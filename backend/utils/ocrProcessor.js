@@ -3,11 +3,14 @@
  * 
  * High-performance Tesseract.js OCR using persistent worker pool.
  * Handles text extraction from image buffers with minimal latency.
+ * Supports PDF and HEIC conversion for OCR processing.
  * 
- * @version 2.0.0 - Optimized with worker pool
+ * @version 2.2.0 - Added PDF and HEIC support
  */
 
 import { createWorker, createScheduler } from 'tesseract.js';
+import { pdf } from 'pdf-to-img';
+import convert from 'heic-convert';
 
 /* ==========================================================================
    WORKER POOL CONFIGURATION
@@ -79,9 +82,10 @@ initializeWorkers().catch(err => {
 
 /**
  * Extracts text from an image buffer using Tesseract.js OCR.
+ * If the file is a PDF, converts it to images first.
  * Uses pre-initialized worker pool for maximum speed.
  * 
- * @param {Buffer} imageBuffer - The image data as a buffer
+ * @param {Buffer} imageBuffer - The image/PDF data as a buffer
  * @param {string} filename - Original filename for logging
  * @returns {Promise<Object>} Object containing extracted text and metadata
  */
@@ -93,17 +97,83 @@ export const extractTextFromImage = async (imageBuffer, filename) => {
         console.log(`[OCR] Processing: ${filename}`);
         const startTime = Date.now();
 
-        // Use scheduler to process with available worker
-        const result = await scheduler.addJob('recognize', imageBuffer);
+        // Check if file is HEIC and convert to JPEG
+        const isHeic = filename.toLowerCase().endsWith('.heic') || filename.toLowerCase().endsWith('.heif');
+        let processBuffer = imageBuffer;
+
+        if (isHeic) {
+            console.log(`[OCR] Detected HEIC file, converting to JPEG...`);
+            try {
+                processBuffer = await convert({
+                    buffer: imageBuffer,
+                    format: 'JPEG',
+                    quality: 0.9
+                });
+                console.log(`[OCR] HEIC conversion complete`);
+            } catch (heicError) {
+                console.error(`[OCR] HEIC conversion error:`, heicError.message);
+                return {
+                    success: false,
+                    text: '',
+                    error: `HEIC conversion failed: ${heicError.message}`,
+                    processingTime: Date.now() - startTime
+                };
+            }
+        }
+
+        // Check if file is PDF
+        const isPdf = filename.toLowerCase().endsWith('.pdf') ||
+            (processBuffer[0] === 0x25 && processBuffer[1] === 0x50 &&
+                processBuffer[2] === 0x44 && processBuffer[3] === 0x46); // %PDF magic bytes
+
+        let combinedText = '';
+        let totalConfidence = 0;
+        let pageCount = 0;
+
+        if (isPdf) {
+            console.log(`[OCR] Detected PDF file, converting pages to images...`);
+
+            try {
+                // Convert PDF pages to images
+                const pdfDocument = await pdf(imageBuffer, { scale: 2.0 });
+
+                for await (const image of pdfDocument) {
+                    pageCount++;
+                    console.log(`[OCR] Processing PDF page ${pageCount}...`);
+
+                    // OCR each page image
+                    const result = await scheduler.addJob('recognize', image);
+                    combinedText += result.data.text.trim() + '\n\n';
+                    totalConfidence += result.data.confidence;
+                }
+
+                console.log(`[OCR] Processed ${pageCount} PDF pages`);
+            } catch (pdfError) {
+                console.error(`[OCR] PDF conversion error:`, pdfError.message);
+                return {
+                    success: false,
+                    text: '',
+                    error: `PDF conversion failed: ${pdfError.message}`,
+                    processingTime: Date.now() - startTime
+                };
+            }
+        } else {
+            // Regular image processing (includes converted HEIC)
+            const result = await scheduler.addJob('recognize', processBuffer);
+            combinedText = result.data.text.trim();
+            totalConfidence = result.data.confidence;
+            pageCount = 1;
+        }
 
         const processingTime = Date.now() - startTime;
         console.log(`[OCR] Completed: ${filename} (${processingTime}ms)`);
 
         return {
             success: true,
-            text: result.data.text.trim(),
-            confidence: result.data.confidence,
-            processingTime: processingTime
+            text: combinedText.trim(),
+            confidence: pageCount > 0 ? totalConfidence / pageCount : 0,
+            processingTime: processingTime,
+            pageCount: pageCount
         };
 
     } catch (error) {

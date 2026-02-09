@@ -567,8 +567,20 @@ const Results = (() => {
             downloadText(result.text, result.filename);
         });
 
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn--secondary btn--sm';
+        deleteBtn.title = 'Delete';
+        deleteBtn.style.color = 'var(--color-error, #ef4444)';
+        deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showDeleteConfirmation(result, item, index);
+        });
+
         actions.appendChild(copyBtn);
         actions.appendChild(downloadBtn);
+        actions.appendChild(deleteBtn);
 
         // Assemble item
         item.appendChild(thumbnail);
@@ -583,6 +595,84 @@ const Results = (() => {
         });
 
         return item;
+    };
+
+    /**
+     * Shows delete confirmation dialog.
+     * @param {Object} result - The result object.
+     * @param {HTMLElement} item - The DOM element to remove.
+     * @param {number} index - The index in currentResults array.
+     */
+    const showDeleteConfirmation = (result, item, index) => {
+        // Remove existing modal
+        const existingModal = document.getElementById('deleteConfirmModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHtml = `
+            <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
+                            <h5 class="modal-title">
+                                <i class="bi bi-trash me-2"></i>Delete Confirmation
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center py-4">
+                            <i class="bi bi-trash" style="font-size: 3rem; color: #dc3545;"></i>
+                            <p class="mt-3 mb-2" style="word-wrap: break-word; overflow-wrap: break-word;"><strong>Delete "${result.filename}"?</strong></p>
+                            <p class="text-danger mb-0"><i class="bi bi-exclamation-circle me-1"></i>This action is final and cannot be undone!</p>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                                <i class="bi bi-trash me-2"></i>Delete Permanently
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        modal.show();
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            modal.hide();
+
+            // Remove from UI
+            item.remove();
+
+            // Remove from currentResults array
+            currentResults.splice(index, 1);
+
+            // If result has database ID, delete from database
+            if (result._id) {
+                try {
+                    await fetch(`${CONFIG.API_BASE_URL}/history/${result._id}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                } catch (error) {
+                    console.error('Failed to delete from database:', error);
+                }
+            }
+
+            Notification.show(`Deleted "${result.filename}"`, 'success');
+
+            // Check if results list is empty
+            const resultsList = $('.results__list');
+            if (resultsList && currentResults.length === 0) {
+                hide();
+            }
+        });
+
+        // Clean up on modal close
+        document.getElementById('deleteConfirmModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('deleteConfirmModal')?.remove();
+        });
     };
 
     /**
@@ -606,7 +696,7 @@ const Results = (() => {
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div style="background: #f8f9fa; border-radius: 8px; padding: 1.25rem; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', 'Monaco', monospace; font-size: 1rem; line-height: 1.8; border: 1px solid #e9ecef;">
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 1.25rem; max-height: 400px; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 1rem; line-height: 1.8; border: 1px solid #e9ecef; width: 100%;">
 ${text || 'No text extracted'}
                             </div>
                         </div>
