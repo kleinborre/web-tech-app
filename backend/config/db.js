@@ -7,7 +7,11 @@
  * @version 1.0.0
  */
 
+import dns from 'dns';
 import mongoose from 'mongoose';
+
+// Force Node.js to use Google DNS for SRV lookups (Windows fix)
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 /**
  * Connects to MongoDB using the MONGO_URI from environment variables.

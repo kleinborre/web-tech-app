@@ -12,9 +12,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 // Route imports
 import ocrRoutes from './routes/ocr.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 // Database connection
 import connectDB from './config/db.js';
@@ -58,6 +60,12 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 /**
+ * Cookie Parser Middleware
+ * Parses cookies for authentication.
+ */
+app.use(cookieParser());
+
+/**
  * Request Logging Middleware
  * Logs incoming requests in development mode.
  */
@@ -88,6 +96,12 @@ app.use(express.static(frontendPath));
  * Handles image-to-text conversion requests.
  */
 app.use('/api/ocr', ocrRoutes);
+
+/**
+ * Auth API Routes
+ * Handles authentication (register, login, logout).
+ */
+app.use('/api/auth', authRoutes);
 
 /**
  * Health Check Endpoint
