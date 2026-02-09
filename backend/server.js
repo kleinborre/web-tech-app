@@ -16,8 +16,14 @@ import { fileURLToPath } from 'url';
 // Route imports
 import ocrRoutes from './routes/ocr.routes.js';
 
+// Database connection
+import connectDB from './config/db.js';
+
 // Load environment variables
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 // ES Module directory resolution
 const __filename = fileURLToPath(import.meta.url);
