@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ImageToTextOnline - Free online OCR tool to extract text from images. Supports JPG, PNG, GIF, JFIF, HEIC, and PDF formats.">
+    <meta name="keywords" content="OCR, image to text, extract text, online converter, free OCR">
+    <meta name="author" content="ImageToTextOnline">
+    <title>ImageToTextOnline - Free Online Image to Text Converter</title>
+    
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ========================================================================
+         HEADER
+         ======================================================================== -->
+    <header class="header">
+        <div class="container">
+            <div class="header__container">
+                <!-- Logo -->
+                <a href="index.html" class="header__logo">
+                    <i class="bi bi-file-text"></i>
+                    ImageToTextOnline
+                </a>
+                
+                <!-- Navigation -->
+                <nav class="header__nav">
+                    <a href="auth/login.html" class="btn btn--outline">Sign In</a>
+                    <a href="auth/register.html" class="btn btn--primary">Register</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================================
+         HERO SECTION
+         ======================================================================== -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero__title">Image To Text Converter</h1>
+            <p class="hero__subtitle">
+                An online image to text converter to extract text from images. 
+                Fast, accurate, and completely free to use.
+            </p>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         OCR SECTION
+         ======================================================================== -->
+    <section class="ocr">
+        <div class="container">
+            <div class="ocr__container">
+                <!-- Drop Zone -->
+                <div class="drop-zone" id="drop-zone">
+                    <div class="drop-zone__icon">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                    </div>
+                    <h3 class="drop-zone__title">Drag & Drop your images here</h3>
+                    <p class="drop-zone__subtitle">or use the options below</p>
+                    
+                    <!-- Action Buttons -->
+                    <div class="drop-zone__actions">
+                        <input type="file" id="file-input" class="visually-hidden" multiple accept=".jpg,.jpeg,.png,.gif,.jfif,.heic,.pdf">
+                        <button type="button" class="btn btn--primary" onclick="document.getElementById('file-input').click()">
+                            <i class="bi bi-upload"></i>
+                            Upload Image
+                        </button>
+                        <button type="button" class="btn btn--outline" id="paste-btn">
+                            <i class="bi bi-clipboard"></i>
+                            Paste
+                        </button>
+                        <button type="button" class="btn btn--secondary" id="url-btn">
+                            <i class="bi bi-link-45deg"></i>
+                            From URL
+                        </button>
+                    </div>
+                    
+                    <!-- Supported Formats -->
+                    <div class="drop-zone__formats">
+                        <span class="drop-zone__format-badge">JPG</span>
+                        <span class="drop-zone__format-badge">PNG</span>
+                        <span class="drop-zone__format-badge">GIF</span>
+                        <span class="drop-zone__format-badge">JFIF</span>
+                        <span class="drop-zone__format-badge">HEIC</span>
+                        <span class="drop-zone__format-badge">PDF</span>
+                    </div>
+                </div>
+
+                <!-- Results Section (Hidden by default) -->
+                <div class="results" id="results">
+                    <div class="results__header">
+                        <h3 class="results__title">Extracted Text</h3>
+                        <div class="results__actions">
+                            <button type="button" class="btn btn--secondary btn--sm results__restart">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                                Restart
+                            </button>
+                            <button type="button" class="btn btn--primary btn--sm results__download-all">
+                                <i class="bi bi-download"></i>
+                                Download All
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Results List -->
+                    <div class="results__list">
+                        <!-- Result items will be dynamically inserted here -->
+                        <div class="results__item">
+                            <img src="assets/images/placeholder.jpg" alt="Uploaded image" class="results__item-thumbnail">
+                            <div class="results__item-content">
+                                <p class="results__item-name">example-image.jpg</p>
+                                <p class="results__item-text">Extracted text will appear here...</p>
+                            </div>
+                            <div class="results__item-actions">
+                                <button type="button" class="btn btn--secondary btn--sm" title="Copy text">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                                <button type="button" class="btn btn--secondary btn--sm" title="Download">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         WHY USE SECTION
+         ======================================================================== -->
+    <section class="section section--gray">
+        <div class="container">
+            <h2 class="section__title">Why Use ImageToTextOnline?</h2>
+            <p class="section__subtitle">
+                Our powerful OCR technology makes extracting text from images quick and effortless.
+            </p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-card__icon">
+                        <i class="bi bi-lightning-charge"></i>
+                    </div>
+                    <h4 class="feature-card__title">Fast Processing</h4>
+                    <p class="feature-card__text">Extract text from images in seconds with our optimized OCR engine.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-card__icon">
+                        <i class="bi bi-bullseye"></i>
+                    </div>
+                    <h4 class="feature-card__title">High Accuracy</h4>
+                    <p class="feature-card__text">Advanced AI-powered recognition ensures accurate text extraction.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-card__icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4 class="feature-card__title">Secure & Private</h4>
+                    <p class="feature-card__text">Your images are processed securely and never stored permanently.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-card__icon">
+                        <i class="bi bi-gift"></i>
+                    </div>
+                    <h4 class="feature-card__title">100% Free</h4>
+                    <p class="feature-card__text">No hidden costs or premium tiers. Free for everyone to use.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         HOW IT WORKS SECTION
+         ======================================================================== -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section__title">How It Works</h2>
+            <p class="section__subtitle">
+                Converting images to text is simple with our three-step process.
+            </p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step__number">1</div>
+                    <h4 class="step__title">Upload Image</h4>
+                    <p class="step__text">Drag and drop your image, paste from clipboard, or select a file from your device.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step__number">2</div>
+                    <h4 class="step__title">Process</h4>
+                    <p class="step__text">Our OCR engine analyzes the image and extracts all readable text automatically.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step__number">3</div>
+                    <h4 class="step__title">Copy or Download</h4>
+                    <p class="step__text">Copy the extracted text to clipboard or download it as a text file.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         FEATURES SECTION
+         ======================================================================== -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section__title">Powerful Features</h2>
+            <p class="section__subtitle">
+                Everything you need to extract text from images efficiently.
+            </p>
+            
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-file-earmark-image"></i>
+                        </div>
+                        <h4 class="feature-card__title">Multiple Formats</h4>
+                        <p class="feature-card__text">Support for JPG, PNG, GIF, JFIF, HEIC, and PDF files.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-collection"></i>
+                        </div>
+                        <h4 class="feature-card__title">Batch Processing</h4>
+                        <p class="feature-card__text">Upload and process multiple images at once.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-translate"></i>
+                        </div>
+                        <h4 class="feature-card__title">Multi-Language</h4>
+                        <p class="feature-card__text">Recognize text in multiple languages with high accuracy.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h4 class="feature-card__title">History Log</h4>
+                        <p class="feature-card__text">Access your previous conversions anytime from your dashboard.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h4 class="feature-card__title">Mobile Friendly</h4>
+                        <p class="feature-card__text">Works seamlessly on all devices - desktop, tablet, and mobile.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-card__icon">
+                            <i class="bi bi-cloud-download"></i>
+                        </div>
+                        <h4 class="feature-card__title">Easy Export</h4>
+                        <p class="feature-card__text">Download extracted text as TXT or copy directly to clipboard.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         FAQ SECTION
+         ======================================================================== -->
+    <section class="faq section--gray">
+        <div class="container">
+            <h2 class="section__title">Frequently Asked Questions</h2>
+            <p class="section__subtitle">
+                Find answers to common questions about our image to text converter.
+            </p>
+            
+            <div class="faq__list">
+                <div class="faq__item">
+                    <button class="faq__question">
+                        What is OCR and how does it work?
+                        <i class="bi bi-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer">
+                        <p>OCR (Optical Character Recognition) is a technology that converts images of text into machine-readable text. Our system uses advanced AI algorithms to analyze image pixels and identify characters, words, and sentences with high accuracy.</p>
+                    </div>
+                </div>
+                
+                <div class="faq__item">
+                    <button class="faq__question">
+                        What file formats are supported?
+                        <i class="bi bi-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer">
+                        <p>We support a wide range of image formats including JPG, JPEG, PNG, GIF, JFIF, HEIC, and PDF documents. You can upload multiple files at once for batch processing.</p>
+                    </div>
+                </div>
+                
+                <div class="faq__item">
+                    <button class="faq__question">
+                        Is there a file size limit?
+                        <i class="bi bi-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer">
+                        <p>Yes, the maximum file size for uploads is 10MB per image. For larger files, we recommend compressing or resizing them before uploading.</p>
+                    </div>
+                </div>
+                
+                <div class="faq__item">
+                    <button class="faq__question">
+                        Are my images stored on your servers?
+                        <i class="bi bi-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer">
+                        <p>We prioritize your privacy. Images are processed in real-time and are not stored permanently. Registered users can access their conversion history, but images are deleted after processing.</p>
+                    </div>
+                </div>
+                
+                <div class="faq__item">
+                    <button class="faq__question">
+                        Do I need to create an account?
+                        <i class="bi bi-chevron-down faq__icon"></i>
+                    </button>
+                    <div class="faq__answer">
+                        <p>No, you can use the basic OCR features without creating an account. However, registered users get access to additional features like conversion history, batch processing, and cloud storage.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================================
+         FOOTER
+         ======================================================================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__container">
+                <!-- Brand -->
+                <div class="footer__brand">
+                    <h4 class="footer__logo">ImageToTextOnline</h4>
+                    <p class="footer__tagline">Extract text from images instantly.</p>
+                </div>
+                
+                <!-- Social Links -->
+                <div class="footer__social">
+                    <a href="#" class="footer__social-link" aria-label="Facebook">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="#" class="footer__social-link" aria-label="Twitter">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <a href="#" class="footer__social-link" aria-label="Instagram">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="#" class="footer__social-link" aria-label="LinkedIn">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="footer__bottom">
+                <p class="footer__copyright">&copy; 2024 ImageToTextOnline. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/main.js"></script>
+</body>
+</html>
