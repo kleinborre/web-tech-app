@@ -507,6 +507,7 @@ const Results = (() => {
         const item = document.createElement('div');
         item.className = 'results__item';
         item.dataset.index = index;
+        item.style.cursor = 'pointer';
 
         // Create thumbnail
         const thumbnail = document.createElement('img');
@@ -551,14 +552,20 @@ const Results = (() => {
         copyBtn.className = 'btn btn--secondary btn--sm';
         copyBtn.title = 'Copy text';
         copyBtn.innerHTML = '<i class="bi bi-clipboard"></i>';
-        copyBtn.addEventListener('click', () => copyText(result.text, result.filename));
+        copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyText(result.text, result.filename);
+        });
 
         // Download button
         const downloadBtn = document.createElement('button');
         downloadBtn.className = 'btn btn--secondary btn--sm';
         downloadBtn.title = 'Download as text file';
         downloadBtn.innerHTML = '<i class="bi bi-download"></i>';
-        downloadBtn.addEventListener('click', () => downloadText(result.text, result.filename));
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadText(result.text, result.filename);
+        });
 
         actions.appendChild(copyBtn);
         actions.appendChild(downloadBtn);
@@ -568,7 +575,72 @@ const Results = (() => {
         item.appendChild(content);
         item.appendChild(actions);
 
+        // Make entire item clickable to show modal
+        item.addEventListener('click', () => {
+            if (result.success && result.text) {
+                showDetailModal(result.filename, result.text);
+            }
+        });
+
         return item;
+    };
+
+    /**
+     * Shows a modal with full extracted text.
+     * @param {string} filename - The filename.
+     * @param {string} text - The full extracted text.
+     */
+    const showDetailModal = (filename, text) => {
+        // Remove existing modal
+        const existingModal = document.getElementById('resultDetailModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHtml = `
+            <div class="modal fade" id="resultDetailModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
+                            <h5 class="modal-title">
+                                <i class="bi bi-file-text me-2"></i>${filename}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 1.25rem; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', 'Monaco', monospace; font-size: 1rem; line-height: 1.8; border: 1px solid #e9ecef;">
+${text || 'No text extracted'}
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-center" style="gap: 1rem;">
+                            <button type="button" class="btn" id="modalCopyBtn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem;">
+                                <i class="bi bi-clipboard me-2"></i>Copy to Clipboard
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="modalDownloadBtn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+                                <i class="bi bi-download me-2"></i>Download as TXT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = new bootstrap.Modal(document.getElementById('resultDetailModal'));
+        modal.show();
+
+        // Bind modal button events
+        document.getElementById('modalCopyBtn').addEventListener('click', () => {
+            copyText(text, filename);
+        });
+
+        document.getElementById('modalDownloadBtn').addEventListener('click', () => {
+            downloadText(text, filename);
+        });
+
+        // Clean up on modal close
+        document.getElementById('resultDetailModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('resultDetailModal')?.remove();
+        });
     };
 
     /**
