@@ -8,6 +8,7 @@
  */
 
 import { processMultipleImages } from '../utils/ocrProcessor.js';
+import ConversionLog from '../models/ConversionLog.model.js';
 
 /* ==========================================================================
    OCR CONTROLLER
@@ -31,6 +32,23 @@ export const convertImages = async (req, res) => {
         const successCount = results.filter(r => r.success).length;
         const failCount = results.filter(r => !r.success).length;
         const totalProcessingTime = results.reduce((sum, r) => sum + (r.processingTime || 0), 0);
+
+        // Save to ConversionLog if user is authenticated
+        if (req.user) {
+            try {
+                const savePromises = results
+                    .filter(r => r.success)
+                    .map(r => ConversionLog.create({
+                        userId: req.user._id,
+                        originalFileName: r.filename,
+                        extractedText: r.text || ''
+                    }));
+                await Promise.all(savePromises);
+                console.log(`[OCR] Saved ${savePromises.length} conversion(s) for user ${req.user.username}`);
+            } catch (logError) {
+                console.error('[OCR] Failed to save conversion log:', logError.message);
+            }
+        }
 
         // Return successful response
         res.status(200).json({

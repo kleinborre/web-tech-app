@@ -17,6 +17,8 @@ import cookieParser from 'cookie-parser';
 // Route imports
 import ocrRoutes from './routes/ocr.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import historyRoutes from './routes/history.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 
 // Database connection
 import connectDB from './config/db.js';
@@ -102,6 +104,18 @@ app.use('/api/ocr', ocrRoutes);
  * Handles authentication (register, login, logout).
  */
 app.use('/api/auth', authRoutes);
+
+/**
+ * History API Routes
+ * Handles user conversion history.
+ */
+app.use('/api/history', historyRoutes);
+
+/**
+ * Admin API Routes
+ * Handles admin panel functionality.
+ */
+app.use('/api/admin', adminRoutes);
 
 /**
  * Health Check Endpoint
