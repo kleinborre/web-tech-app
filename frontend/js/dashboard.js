@@ -14,7 +14,7 @@ const DASHBOARD_CONFIG = {
     HISTORY_API: '/api/history',
     ADMIN_API: '/api/admin',
     AUTH_API: '/api/auth',
-    ITEMS_PER_PAGE: 5,
+    ITEMS_PER_PAGE: 20,
     LOGIN_PAGE: '/auth/login.html'
 };
 
@@ -165,21 +165,21 @@ const HistoryManager = {
             `;
         } else {
             tbody.innerHTML = items.map(item => `
-                <tr data-id="${item._id}">
+                <tr data-id="${item._id}" style="cursor: pointer;" onclick="HistoryManager.showDetail('${item._id}', '${item.originalFileName || 'Untitled'}', \`${encodeURIComponent(item.extractedText || '')}\`, '${item.conversionDate}')">
                     <td>${DashboardUI.formatDate(item.conversionDate)}</td>
                     <td>${item.originalFileName || 'Untitled'}</td>
                     <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         ${DashboardUI.truncateText(item.extractedText, 80)}
                     </td>
-                    <td>
-                        <div class="data-table__actions">
-                            <button class="btn btn--secondary btn--sm" title="Copy" onclick="HistoryManager.copy('${item._id}', \`${encodeURIComponent(item.extractedText || '')}\`)">
+                    <td onclick="event.stopPropagation();">
+                        <div class="data-table__actions" style="font-size: 1.25rem;">
+                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem;" title="Copy" onclick="HistoryManager.copy('${item._id}', \`${encodeURIComponent(item.extractedText || '')}\`)">
                                 <i class="bi bi-clipboard"></i>
                             </button>
-                            <button class="btn btn--secondary btn--sm" title="Download" onclick="HistoryManager.download('${item.originalFileName || 'text'}', \`${encodeURIComponent(item.extractedText || '')}\`)">
+                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem;" title="Download" onclick="HistoryManager.download('${item.originalFileName || 'text'}', \`${encodeURIComponent(item.extractedText || '')}\`)">
                                 <i class="bi bi-download"></i>
                             </button>
-                            <button class="btn btn--secondary btn--sm" title="Delete" style="color: var(--color-error);" onclick="HistoryManager.delete('${item._id}')">
+                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem; color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -250,8 +250,25 @@ const HistoryManager = {
     },
 
     async delete(id) {
-        if (!confirm('Are you sure you want to delete this record?')) return;
+        // Use confirmation dialog from auth.js
+        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+            UI.showConfirmDialog(
+                'Delete Record',
+                'Are you sure you want to delete this record?',
+                async () => {
+                    await HistoryManager.performDelete(id);
+                },
+                null,
+                'Delete',
+                'Cancel',
+                'danger'
+            );
+        } else if (confirm('Are you sure you want to delete this record?')) {
+            await HistoryManager.performDelete(id);
+        }
+    },
 
+    async performDelete(id) {
         try {
             const result = await DashboardAPI.deleteHistory(id);
             if (result.success) {
@@ -263,6 +280,49 @@ const HistoryManager = {
         } catch (error) {
             DashboardUI.showToast('Failed to delete', 'danger');
         }
+    },
+
+    showDetail(id, filename, encodedText, date) {
+        const text = decodeURIComponent(encodedText);
+        const existingModal = document.getElementById('historyDetailModal');
+        if (existingModal) existingModal.remove();
+
+        const modalHtml = `
+            <div class="modal fade" id="historyDetailModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
+                            <h5 class="modal-title">
+                                <i class="bi bi-file-text me-2"></i>${filename}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <small class="text-muted"><i class="bi bi-calendar me-1"></i>${DashboardUI.formatDate(date)}</small>
+                            </div>
+                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.6;">
+${text || 'No text extracted'}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 1.1rem;" onclick="HistoryManager.copy('${id}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                                <i class="bi bi-clipboard me-2"></i>Copy
+                            </button>
+                            <button type="button" class="btn btn-secondary" style="font-size: 1.1rem;" onclick="HistoryManager.download('${filename}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                                <i class="bi bi-download me-2"></i>Download
+                            </button>
+                            <button type="button" class="btn btn-danger" style="font-size: 1.1rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide(); HistoryManager.delete('${id}');">
+                                <i class="bi bi-trash me-2"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
     }
 };
 
@@ -311,22 +371,55 @@ const AdminManager = {
             data.push(dayData ? dayData.count : 0);
         }
 
-        // Simple CSS bar chart (no Chart.js dependency)
+        // Line chart with SVG
         const maxValue = Math.max(...data, 1);
         const chartContainer = canvas.parentElement;
+        const width = 100;
+        const height = 60;
+        const padding = 5;
+
+        // Calculate points for the line
+        const points = data.map((value, i) => {
+            const x = padding + (i * (width - 2 * padding) / 6);
+            const y = height - padding - (value / maxValue) * (height - 2 * padding);
+            return { x, y, value };
+        });
+
+        // Create SVG path
+        const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+        // Create area path (for gradient fill)
+        const areaPath = linePath + ` L ${points[6].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
 
         chartContainer.innerHTML = `
-            <div class="simple-chart">
-                <div class="simple-chart__bars">
-                    ${data.map((value, i) => `
-                        <div class="simple-chart__bar-container">
-                            <div class="simple-chart__bar" style="height: ${(value / maxValue) * 100}%">
-                                <span class="simple-chart__value">${value}</span>
-                            </div>
-                            <span class="simple-chart__label">${labels[i]}</span>
-                        </div>
+            <div style="position: relative;">
+                <svg viewBox="0 0 ${width} ${height + 25}" style="width: 100%; height: 220px;">
+                    <defs>
+                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00838f;stop-opacity:0.3" />
+                            <stop offset="100%" style="stop-color:#00838f;stop-opacity:0.05" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Grid lines -->
+                    ${[0, 1, 2, 3, 4].map(i => {
+            const y = padding + (i * (height - 2 * padding) / 4);
+            return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="#e0e0e0" stroke-width="0.3" stroke-dasharray="1,1"/>`;
+        }).join('')}
+                    
+                    <!-- Area fill -->
+                    <path d="${areaPath}" fill="url(#lineGradient)" />
+                    
+                    <!-- Line -->
+                    <path d="${linePath}" fill="none" stroke="#00838f" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    
+                    <!-- Dots and values -->
+                    ${points.map((p, i) => `
+                        <circle cx="${p.x}" cy="${p.y}" r="2" fill="#00838f" stroke="white" stroke-width="0.5"/>
+                        <text x="${p.x}" y="${p.y - 3}" text-anchor="middle" font-size="3" fill="#00838f" font-weight="600">${p.value}</text>
+                        <text x="${p.x}" y="${height + 8}" text-anchor="middle" font-size="3.5" fill="#666">${labels[i]}</text>
                     `).join('')}
-                </div>
+                </svg>
             </div>
         `;
     },
@@ -386,6 +479,29 @@ const AdminManager = {
     },
 
     async toggleStatus(userId) {
+        // Get user info for better messaging
+        const row = document.querySelector(`tr[data-id="${userId}"]`);
+        const username = row?.querySelector('span')?.textContent?.replace(' (You)', '') || 'this user';
+        const isActive = row?.querySelector('.badge.bg-success') !== null;
+        const action = isActive ? 'deactivate' : 'reactivate';
+
+        // Double confirmation
+        if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
+            UI.showDoubleConfirmDialog(
+                `${isActive ? 'Deactivate' : 'Reactivate'} User`,
+                `Are you sure you want to ${action} ${username}?`,
+                'Final Confirmation',
+                `This decision is final! ${isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
+                async () => {
+                    await AdminManager.performStatusToggle(userId);
+                }
+            );
+        } else {
+            await AdminManager.performStatusToggle(userId);
+        }
+    },
+
+    async performStatusToggle(userId) {
         try {
             const result = await DashboardAPI.toggleUserStatus(userId);
             if (result.success) {
@@ -401,10 +517,31 @@ const AdminManager = {
 
     async toggleRole(userId, currentRole) {
         const newRole = currentRole === 'admin' ? 'user' : 'admin';
-        if (!confirm(`Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} this user?`)) return;
+        const action = newRole === 'admin' ? 'promote to Admin' : 'demote to User';
 
+        // Get username
+        const row = document.querySelector(`tr[data-id="${userId}"]`);
+        const username = row?.querySelector('span')?.textContent?.replace(' (You)', '') || 'this user';
+
+        // Double confirmation
+        if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
+            UI.showDoubleConfirmDialog(
+                `${newRole === 'admin' ? 'Promote' : 'Demote'} User`,
+                `Are you sure you want to ${action} ${username}?`,
+                'Final Confirmation',
+                `This decision is final! Are you absolutely sure you want to ${action}?`,
+                async () => {
+                    await AdminManager.performRoleChange(userId, newRole);
+                }
+            );
+        } else {
+            await AdminManager.performRoleChange(userId, newRole);
+        }
+    },
+
+    async performRoleChange(userId, role) {
         try {
-            const result = await DashboardAPI.changeUserRole(userId, newRole);
+            const result = await DashboardAPI.changeUserRole(userId, role);
             if (result.success) {
                 DashboardUI.showToast(result.message, 'success');
                 AdminManager.loadUsers(DashboardState.usersPage);
@@ -431,8 +568,26 @@ const ViewManager = {
     },
 
     toggle() {
-        DashboardState.currentView = DashboardState.currentView === 'user' ? 'admin' : 'user';
-        ViewManager.update();
+        const targetView = DashboardState.currentView === 'user' ? 'admin' : 'user';
+        const viewName = targetView === 'admin' ? 'Admin' : 'User';
+
+        // Show confirmation dialog
+        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+            UI.showConfirmDialog(
+                'Switch View',
+                `Switch to ${viewName} View?`,
+                () => {
+                    DashboardState.currentView = targetView;
+                    ViewManager.update();
+                },
+                null,
+                'Switch',
+                'Cancel'
+            );
+        } else {
+            DashboardState.currentView = targetView;
+            ViewManager.update();
+        }
     },
 
     update() {
@@ -500,12 +655,6 @@ async function initDashboard() {
 
         const avatarEl = document.getElementById('userAvatar');
         if (avatarEl) avatarEl.textContent = DashboardUI.getInitials(result.user.username);
-
-        // Setup logout
-        document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleLogout();
-        });
 
         // Initialize view
         ViewManager.init();

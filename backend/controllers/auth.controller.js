@@ -94,10 +94,10 @@ export const register = async (req, res) => {
         }
 
         // Check password length
-        if (password.length < 8) {
+        if (password.length < 6) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must be at least 8 characters'
+                error: 'Password must be at least 6 characters'
             });
         }
 
@@ -290,6 +290,40 @@ export const getMe = async (req, res) => {
         console.error('[Auth] GetMe error:', error.message);
         res.status(500).json({
             success: false,
+            error: 'Server error'
+        });
+    }
+};
+
+/**
+ * @desc    Check if email exists (for forgot password)
+ * @route   POST /api/auth/check-email
+ * @access  Public
+ */
+export const checkEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                exists: false,
+                error: 'Email is required'
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        res.status(200).json({
+            success: true,
+            exists: !!user
+        });
+
+    } catch (error) {
+        console.error('[Auth] CheckEmail error:', error.message);
+        res.status(500).json({
+            success: false,
+            exists: false,
             error: 'Server error'
         });
     }

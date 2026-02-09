@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ImageToTextOnline Admin - User Management. View, search, and manage all users.">
+    <title>User Management - ImageToTextOnline</title>
+
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+
+    <style>
+        .users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .users-search {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .users-search input {
+            flex: 1;
+        }
+
+        .user-detail-modal .modal-body {
+            padding: 0;
+        }
+
+        .user-detail {
+            padding: 1.5rem;
+        }
+
+        .user-detail__item {
+            display: flex;
+            border-bottom: 1px solid var(--color-gray-200);
+            padding: 0.75rem 0;
+        }
+
+        .user-detail__item:last-child {
+            border-bottom: none;
+        }
+
+        .user-detail__label {
+            font-weight: 600;
+            color: var(--color-gray-600);
+            width: 140px;
+            flex-shrink: 0;
+        }
+
+        .user-detail__value {
+            flex: 1;
+        }
+
+        .user-detail__actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--color-gray-200);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ========================================================================
+         DASHBOARD LAYOUT
+         ======================================================================== -->
+    <div class="dashboard">
+        <!-- Dashboard Header -->
+        <header class="dashboard__header">
+            <a href="../index.html" class="dashboard__logo">
+                <i class="bi bi-file-text"></i>
+                ImageToTextOnline
+            </a>
+
+            <div class="dashboard__user">
+                <span id="welcomeUser" style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
+                    Admin</span>
+                <div id="userAvatar" class="dashboard__avatar">A</div>
+                <a href="#" id="logoutBtn" class="btn btn--outline btn--sm">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Sign Out
+                </a>
+            </div>
+        </header>
+
+        <!-- Dashboard Body -->
+        <div class="dashboard__body">
+            <!-- Sidebar Navigation -->
+            <aside class="dashboard__sidebar">
+                <nav>
+                    <ul class="dashboard__nav">
+                        <li class="dashboard__nav-item">
+                            <a href="dashboard.html" class="dashboard__nav-link">
+                                <i class="bi bi-grid"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="dashboard__nav-item">
+                            <a href="../index.html" class="dashboard__nav-link">
+                                <i class="bi bi-file-text"></i>
+                                Convert
+                            </a>
+                        </li>
+                        <li class="dashboard__nav-item">
+                            <a href="users.html" class="dashboard__nav-link dashboard__nav-link--active">
+                                <i class="bi bi-people"></i>
+                                Users
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="dashboard__content">
+                <!-- Page Title -->
+                <div class="users-header">
+                    <h1 style="font-size: var(--font-size-2xl); margin-bottom: 0;">User Management</h1>
+                    <div class="users-search">
+                        <input type="text" id="searchInput" class="form-control"
+                            placeholder="Search by username, email, role, status...">
+                        <button class="btn btn--secondary" id="refreshBtn" title="Refresh">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="dashboard__card">
+                    <div style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="usersPagination" class="mt-3 d-flex justify-content-center"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div class="modal fade" id="userDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-detail" id="userDetailContent">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Auth JavaScript -->
+    <script src="../js/auth.js"></script>
+
+    <!-- Users Page Script -->
+    <script>
+        const UsersPageConfig = {
+            ADMIN_API: '/api/admin',
+            AUTH_API: '/api/auth',
+            ITEMS_PER_PAGE: 20,
+            LOGIN_PAGE: '/auth/login.html'
+        };
+
+        const UsersPageState = {
+            currentUser: null,
+            users: [],
+            filteredUsers: [],
+            page: 1,
+            totalPages: 1,
+            searchQuery: ''
+        };
+
+        // API calls
+        const UsersAPI = {
+            async getMe() {
+                const res = await fetch(`${UsersPageConfig.AUTH_API}/me`, { credentials: 'include' });
+                return res.json();
+            },
+            async getUsers(page = 1) {
+                const res = await fetch(`${UsersPageConfig.ADMIN_API}/users?page=${page}&limit=${UsersPageConfig.ITEMS_PER_PAGE}`, { credentials: 'include' });
+                return res.json();
+            },
+            async getUser(id) {
+                const res = await fetch(`${UsersPageConfig.ADMIN_API}/users/${id}`, { credentials: 'include' });
+                return res.json();
+            },
+            async toggleStatus(id) {
+                const res = await fetch(`${UsersPageConfig.ADMIN_API}/users/${id}/status`, { method: 'PATCH', credentials: 'include' });
+                return res.json();
+            },
+            async changeRole(id, role) {
+                const res = await fetch(`${UsersPageConfig.ADMIN_API}/users/${id}/role`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ role })
+                });
+                return res.json();
+            }
+        };
+
+        // Utilities
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function getInitials(name) {
+            return name ? name.substring(0, 2).toUpperCase() : 'U';
+        }
+
+        function getRoleBadge(role) {
+            const classes = { superadmin: 'bg-danger', admin: 'bg-primary', user: 'bg-secondary' };
+            return `<span class="badge ${classes[role] || 'bg-secondary'}">${role}</span>`;
+        }
+
+        function showToast(message, type = 'info') {
+            if (typeof DashboardUI !== 'undefined') {
+                DashboardUI.showToast(message, type);
+            } else if (typeof UI !== 'undefined') {
+                UI.showToast(message, type);
+            } else {
+                alert(message);
+            }
+        }
+
+        // Render users table
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            const users = UsersPageState.filteredUsers.length > 0 || UsersPageState.searchQuery
+                ? UsersPageState.filteredUsers
+                : UsersPageState.users;
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No users found</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const isSelf = user._id === UsersPageState.currentUser?._id;
+                const isSuperadmin = user.role === 'superadmin';
+                const canModify = !isSelf && !isSuperadmin;
+
+                return `
+                    <tr data-id="${user._id}" style="cursor: pointer;" onclick="viewUser('${user._id}')">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="dashboard__avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">${getInitials(user.username)}</div>
+                                <span>${user.username}${isSelf ? ' (You)' : ''}</span>
+                            </div>
+                        </td>
+                        <td>${user.email || '-'}</td>
+                        <td>${getRoleBadge(user.role)}</td>
+                        <td>${formatDate(user.createdAt)}</td>
+                        <td><span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></td>
+                        <td onclick="event.stopPropagation();">
+                            ${canModify ? `
+                                <button class="btn btn--secondary btn--sm" onclick="toggleStatus('${user._id}')" title="${user.isActive ? 'Deactivate' : 'Activate'}">
+                                    <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'}"></i> ${user.isActive ? 'Deactivate' : 'Activate'}
+                                </button>
+                                ${UsersPageState.currentUser?.role === 'superadmin' ? `
+                                    <button class="btn btn--secondary btn--sm" onclick="toggleRole('${user._id}', '${user.role}')" title="${user.role === 'admin' ? 'Demote' : 'Promote'}">
+                                        <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'}"></i> ${user.role === 'admin' ? 'Demote' : 'Promote'}
+                                    </button>
+                                ` : ''}
+                            ` : '<span class="text-muted">-</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const container = document.getElementById('usersPagination');
+            const { page, totalPages } = UsersPageState;
+
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<nav><ul class="pagination pagination-sm mb-0">';
+            html += `<li class="page-item ${page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadUsers(${page - 1}); return false;">Prev</a></li>`;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                    html += `<li class="page-item ${i === page ? 'active' : ''}"><a class="page-link" href="#" onclick="loadUsers(${i}); return false;">${i}</a></li>`;
+                } else if (i === page - 2 || i === page + 2) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            html += `<li class="page-item ${page === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="loadUsers(${page + 1}); return false;">Next</a></li>`;
+            html += '</ul></nav>';
+            container.innerHTML = html;
+        }
+
+        // Load users
+        async function loadUsers(page = 1) {
+            try {
+                const result = await UsersAPI.getUsers(page);
+                if (result.success) {
+                    UsersPageState.users = result.data;
+                    UsersPageState.page = result.pagination.page;
+                    UsersPageState.totalPages = result.pagination.pages;
+
+                    // Apply search filter
+                    if (UsersPageState.searchQuery) {
+                        filterUsers(UsersPageState.searchQuery);
+                    } else {
+                        UsersPageState.filteredUsers = [];
+                        renderUsers();
+                    }
+                    renderPagination();
+                }
+            } catch (error) {
+                console.error('Load users error:', error);
+                showToast('Failed to load users', 'danger');
+            }
+        }
+
+        // Filter users
+        function filterUsers(query) {
+            UsersPageState.searchQuery = query.toLowerCase();
+            if (!query) {
+                UsersPageState.filteredUsers = [];
+            } else {
+                UsersPageState.filteredUsers = UsersPageState.users.filter(user =>
+                    user.username.toLowerCase().includes(query) ||
+                    (user.email && user.email.toLowerCase().includes(query)) ||
+                    user.role.toLowerCase().includes(query) ||
+                    (user.isActive ? 'active' : 'inactive').includes(query)
+                );
+            }
+            renderUsers();
+        }
+
+        // View user details
+        async function viewUser(userId) {
+            try {
+                const result = await UsersAPI.getUser(userId);
+                if (result.success) {
+                    const user = result.data;
+                    const isSelf = user._id === UsersPageState.currentUser?._id;
+                    const isSuperadmin = user.role === 'superadmin';
+                    const canModify = !isSelf && !isSuperadmin;
+
+                    document.getElementById('userDetailContent').innerHTML = `
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Username</span>
+                            <span class="user-detail__value">${user.username}</span>
+                        </div>
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Email</span>
+                            <span class="user-detail__value">${user.email || '-'}</span>
+                        </div>
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Role</span>
+                            <span class="user-detail__value">${getRoleBadge(user.role)}</span>
+                        </div>
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Status</span>
+                            <span class="user-detail__value"><span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span></span>
+                        </div>
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Joined</span>
+                            <span class="user-detail__value">${formatDate(user.createdAt)}</span>
+                        </div>
+                        <div class="user-detail__item">
+                            <span class="user-detail__label">Conversions</span>
+                            <span class="user-detail__value">${user.conversionCount || 0}</span>
+                        </div>
+                        ${canModify ? `
+                            <div class="user-detail__actions">
+                                <button class="btn ${user.isActive ? 'btn--secondary' : 'btn--primary'}" onclick="toggleStatus('${user._id}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
+                                    <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'}"></i> ${user.isActive ? 'Deactivate Account' : 'Activate Account'}
+                                </button>
+                                ${UsersPageState.currentUser?.role === 'superadmin' ? `
+                                    <button class="btn btn--outline" onclick="toggleRole('${user._id}', '${user.role}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
+                                        <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'}"></i> ${user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    `;
+
+                    new bootstrap.Modal(document.getElementById('userDetailModal')).show();
+                }
+            } catch (error) {
+                console.error('View user error:', error);
+                showToast('Failed to load user details', 'danger');
+            }
+        }
+
+        // Toggle status with double confirmation
+        async function toggleStatus(userId) {
+            const user = UsersPageState.users.find(u => u._id === userId);
+            const action = user?.isActive ? 'deactivate' : 'reactivate';
+
+            if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
+                UI.showDoubleConfirmDialog(
+                    `${user?.isActive ? 'Deactivate' : 'Reactivate'} User`,
+                    `Are you sure you want to ${action} ${user?.username}?`,
+                    'Final Confirmation',
+                    `This decision is final! ${user?.isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
+                    async () => {
+                        const result = await UsersAPI.toggleStatus(userId);
+                        if (result.success) {
+                            showToast(result.message, 'success');
+                            loadUsers(UsersPageState.page);
+                        } else {
+                            showToast(result.error, 'danger');
+                        }
+                    }
+                );
+            } else {
+                const result = await UsersAPI.toggleStatus(userId);
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    loadUsers(UsersPageState.page);
+                } else {
+                    showToast(result.error, 'danger');
+                }
+            }
+        }
+
+        // Toggle role with double confirmation
+        async function toggleRole(userId, currentRole) {
+            const newRole = currentRole === 'admin' ? 'user' : 'admin';
+            const user = UsersPageState.users.find(u => u._id === userId);
+
+            if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
+                UI.showDoubleConfirmDialog(
+                    `${newRole === 'admin' ? 'Promote' : 'Demote'} User`,
+                    `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} ${user?.username}?`,
+                    'Final Confirmation',
+                    `This decision is final! Are you absolutely sure?`,
+                    async () => {
+                        const result = await UsersAPI.changeRole(userId, newRole);
+                        if (result.success) {
+                            showToast(result.message, 'success');
+                            loadUsers(UsersPageState.page);
+                        } else {
+                            showToast(result.error, 'danger');
+                        }
+                    }
+                );
+            } else {
+                const result = await UsersAPI.changeRole(userId, newRole);
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    loadUsers(UsersPageState.page);
+                } else {
+                    showToast(result.error, 'danger');
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Check auth
+                const result = await UsersAPI.getMe();
+                if (!result.success || !['admin', 'superadmin'].includes(result.user.role)) {
+                    window.location.href = UsersPageConfig.LOGIN_PAGE;
+                    return;
+                }
+
+                UsersPageState.currentUser = result.user;
+
+                // Update UI
+                document.getElementById('welcomeUser').textContent = `Welcome, ${result.user.username}`;
+                document.getElementById('userAvatar').textContent = getInitials(result.user.username);
+
+                // Load users
+                loadUsers();
+
+                // Search input
+                const searchInput = document.getElementById('searchInput');
+                let debounceTimer;
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => filterUsers(e.target.value), 300);
+                });
+
+                // Refresh button
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    searchInput.value = '';
+                    UsersPageState.searchQuery = '';
+                    loadUsers(1);
+                });
+
+                // Convert link confirmation
+                const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
+                if (convertLink) {
+                    convertLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Leave Users Page',
+                                'Are you sure you want to leave and go to the Convert page?',
+                                () => {
+                                    window.location.href = '../index.html';
+                                },
+                                null,
+                                'Yes, Leave',
+                                'Cancel',
+                                'primary'
+                            );
+                        } else {
+                            window.location.href = '../index.html';
+                        }
+                    });
+                }
+
+                // Logout button confirmation
+                const logoutBtn = document.getElementById('logoutBtn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Sign Out',
+                                'Are you sure you want to sign out?',
+                                async () => {
+                                    if (typeof AuthService !== 'undefined') {
+                                        await AuthService.logout();
+                                    }
+                                    localStorage.removeItem('user');
+                                    window.location.href = '/';
+                                },
+                                null,
+                                'Sign Out',
+                                'Cancel',
+                                'primary'
+                            );
+                        }
+                    });
+                }
+
+                // Logo click confirmation (header logo)
+                const logoLink = document.querySelector('.dashboard__logo');
+                if (logoLink) {
+                    logoLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Leave Users Page',
+                                'Are you sure you want to leave and go to the home page?',
+                                () => {
+                                    window.location.href = '../index.html';
+                                },
+                                null,
+                                'Yes, Leave',
+                                'Cancel',
+                                'primary'
+                            );
+                        } else {
+                            window.location.href = '../index.html';
+                        }
+                    });
+                }
+
+            } catch (error) {
+                console.error('Init error:', error);
+                window.location.href = UsersPageConfig.LOGIN_PAGE;
+            }
+        });
+    </script>
+</body>
+
+</html>

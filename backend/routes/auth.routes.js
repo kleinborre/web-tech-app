@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { register, login, logout, getMe } from '../controllers/auth.controller.js';
+import { register, login, logout, getMe, checkEmail } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -29,6 +29,13 @@ router.post('/register', register);
  * @access  Public
  */
 router.post('/login', login);
+
+/**
+ * @route   POST /api/auth/check-email
+ * @desc    Check if email exists (for forgot password)
+ * @access  Public
+ */
+router.post('/check-email', checkEmail);
 
 /* ==========================================================================
    PROTECTED ROUTES

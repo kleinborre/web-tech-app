@@ -76,6 +76,36 @@
             border-radius: 8px;
             margin-bottom: 1rem;
         }
+
+        /* Chart container - ensure full width */
+        #chartContainer {
+            width: 100%;
+            min-height: 250px;
+            padding: 1rem;
+        }
+
+        #chartContainer svg {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 220px;
+        }
+
+        /* Data table full width */
+        .data-table {
+            width: 100%;
+            table-layout: auto;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem 1rem;
+            white-space: nowrap;
+        }
+
+        .data-table td:nth-child(3) {
+            white-space: normal;
+            max-width: 300px;
+        }
     </style>
 </head>
 
@@ -121,7 +151,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item" data-view="admin" style="display: none;">
-                            <a href="#" class="dashboard__nav-link">
+                            <a href="users.html" class="dashboard__nav-link">
                                 <i class="bi bi-people"></i>
                                 Users
                             </a>
@@ -268,6 +298,57 @@
 
     <!-- Custom JavaScript -->
     <script src="../js/main.js"></script>
+
+    <!-- Navigation Confirmations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Convert link confirmation
+            const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
+            if (convertLink) {
+                convertLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                        UI.showConfirmDialog(
+                            'Leave Dashboard',
+                            'Are you sure you want to leave the dashboard and go to the Convert page?',
+                            () => {
+                                window.location.href = '../index.html';
+                            },
+                            null,
+                            'Yes, Leave',
+                            'Cancel',
+                            'primary'
+                        );
+                    } else {
+                        window.location.href = '../index.html';
+                    }
+                });
+            }
+
+            // Logo click confirmation (header logo)
+            const logoLink = document.querySelector('.dashboard__logo');
+            if (logoLink) {
+                logoLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                        UI.showConfirmDialog(
+                            'Leave Dashboard',
+                            'Are you sure you want to leave the dashboard and go to the home page?',
+                            () => {
+                                window.location.href = '../index.html';
+                            },
+                            null,
+                            'Yes, Leave',
+                            'Cancel',
+                            'primary'
+                        );
+                    } else {
+                        window.location.href = '../index.html';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

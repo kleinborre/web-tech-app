@@ -15,8 +15,8 @@ const AUTH_CONFIG = {
     REDIRECT_AFTER_LOGIN: '/admin/dashboard.html',
     REDIRECT_AFTER_LOGOUT: '/',
     LOGIN_PAGE: '/auth/login.html',
-    MIN_PASSWORD_LENGTH: 8,
-    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>]/,
+    MIN_PASSWORD_LENGTH: 6, // Lowered from 8
+    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>]/, // Optional special char
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     USERNAME_REGEX: /^[a-zA-Z0-9_-]+$/
 };
@@ -59,51 +59,28 @@ const Validators = {
     },
 
     /**
-     * Validate password strength.
+     * Validate password strength (simplified requirements).
      */
     password: (password) => {
-        const errors = [];
-
         if (!password || password === '') {
             return { valid: false, message: 'Password is required', strength: 0 };
         }
 
         if (password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
-            errors.push(`at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters`);
-        }
-
-        if (!AUTH_CONFIG.PASSWORD_REGEX.test(password)) {
-            errors.push('at least one special character (!@#$%^&*...)');
-        }
-
-        if (!/[A-Z]/.test(password)) {
-            errors.push('at least one uppercase letter');
-        }
-
-        if (!/[a-z]/.test(password)) {
-            errors.push('at least one lowercase letter');
-        }
-
-        if (!/[0-9]/.test(password)) {
-            errors.push('at least one number');
-        }
-
-        // Calculate strength (0-4)
-        let strength = 0;
-        if (password.length >= AUTH_CONFIG.MIN_PASSWORD_LENGTH) strength++;
-        if (AUTH_CONFIG.PASSWORD_REGEX.test(password)) strength++;
-        if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
-        if (/[0-9]/.test(password)) strength++;
-
-        if (errors.length > 0) {
             return {
                 valid: false,
-                message: `Password must contain ${errors.join(', ')}`,
-                strength
+                message: `Password must be at least ${AUTH_CONFIG.MIN_PASSWORD_LENGTH} characters`,
+                strength: 0
             };
         }
 
-        return { valid: true, message: 'Strong password!', strength: 4 };
+        // Calculate strength (0-4) but only require length
+        let strength = 1;
+        if (password.length >= 8) strength++;
+        if (AUTH_CONFIG.PASSWORD_REGEX.test(password)) strength++;
+        if (/[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password)) strength++;
+
+        return { valid: true, message: 'Password accepted', strength };
     },
 
     /**
@@ -266,29 +243,34 @@ const UI = {
     },
 
     /**
-     * Show success modal.
+     * Show success modal with countdown.
+     * @param {boolean} autoRedirect - If true, automatically redirects after countdown (default: false)
      */
-    showSuccessModal: (title, message, redirectUrl = null) => {
+    showSuccessModal: (title, message, redirectUrl = null, buttonText = 'Continue', autoRedirect = false) => {
         // Remove existing modal
         const existingModal = document.getElementById('successModal');
         if (existingModal) existingModal.remove();
 
+        // Use primary (dark turquoise) theme color instead of green
+        const bgColor = 'background: linear-gradient(135deg, #00838f, #00acc1);';
+        const iconColor = 'color: #00838f;';
+
         const modalHtml = `
-            <div class="modal fade" id="successModal" tabindex="-1">
+            <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
-                        <div class="modal-header bg-success text-white">
+                        <div class="modal-header text-white" style="${bgColor}">
                             <h5 class="modal-title">
                                 <i class="bi bi-check-circle me-2"></i>${title}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body text-center py-4">
-                            <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                            <i class="bi bi-check-circle-fill" style="font-size: 4rem; ${iconColor}"></i>
                             <p class="mt-3 mb-0">${message}</p>
+                            ${autoRedirect && redirectUrl ? '<p class="mt-2 text-muted" id="countdownText">Redirecting in <span id="countdownNumber">3</span>...</p>' : ''}
                         </div>
                         <div class="modal-footer justify-content-center">
-                            <button type="button" class="btn btn-success" id="modalContinueBtn">Continue</button>
+                            <button type="button" class="btn" id="modalContinueBtn" style="${bgColor} color: white; border: none;">${buttonText}</button>
                         </div>
                     </div>
                 </div>
@@ -300,19 +282,127 @@ const UI = {
         const modal = new bootstrap.Modal(document.getElementById('successModal'));
         modal.show();
 
-        document.getElementById('modalContinueBtn').addEventListener('click', () => {
-            modal.hide();
-            if (redirectUrl) {
+        const continueBtn = document.getElementById('modalContinueBtn');
+
+        // If auto redirect with countdown
+        if (autoRedirect && redirectUrl) {
+            let countdown = 3;
+            const countdownEl = document.getElementById('countdownNumber');
+
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdownEl) countdownEl.textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    modal.hide();
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+
+            continueBtn.addEventListener('click', () => {
+                clearInterval(countdownInterval);
+                modal.hide();
                 window.location.href = redirectUrl;
-            }
+            });
+        } else {
+            continueBtn.addEventListener('click', () => {
+                modal.hide();
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            });
+
+            // Also handle modal close
+            document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            });
+        }
+    },
+
+    /**
+     * Show confirmation dialog.
+     * @param {string} type - 'primary' (turquoise), 'secondary' (gray), 'warning' (yellow), 'danger' (red)
+     */
+    showConfirmDialog: (title, message, onConfirm, onCancel = null, confirmText = 'Yes', cancelText = 'Cancel', type = 'primary') => {
+        const existingModal = document.getElementById('confirmModal');
+        if (existingModal) existingModal.remove();
+
+        // Color schemes
+        let bgStyle, btnStyle, iconStyle;
+        switch (type) {
+            case 'primary':
+                bgStyle = 'background: linear-gradient(135deg, #00838f, #00acc1);';
+                btnStyle = 'background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none;';
+                iconStyle = 'color: #00838f;';
+                break;
+            case 'secondary':
+                bgStyle = 'background: linear-gradient(135deg, #546e7a, #78909c);';
+                btnStyle = 'background: linear-gradient(135deg, #546e7a, #78909c); color: white; border: none;';
+                iconStyle = 'color: #546e7a;';
+                break;
+            case 'danger':
+                bgStyle = 'background: linear-gradient(135deg, #c62828, #e53935);';
+                btnStyle = 'background: linear-gradient(135deg, #c62828, #e53935); color: white; border: none;';
+                iconStyle = 'color: #c62828;';
+                break;
+            case 'warning':
+            default:
+                bgStyle = 'background: linear-gradient(135deg, #f9a825, #fbc02d);';
+                btnStyle = 'background: linear-gradient(135deg, #f9a825, #fbc02d); color: white; border: none;';
+                iconStyle = 'color: #f9a825;';
+                break;
+        }
+
+        const modalHtml = `
+            <div class="modal fade" id="confirmModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="${bgStyle}">
+                            <h5 class="modal-title">
+                                <i class="bi bi-question-circle me-2"></i>${title}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center py-4">
+                            <i class="bi bi-question-circle-fill" style="font-size: 3rem; ${iconStyle}"></i>
+                            <p class="mt-3 mb-0">${message}</p>
+                        </div>
+                        <div class="modal-footer justify-content-center">
+                            <button type="button" class="btn btn-secondary" id="confirmCancelBtn">${cancelText}</button>
+                            <button type="button" class="btn" id="confirmOkBtn" style="${btnStyle}">${confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+
+        document.getElementById('confirmOkBtn').addEventListener('click', () => {
+            modal.hide();
+            if (onConfirm) onConfirm();
         });
 
-        // Also handle modal close
-        document.getElementById('successModal').addEventListener('hidden.bs.modal', () => {
-            if (redirectUrl) {
-                window.location.href = redirectUrl;
-            }
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+            modal.hide();
+            if (onCancel) onCancel();
         });
+    },
+
+    /**
+     * Show double confirmation dialog (for critical actions).
+     * First dialog uses primary (turquoise), second uses secondary (gray).
+     */
+    showDoubleConfirmDialog: (title1, message1, title2, message2, onConfirm) => {
+        UI.showConfirmDialog(title1, message1, () => {
+            UI.showConfirmDialog(title2, message2, onConfirm, null, 'Yes, I am sure', 'Cancel', 'secondary');
+        }, null, 'Yes', 'Cancel', 'primary');
     }
 };
 
@@ -459,11 +549,14 @@ const FormHandlers = {
                     // Store user info in localStorage for frontend use
                     localStorage.setItem('user', JSON.stringify(result.user));
 
-                    UI.showToast('Login successful! Redirecting...', 'success');
-
-                    setTimeout(() => {
-                        window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGIN;
-                    }, 1000);
+                    // Show success modal with countdown before redirect
+                    UI.showSuccessModal(
+                        'Login Successful!',
+                        `Welcome back, <strong>${result.user.username}</strong>!`,
+                        AUTH_CONFIG.REDIRECT_AFTER_LOGIN,
+                        'Go to Dashboard',
+                        true // Enable auto-redirect with countdown
+                    );
                 } else {
                     UI.showToast(result.error || 'Login failed', 'danger');
                     UI.hideLoading(submitBtn);
@@ -601,8 +694,10 @@ const FormHandlers = {
                 if (result.success) {
                     UI.showSuccessModal(
                         'Registration Successful!',
-                        'Your account has been created. You will be redirected to login.',
-                        AUTH_CONFIG.LOGIN_PAGE
+                        'Your account has been created successfully!',
+                        AUTH_CONFIG.LOGIN_PAGE,
+                        'Go to Login',
+                        true // Enable auto-redirect with countdown
                     );
                 } else {
                     UI.showToast(result.error || 'Registration failed', 'danger');
@@ -620,22 +715,32 @@ const FormHandlers = {
      * Initialize logout buttons.
      */
     initLogout: () => {
-        const logoutBtns = document.querySelectorAll('.logout-btn, [data-action="logout"]');
+        const logoutBtns = document.querySelectorAll('.logout-btn, [data-action="logout"], #logoutBtn');
 
         logoutBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
 
-                try {
-                    await AuthService.logout();
-                    localStorage.removeItem('user');
-                    window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    // Still redirect even if API fails
-                    localStorage.removeItem('user');
-                    window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
-                }
+                // Show confirmation dialog
+                UI.showConfirmDialog(
+                    'Sign Out',
+                    'Are you sure you want to sign out?',
+                    async () => {
+                        try {
+                            await AuthService.logout();
+                            localStorage.removeItem('user');
+                            window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                            // Still redirect even if API fails
+                            localStorage.removeItem('user');
+                            window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
+                        }
+                    },
+                    null,
+                    'Sign Out',
+                    'Cancel'
+                );
             });
         });
     }
