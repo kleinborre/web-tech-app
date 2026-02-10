@@ -34,20 +34,20 @@
         <div class="container">
             <div class="header__container">
                 <!-- Logo -->
-                <a href="index.html" class="header__logo">
+                <a href="/" class="header__logo">
                     <i class="bi bi-file-text"></i>
                     ImageToTextOnline
                 </a>
 
                 <!-- Navigation - Logged Out -->
                 <nav class="header__nav" data-auth="logged-out">
-                    <a href="auth/login.html" class="btn btn--outline">Sign In</a>
-                    <a href="auth/register.html" class="btn btn--primary">Register</a>
+                    <a href="/auth/login" class="btn btn--outline">Sign In</a>
+                    <a href="/auth/register" class="btn btn--primary">Register</a>
                 </nav>
 
                 <!-- Navigation - Logged In -->
                 <nav class="header__nav" data-auth="logged-in" style="display: none;">
-                    <a href="admin/dashboard.html" class="btn btn--outline">
+                    <a href="/admin/dashboard" class="btn btn--outline">
                         <i class="bi bi-grid me-1"></i> Dashboard
                     </a>
                     <button class="btn btn--secondary" id="headerLogoutBtn">
@@ -461,7 +461,7 @@
             }
 
             // Dashboard link confirmation
-            const dashboardLink = document.querySelector('[data-auth="logged-in"] a[href="admin/dashboard.html"]');
+            const dashboardLink = document.querySelector('[data-auth="logged-in"] a[href="/admin/dashboard"]');
             if (dashboardLink) {
                 dashboardLink.addEventListener('click', (e) => {
                     e.preventDefault();

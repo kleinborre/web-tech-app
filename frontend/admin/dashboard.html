@@ -77,17 +77,10 @@
             margin-bottom: 1rem;
         }
 
-        /* Chart container - ensure full width */
+        /* Chart container - full width and responsive */
         #chartContainer {
             width: 100%;
-            min-height: 250px;
             padding: 1rem;
-        }
-
-        #chartContainer svg {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 220px;
         }
 
         /* Data table full width */
@@ -116,7 +109,7 @@
     <div class="dashboard">
         <!-- Dashboard Header -->
         <header class="dashboard__header">
-            <a href="../index.html" class="dashboard__logo">
+            <a href="/" class="dashboard__logo">
                 <i class="bi bi-file-text"></i>
                 ImageToTextOnline
             </a>
@@ -145,13 +138,13 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="../index.html" class="dashboard__nav-link">
+                            <a href="/" class="dashboard__nav-link">
                                 <i class="bi bi-file-text"></i>
                                 Convert
                             </a>
                         </li>
                         <li class="dashboard__nav-item" data-view="admin" style="display: none;">
-                            <a href="users.html" class="dashboard__nav-link">
+                            <a href="/admin/users" class="dashboard__nav-link">
                                 <i class="bi bi-people"></i>
                                 Users
                             </a>
@@ -303,7 +296,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Convert link confirmation
-            const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
+            const convertLink = document.querySelector('a[href="/"].dashboard__nav-link');
             if (convertLink) {
                 convertLink.addEventListener('click', (e) => {
                     e.preventDefault();

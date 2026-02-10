@@ -130,6 +130,38 @@ app.get('/api/health', (req, res) => {
 });
 
 /* ==========================================================================
+   PAGE ROUTES (Clean URLs - RESTful)
+   ========================================================================== */
+
+/**
+ * Authentication Pages
+ * Serves auth-related HTML pages using clean URLs.
+ */
+app.get('/auth/login', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'auth', 'login.html'));
+});
+
+app.get('/auth/register', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'auth', 'register.html'));
+});
+
+app.get('/auth/forgot-password', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'auth', 'forgot-password.html'));
+});
+
+/**
+ * Admin Pages
+ * Serves admin panel HTML pages using clean URLs.
+ */
+app.get('/admin/dashboard', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'admin', 'dashboard.html'));
+});
+
+app.get('/admin/users', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'admin', 'users.html'));
+});
+
+/* ==========================================================================
    FRONTEND ROUTING (SPA Support)
    ========================================================================== */
 

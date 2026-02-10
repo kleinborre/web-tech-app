@@ -15,7 +15,7 @@ const DASHBOARD_CONFIG = {
     ADMIN_API: '/api/admin',
     AUTH_API: '/api/auth',
     ITEMS_PER_PAGE: 20,
-    LOGIN_PAGE: '/auth/login.html'
+    LOGIN_PAGE: '/auth/login'
 };
 
 /* ==========================================================================
@@ -371,55 +371,26 @@ const AdminManager = {
             data.push(dayData ? dayData.count : 0);
         }
 
-        // Line chart with SVG
+        // HTML/CSS bar chart — full width, readable text
         const maxValue = Math.max(...data, 1);
         const chartContainer = canvas.parentElement;
-        const width = 100;
-        const height = 60;
-        const padding = 5;
-
-        // Calculate points for the line
-        const points = data.map((value, i) => {
-            const x = padding + (i * (width - 2 * padding) / 6);
-            const y = height - padding - (value / maxValue) * (height - 2 * padding);
-            return { x, y, value };
-        });
-
-        // Create SVG path
-        const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-
-        // Create area path (for gradient fill)
-        const areaPath = linePath + ` L ${points[6].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
 
         chartContainer.innerHTML = `
-            <div style="position: relative;">
-                <svg viewBox="0 0 ${width} ${height + 25}" style="width: 100%; height: 220px;">
-                    <defs>
-                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#00838f;stop-opacity:0.3" />
-                            <stop offset="100%" style="stop-color:#00838f;stop-opacity:0.05" />
-                        </linearGradient>
-                    </defs>
-                    
-                    <!-- Grid lines -->
-                    ${[0, 1, 2, 3, 4].map(i => {
-            const y = padding + (i * (height - 2 * padding) / 4);
-            return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="#e0e0e0" stroke-width="0.3" stroke-dasharray="1,1"/>`;
+            <div style="display: flex; align-items: flex-end; gap: 8px; width: 100%; height: 220px; padding: 0 4px; border-bottom: 2px solid #e0e0e0;">
+                ${data.map((value, i) => {
+            const heightPercent = Math.max((value / maxValue) * 100, 3);
+            return `
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
+                            <span style="font-size: 0.85rem; font-weight: 600; color: #00838f; margin-bottom: 4px;">${value}</span>
+                            <div style="width: 100%; max-width: 60px; height: ${heightPercent}%; background: linear-gradient(to top, #00838f, #26c6da); border-radius: 6px 6px 0 0; min-height: 6px; transition: height 0.4s ease;"></div>
+                        </div>
+                    `;
         }).join('')}
-                    
-                    <!-- Area fill -->
-                    <path d="${areaPath}" fill="url(#lineGradient)" />
-                    
-                    <!-- Line -->
-                    <path d="${linePath}" fill="none" stroke="#00838f" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                    
-                    <!-- Dots and values -->
-                    ${points.map((p, i) => `
-                        <circle cx="${p.x}" cy="${p.y}" r="2" fill="#00838f" stroke="white" stroke-width="0.5"/>
-                        <text x="${p.x}" y="${p.y - 3}" text-anchor="middle" font-size="3" fill="#00838f" font-weight="600">${p.value}</text>
-                        <text x="${p.x}" y="${height + 8}" text-anchor="middle" font-size="3.5" fill="#666">${labels[i]}</text>
-                    `).join('')}
-                </svg>
+            </div>
+            <div style="display: flex; gap: 8px; width: 100%; padding: 8px 4px 0;">
+                ${labels.map(label => `
+                    <div style="flex: 1; text-align: center; font-size: 0.85rem; color: #555; font-weight: 500;">${label}</div>
+                `).join('')}
             </div>
         `;
     },

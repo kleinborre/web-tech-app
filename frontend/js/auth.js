@@ -12,9 +12,9 @@
 
 const AUTH_CONFIG = {
     API_BASE: '/api/auth',
-    REDIRECT_AFTER_LOGIN: '/admin/dashboard.html',
+    REDIRECT_AFTER_LOGIN: '/admin/dashboard',
     REDIRECT_AFTER_LOGOUT: '/',
-    LOGIN_PAGE: '/auth/login.html',
+    LOGIN_PAGE: '/auth/login',
     MIN_PASSWORD_LENGTH: 6, // Lowered from 8
     PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>]/, // Optional special char
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
