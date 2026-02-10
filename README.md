@@ -4,8 +4,10 @@
 
 | | |
 |---|---|
-| **Course** | Web Application Technology |
+| **Course** | MO-IT149 - Web Technology Application |
+| **Term / Section** | Term 2 — Section A3101 |
 | **Institution** | Mapua Malayan Digital College |
+| **Mentor** | Sir Mario Pison Jr. |
 | **Developer** | Oliver Jann Klein Borre |
 | **Version** | 1.0.0 |
 
@@ -479,5 +481,6 @@ The following accounts are created by the database seeder (`seeder.js`):
 
 <div align="center">
   <p><strong>ImageToTextOnline</strong> — Built with ☕ by Oliver Jann Klein Borre</p>
-  <p><em>Web Application Technology — Mapua Malayan Digital College</em></p>
+  <p><em>MO-IT149 - Web Technology Application — Mapua Malayan Digital College</em></p>
+  <p>© 2026 Oliver Jann Klein Borre. All rights reserved.</p>
 </div>
