@@ -1407,3 +1407,257 @@ img {
     white-space: nowrap;
     border: 0;
 }
+
+/* ==========================================================================
+   MOBILE RESPONSIVE STYLES
+   ========================================================================== */
+
+/**
+ * Small screens (phones, max 767px)
+ * Fixes header nav overflow, hero text sizing, auth card padding,
+ * dashboard layout, data table horizontal scroll, and flex wrap issues.
+ */
+@media (max-width: 767.98px) {
+
+    /* ----- Header ----- */
+    .header__container {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .header__nav {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+        justify-content: center;
+    }
+
+    .header__link {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .header__logo {
+        font-size: var(--font-size-base);
+    }
+
+    /* ----- Hero ----- */
+    .hero {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .hero__title {
+        font-size: var(--font-size-2xl);
+        word-break: break-word;
+    }
+
+    .hero__subtitle {
+        font-size: var(--font-size-base);
+        padding: 0 var(--spacing-sm);
+    }
+
+    /* ----- OCR Section ----- */
+    .ocr {
+        padding: var(--spacing-lg) 0 var(--spacing-xl);
+    }
+
+    .drop-zone {
+        padding: var(--spacing-lg);
+    }
+
+    .drop-zone__icon {
+        font-size: 2rem;
+    }
+
+    .drop-zone__title {
+        font-size: var(--font-size-base);
+    }
+
+    .drop-zone__subtitle {
+        font-size: var(--font-size-xs);
+    }
+
+    /* ----- Results ----- */
+    .results__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .results__actions {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .results__actions .btn {
+        flex: 1;
+        min-width: 0;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .results__item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .results__item-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* ----- About / Features ----- */
+    .about {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .section__title {
+        font-size: var(--font-size-xl);
+    }
+
+    .section__subtitle {
+        font-size: var(--font-size-sm);
+    }
+
+    /* ----- How It Works ----- */
+    .how-it-works {
+        padding: var(--spacing-xl) 0;
+    }
+
+    /* ----- FAQ ----- */
+    .faq {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .faq__question {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+
+    .faq__answer {
+        padding: 0 var(--spacing-md) var(--spacing-sm);
+        font-size: var(--font-size-sm);
+    }
+
+    /* ----- Auth Pages ----- */
+    .auth {
+        padding: var(--spacing-md);
+    }
+
+    .auth__card {
+        padding: var(--spacing-lg);
+    }
+
+    .auth__title {
+        font-size: var(--font-size-xl);
+    }
+
+    /* ----- Dashboard Header ----- */
+    .dashboard__header {
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .dashboard__user {
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+
+    .dashboard__user .btn {
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    /* ----- Dashboard Content ----- */
+    .dashboard__content {
+        padding: var(--spacing-md);
+    }
+
+    .dashboard__card {
+        padding: var(--spacing-md);
+    }
+
+    .dashboard__card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .dashboard__card-title {
+        font-size: var(--font-size-base);
+    }
+
+    /* ----- Data Table (horizontal scroll) ----- */
+    .dashboard__card .table-responsive,
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 600px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+        white-space: nowrap;
+    }
+
+    .data-table__actions {
+        flex-wrap: nowrap;
+    }
+
+    /* ----- Chart ----- */
+    .chart-placeholder {
+        height: 200px;
+    }
+
+    /* ----- Footer ----- */
+    .footer {
+        padding: var(--spacing-lg) 0 var(--spacing-md);
+    }
+
+    .footer__logo {
+        font-size: var(--font-size-base);
+    }
+
+    /* ----- Buttons (general) ----- */
+    .btn--lg {
+        padding: 0.625rem 1.25rem;
+        font-size: var(--font-size-sm);
+    }
+
+    /* ----- Container ----- */
+    .container-custom {
+        padding: 0 var(--spacing-sm);
+    }
+}
+
+/**
+ * Medium screens (tablets, 768px to 991px)
+ * Adjust dashboard and content spacing for tablets.
+ */
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+    .dashboard__content {
+        padding: var(--spacing-md);
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+}
+
+/**
+ * Prevent horizontal overflow globally.
+ * Ensures no element causes a horizontal scrollbar on the page.
+ */
+html,
+body {
+    overflow-x: hidden;
+}
