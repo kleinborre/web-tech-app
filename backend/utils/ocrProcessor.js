@@ -9,8 +9,11 @@
  */
 
 import { createWorker, createScheduler } from 'tesseract.js';
-import { pdf } from 'pdf-to-img';
 import convert from 'heic-convert';
+
+// NOTE: pdf-to-img is loaded dynamically (lazy import) inside the PDF
+// processing block because pdfjs-dist requires native canvas bindings
+// (@napi-rs/canvas) that are unavailable in serverless environments (Vercel).
 
 /* ==========================================================================
    WORKER POOL CONFIGURATION
@@ -134,7 +137,8 @@ export const extractTextFromImage = async (imageBuffer, filename) => {
             console.log(`[OCR] Detected PDF file, converting pages to images...`);
 
             try {
-                // Convert PDF pages to images
+                // Dynamically import pdf-to-img (avoids crash in serverless environments)
+                const { pdf } = await import('pdf-to-img');
                 const pdfDocument = await pdf(imageBuffer, { scale: 2.0 });
 
                 for await (const image of pdfDocument) {
