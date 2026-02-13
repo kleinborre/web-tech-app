@@ -89,7 +89,7 @@
     <div class="dashboard">
         <!-- Dashboard Header -->
         <header class="dashboard__header">
-            <a href="/" class="dashboard__logo">
+            <a href="../index.html" class="dashboard__logo">
                 <i class="bi bi-file-text"></i>
                 ImageToTextOnline
             </a>
@@ -112,19 +112,19 @@
                 <nav>
                     <ul class="dashboard__nav">
                         <li class="dashboard__nav-item">
-                            <a href="/admin/dashboard" class="dashboard__nav-link">
+                            <a href="dashboard.html" class="dashboard__nav-link">
                                 <i class="bi bi-grid"></i>
                                 Dashboard
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="/" class="dashboard__nav-link">
+                            <a href="../index.html" class="dashboard__nav-link">
                                 <i class="bi bi-file-text"></i>
                                 Convert
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="/admin/users" class="dashboard__nav-link dashboard__nav-link--active">
+                            <a href="users.html" class="dashboard__nav-link dashboard__nav-link--active">
                                 <i class="bi bi-people"></i>
                                 Users
                             </a>
@@ -539,7 +539,7 @@
                 });
 
                 // Convert link confirmation
-                const convertLink = document.querySelector('a[href="/"].dashboard__nav-link');
+                const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
                 if (convertLink) {
                     convertLink.addEventListener('click', (e) => {
                         e.preventDefault();

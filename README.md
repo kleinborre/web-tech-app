@@ -1,6 +1,11 @@
 # 🔍 ImageToTextOnline — OCR Web Application
 
-🌐 **Live Demo:** [https://kleinborre.github.io/web-tech-app/](https://kleinborre.github.io/web-tech-app/)
+🌐 **Live Deployments:**
+
+| Platform | URL | Scope |
+|----------|-----|-------|
+| **GitHub Pages** | [https://kleinborre.github.io/web-tech-app/](https://kleinborre.github.io/web-tech-app/) | Frontend implementation only — limited to Milestone 1 scope |
+| **Vercel** | [https://web-tech-app.vercel.app/](https://web-tech-app.vercel.app/) | Outside MS1 & Course scope — demonstrates full web app capability and functionality |
 
 > A full-stack web application that converts images to editable text using Optical Character Recognition (OCR) technology, built with Node.js, Express.js, MongoDB, and Tesseract.js.
 
