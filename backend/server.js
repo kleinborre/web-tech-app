@@ -49,9 +49,12 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
  * Allows cross-origin requests for API access.
  */
 app.use(cors({
-    origin: NODE_ENV === 'production' ? 'https://yourdomain.com' : '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: NODE_ENV === 'production'
+        ? ['https://web-tech-app.vercel.app', 'https://kleinborre.github.io']
+        : '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 /**
@@ -229,15 +232,18 @@ app.use((err, req, res, next) => {
    SERVER INITIALIZATION
    ========================================================================== */
 
-app.listen(PORT, () => {
-    console.log('='.repeat(60));
-    console.log('  ImageToTextOnline Server');
-    console.log('='.repeat(60));
-    console.log(`  Environment: ${NODE_ENV}`);
-    console.log(`  Server:      http://localhost:${PORT}`);
-    console.log(`  API:         http://localhost:${PORT}/api`);
-    console.log(`  Health:      http://localhost:${PORT}/api/health`);
-    console.log('='.repeat(60));
-});
+// Only start listening when running locally (not on Vercel serverless)
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log('='.repeat(60));
+        console.log('  ImageToTextOnline Server');
+        console.log('='.repeat(60));
+        console.log(`  Environment: ${NODE_ENV}`);
+        console.log(`  Server:      http://localhost:${PORT}`);
+        console.log(`  API:         http://localhost:${PORT}/api`);
+        console.log(`  Health:      http://localhost:${PORT}/api/health`);
+        console.log('='.repeat(60));
+    });
+}
 
 export default app;
