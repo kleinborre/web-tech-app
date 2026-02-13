@@ -1414,15 +1414,9 @@ img {
  */
 .stats {
     display: grid;
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
-}
-
-@media (min-width: 576px) {
-    .stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
 }
 
 @media (min-width: 992px) {
@@ -1685,6 +1679,118 @@ img {
     font-size: 2.5rem;
     display: block;
     margin-bottom: var(--spacing-sm);
+}
+
+/**
+ * Card Pagination
+ */
+.history-card-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding-top: var(--spacing-md);
+}
+
+.history-card-pagination .btn {
+    min-width: 32px;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/**
+ * User Cards (Mobile admin user management)
+ */
+.user-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.user-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-card__name {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    color: var(--color-gray-800);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-card__email {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-card__meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-sm);
+}
+
+.user-card__actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.user-card__actions .btn {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+/**
+ * Admin Users Table ↔ Cards Toggle
+ */
+.admin-users-table-wrapper {
+    display: block;
+}
+
+.admin-users-cards-wrapper {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .admin-users-table-wrapper {
+        display: none;
+    }
+
+    .admin-users-cards-wrapper {
+        display: block;
+    }
+}
+
+/**
+ * Chart responsive container
+ */
+#chartContainer {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ==========================================================================

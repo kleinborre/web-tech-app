@@ -29,7 +29,9 @@ const DashboardState = {
     historyPage: 1,
     usersPage: 1,
     allHistoryItems: [],
-    historySearchQuery: ''
+    historySearchQuery: '',
+    cardPage: 1,
+    CARDS_PER_PAGE: 3
 };
 
 /* ==========================================================================
@@ -217,47 +219,74 @@ const HistoryManager = {
     },
 
     /**
-     * Mobile/Tablet: card layout
+     * Mobile/Tablet: card layout with client-side pagination (3 per page)
      */
     renderCards(items) {
         const container = document.getElementById('historyCardsContainer');
         if (!container) return;
 
-        if (items.length === 0) {
+        if (!items || items.length === 0) {
             container.innerHTML = `
                 <div class="history-empty">
                     <i class="bi bi-inbox"></i>
                     <p>${DashboardState.historySearchQuery ? 'No results found' : 'No conversion history yet'}</p>
                 </div>
             `;
-        } else {
-            container.innerHTML = items.map(item => {
-                const encodedText = encodeURIComponent(item.extractedText || '');
-                const filename = item.originalFileName || 'Untitled';
-                return `
-                    <div class="history-card" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
-                        <div class="history-card__header">
-                            <span class="history-card__filename">
-                                <i class="bi bi-file-earmark-text me-1"></i>${filename}
-                            </span>
-                            <span class="history-card__date">${DashboardUI.formatDate(item.conversionDate)}</span>
-                        </div>
-                        <div class="history-card__snippet">${DashboardUI.truncateText(item.extractedText, 120) || 'No text extracted'}</div>
-                        <div class="history-card__actions" onclick="event.stopPropagation();">
-                            <button class="btn btn--secondary" title="Copy" onclick="HistoryManager.copy('${item._id}', '${encodedText}')">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
-                            <button class="btn btn--secondary" title="Download" onclick="HistoryManager.download('${filename}', '${encodedText}')">
-                                <i class="bi bi-download"></i>
-                            </button>
-                            <button class="btn btn--secondary" style="color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return;
         }
+
+        // Client-side pagination
+        const perPage = DashboardState.CARDS_PER_PAGE;
+        const totalPages = Math.ceil(items.length / perPage);
+        if (DashboardState.cardPage > totalPages) DashboardState.cardPage = totalPages;
+        if (DashboardState.cardPage < 1) DashboardState.cardPage = 1;
+        const start = (DashboardState.cardPage - 1) * perPage;
+        const pageItems = items.slice(start, start + perPage);
+
+        let html = pageItems.map(item => {
+            const encodedText = encodeURIComponent(item.extractedText || '');
+            const filename = item.originalFileName || 'Untitled';
+            return `
+                <div class="history-card" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
+                    <div class="history-card__header">
+                        <span class="history-card__filename">
+                            <i class="bi bi-file-earmark-text me-1"></i>${filename}
+                        </span>
+                        <span class="history-card__date">${DashboardUI.formatDate(item.conversionDate)}</span>
+                    </div>
+                    <div class="history-card__snippet">${DashboardUI.truncateText(item.extractedText, 120) || 'No text extracted'}</div>
+                    <div class="history-card__actions" onclick="event.stopPropagation();">
+                        <button class="btn btn--secondary btn--sm" title="Copy" onclick="HistoryManager.copy('${item._id}', '${encodedText}')">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                        <button class="btn btn--secondary btn--sm" title="Download" onclick="HistoryManager.download('${filename}', '${encodedText}')">
+                            <i class="bi bi-download"></i>
+                        </button>
+                        <button class="btn btn--secondary btn--sm" style="color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Render card pagination if > 1 page
+        if (totalPages > 1) {
+            html += `<div class="history-card-pagination">`;
+            html += `<button class="btn btn--secondary btn--sm" ${DashboardState.cardPage === 1 ? 'disabled' : ''} onclick="HistoryManager.goCardPage(${DashboardState.cardPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="btn btn--sm ${i === DashboardState.cardPage ? 'btn--primary' : 'btn--secondary'}" onclick="HistoryManager.goCardPage(${i})">${i}</button>`;
+            }
+            html += `<button class="btn btn--secondary btn--sm" ${DashboardState.cardPage === totalPages ? 'disabled' : ''} onclick="HistoryManager.goCardPage(${DashboardState.cardPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
+            html += `</div>`;
+        }
+
+        container.innerHTML = html;
+    },
+
+    goCardPage(page) {
+        DashboardState.cardPage = page;
+        HistoryManager.renderFiltered();
     },
 
     renderPagination(pagination) {
@@ -307,6 +336,7 @@ const HistoryManager = {
         if (searchInput) {
             searchInput.addEventListener('input', () => {
                 DashboardState.historySearchQuery = searchInput.value;
+                DashboardState.cardPage = 1;
                 HistoryManager.renderFiltered();
             });
         }
@@ -315,6 +345,7 @@ const HistoryManager = {
             refreshBtn.addEventListener('click', () => {
                 if (searchInput) searchInput.value = '';
                 DashboardState.historySearchQuery = '';
+                DashboardState.cardPage = 1;
                 HistoryManager.load(1);
             });
         }
@@ -383,28 +414,28 @@ const HistoryManager = {
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
-                            <h5 class="modal-title">
+                            <h5 class="modal-title" style="font-size: 1rem;">
                                 <i class="bi bi-file-text me-2"></i>${filename}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9;"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <small class="text-muted"><i class="bi bi-calendar me-1"></i>${DashboardUI.formatDate(date)}</small>
                             </div>
-                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.6;">
+                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 0.85rem; line-height: 1.6;">
 ${text || 'No text extracted'}
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 1.1rem;" onclick="HistoryManager.copy('${id}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
-                                <i class="bi bi-clipboard me-2"></i>Copy
+                        <div class="modal-footer" style="justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;">
+                            <button type="button" class="btn btn-sm" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.copy('${id}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                                <i class="bi bi-clipboard me-1"></i>Copy
                             </button>
-                            <button type="button" class="btn btn-secondary" style="font-size: 1.1rem;" onclick="HistoryManager.download('${filename}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
-                                <i class="bi bi-download me-2"></i>Download
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.download('${filename}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                                <i class="bi bi-download me-1"></i>Download
                             </button>
-                            <button type="button" class="btn btn-danger" style="font-size: 1.1rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide(); HistoryManager.delete('${id}');">
-                                <i class="bi bi-trash me-2"></i>Delete
+                            <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide(); HistoryManager.delete('${id}');">
+                                <i class="bi bi-trash me-1"></i>Delete
                             </button>
                         </div>
                     </div>
@@ -462,25 +493,25 @@ const AdminManager = {
             data.push(dayData ? dayData.count : 0);
         }
 
-        // HTML/CSS bar chart — full width, readable text
+        // HTML/CSS bar chart — responsive, full width
         const maxValue = Math.max(...data, 1);
         const chartContainer = canvas.parentElement;
 
         chartContainer.innerHTML = `
-            <div style="display: flex; align-items: flex-end; gap: 8px; width: 100%; height: 220px; padding: 0 4px; border-bottom: 2px solid #e0e0e0;">
+            <div style="display: flex; align-items: flex-end; gap: 2px; width: 100%; height: 200px; padding: 0 2px; border-bottom: 2px solid #e0e0e0; min-width: 0;">
                 ${data.map((value, i) => {
             const heightPercent = Math.max((value / maxValue) * 100, 3);
             return `
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;">
-                            <span style="font-size: 0.85rem; font-weight: 600; color: #00838f; margin-bottom: 4px;">${value}</span>
-                            <div style="width: 100%; max-width: 60px; height: ${heightPercent}%; background: linear-gradient(to top, #00838f, #26c6da); border-radius: 6px 6px 0 0; min-height: 6px; transition: height 0.4s ease;"></div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; min-width: 0;">
+                            <span style="font-size: clamp(0.65rem, 2vw, 0.85rem); font-weight: 600; color: #00838f; margin-bottom: 2px;">${value}</span>
+                            <div style="width: 100%; max-width: 50px; height: ${heightPercent}%; background: linear-gradient(to top, #00838f, #26c6da); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.4s ease;"></div>
                         </div>
                     `;
         }).join('')}
             </div>
-            <div style="display: flex; gap: 8px; width: 100%; padding: 8px 4px 0;">
+            <div style="display: flex; gap: 2px; width: 100%; padding: 6px 2px 0;">
                 ${labels.map(label => `
-                    <div style="flex: 1; text-align: center; font-size: 0.85rem; color: #555; font-weight: 500;">${label}</div>
+                    <div style="flex: 1; text-align: center; font-size: clamp(0.6rem, 2vw, 0.85rem); color: #555; font-weight: 500; min-width: 0; overflow: hidden;">${label}</div>
                 `).join('')}
             </div>
         `;
@@ -499,45 +530,87 @@ const AdminManager = {
     },
 
     renderUsers(users, pagination) {
+        // Limit to max 3 users for dashboard preview
+        const previewUsers = users.slice(0, 3);
+
+        // === Table rendering (desktop) ===
         const tbody = document.getElementById('usersTableBody');
-        if (!tbody) return;
+        if (tbody) {
+            tbody.innerHTML = previewUsers.map(user => {
+                const isSelf = user._id === DashboardState.user?._id;
+                const isSuperadmin = user.role === 'superadmin';
+                const canModify = !isSelf && !isSuperadmin;
 
-        tbody.innerHTML = users.map(user => {
-            const isSelf = user._id === DashboardState.user?._id;
-            const isSuperadmin = user.role === 'superadmin';
-            const canModify = !isSelf && !isSuperadmin;
+                return `
+                    <tr data-id="${user._id}" class="${!user.isActive ? 'table-secondary' : ''}">
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="dashboard__avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">${DashboardUI.getInitials(user.username)}</div>
+                                <span>${user.username}${isSelf ? ' (You)' : ''}</span>
+                            </div>
+                        </td>
+                        <td>${user.email || '-'}</td>
+                        <td><span class="badge ${DashboardUI.getRoleBadgeClass(user.role)}">${user.role}</span></td>
+                        <td>${DashboardUI.formatDate(user.createdAt)}</td>
+                        <td>
+                            <span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span>
+                        </td>
+                        <td>
+                            <div class="data-table__actions">
+                                ${canModify ? `
+                                    <button class="btn btn--secondary btn--sm" title="${user.isActive ? 'Deactivate' : 'Activate'}" onclick="AdminManager.toggleStatus('${user._id}')">
+                                        <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'}"></i>
+                                    </button>
+                                    ${DashboardState.user?.role === 'superadmin' ? `
+                                        <button class="btn btn--secondary btn--sm" title="${user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}" onclick="AdminManager.toggleRole('${user._id}', '${user.role}')">
+                                            <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'}"></i>
+                                        </button>
+                                    ` : ''}
+                                ` : '<span class="text-muted">-</span>'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
 
-            return `
-                <tr data-id="${user._id}" class="${!user.isActive ? 'table-secondary' : ''}">
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <div class="dashboard__avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">${DashboardUI.getInitials(user.username)}</div>
-                            <span>${user.username}${isSelf ? ' (You)' : ''}</span>
+        // === Card rendering (mobile) ===
+        const cardsContainer = document.getElementById('adminUsersCardsContainer');
+        if (cardsContainer) {
+            cardsContainer.innerHTML = previewUsers.map(user => {
+                const isSelf = user._id === DashboardState.user?._id;
+                const isSuperadmin = user.role === 'superadmin';
+                const canModify = !isSelf && !isSuperadmin;
+
+                return `
+                    <div class="user-card">
+                        <div class="user-card__header">
+                            <div class="dashboard__avatar" style="width: 36px; height: 36px; font-size: 0.875rem;">${DashboardUI.getInitials(user.username)}</div>
+                            <div class="user-card__info">
+                                <div class="user-card__name">${user.username}${isSelf ? ' (You)' : ''}</div>
+                                <div class="user-card__email">${user.email || '-'}</div>
+                            </div>
                         </div>
-                    </td>
-                    <td>${user.email || '-'}</td>
-                    <td><span class="badge ${DashboardUI.getRoleBadgeClass(user.role)}">${user.role}</span></td>
-                    <td>${DashboardUI.formatDate(user.createdAt)}</td>
-                    <td>
-                        <span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span>
-                    </td>
-                    <td>
-                        <div class="data-table__actions">
-                            ${canModify ? `
+                        <div class="user-card__meta">
+                            <span class="badge ${DashboardUI.getRoleBadgeClass(user.role)}">${user.role}</span>
+                            <span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">${user.isActive ? 'Active' : 'Inactive'}</span>
+                        </div>
+                        ${canModify ? `
+                            <div class="user-card__actions" onclick="event.stopPropagation();">
                                 <button class="btn btn--secondary btn--sm" title="${user.isActive ? 'Deactivate' : 'Activate'}" onclick="AdminManager.toggleStatus('${user._id}')">
                                     <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'}"></i>
                                 </button>
                                 ${DashboardState.user?.role === 'superadmin' ? `
-                                    <button class="btn btn--secondary btn--sm" title="${user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}" onclick="AdminManager.toggleRole('${user._id}', '${user.role}')">
+                                    <button class="btn btn--secondary btn--sm" title="${user.role === 'admin' ? 'Demote' : 'Promote'}" onclick="AdminManager.toggleRole('${user._id}', '${user.role}')">
                                         <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'}"></i>
                                     </button>
                                 ` : ''}
-                            ` : '<span class="text-muted">-</span>'}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }).join('');
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
     },
 
     async toggleStatus(userId) {

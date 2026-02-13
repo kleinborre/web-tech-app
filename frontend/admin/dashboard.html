@@ -255,27 +255,32 @@
                         <div class="dashboard__card-header">
                             <h2 class="dashboard__card-title">User Management</h2>
                         </div>
-                        <div style="overflow-x: auto;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>User</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Joined</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="usersTableBody">
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4">
-                                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                                            Loading users...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="admin-users-table-wrapper">
+                            <div style="overflow-x: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Joined</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                Loading users...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="admin-users-cards-wrapper">
+                            <div id="adminUsersCardsContainer" class="history-cards"></div>
                         </div>
                     </div>
                 </div>
