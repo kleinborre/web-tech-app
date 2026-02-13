@@ -19,8 +19,8 @@ import convert from 'heic-convert';
    WORKER POOL CONFIGURATION
    ========================================================================== */
 
-// Number of concurrent workers (adjust based on server CPU cores)
-const WORKER_COUNT = 2;
+// Use fewer workers in serverless to reduce cold start time and memory
+const WORKER_COUNT = process.env.VERCEL ? 1 : 2;
 
 // Scheduler for managing worker pool
 let scheduler = null;
@@ -30,6 +30,8 @@ let initPromise = null;
 /**
  * Initialize the Tesseract worker pool.
  * Workers are pre-loaded with the English language model.
+ * NOTE: In serverless (Vercel), workers initialize on first OCR request
+ * instead of module load to avoid cold start timeouts.
  */
 const initializeWorkers = async () => {
     if (isInitialized) return;
@@ -74,10 +76,12 @@ const initializeWorkers = async () => {
     return initPromise;
 };
 
-// Initialize workers on module load
-initializeWorkers().catch(err => {
-    console.error('[OCR] Failed to initialize workers:', err.message);
-});
+// Only auto-initialize workers in non-serverless environments (local dev)
+if (!process.env.VERCEL) {
+    initializeWorkers().catch(err => {
+        console.error('[OCR] Failed to initialize workers:', err.message);
+    });
+}
 
 /* ==========================================================================
    OCR PROCESSOR
