@@ -183,6 +183,8 @@ The following accounts are created by the database seeder (`seeder.js`):
 web-tech-app/
 ├── .gitignore                          # Git ignore configuration
 ├── README.md                           # Project documentation (this file)
+├── index.html                          # GitHub Pages redirect entry point
+├── vercel.json                         # Vercel deployment configuration
 │
 ├── backend/                            # Server-side application
 │   ├── .env                            # Environment variables (not committed)
@@ -225,7 +227,8 @@ web-tech-app/
     │
     ├── admin/                          # Admin panel pages
     │   ├── dashboard.html              # Admin dashboard with stats and charts
-    │   └── users.html                  # User management and role administration
+    │   ├── users.html                  # User management and role administration
+    │   └── settings.html               # Account settings (profile, password, preferences)
     │
     ├── auth/                           # Authentication pages
     │   ├── login.html                  # User login form
@@ -238,7 +241,8 @@ web-tech-app/
     ├── js/                             # JavaScript modules
     │   ├── main.js                     # Core application logic (OCR, UI, utilities)
     │   ├── auth.js                     # Authentication logic (login, register, session)
-    │   └── dashboard.js                # Admin dashboard logic (stats, charts, users)
+    │   ├── dashboard.js                # Admin dashboard logic (stats, charts, users)
+    │   └── settings.js                 # Settings page logic (profile, password updates)
     │
     └── assets/                         # Static assets (images, icons, media)
 ```
@@ -490,7 +494,7 @@ After starting the server, open a web browser and navigate to any of the followi
 | Phase 3 | OCR engine integration with Tesseract.js, multi-format image support (HEIC, PDF) |
 | Phase 4 | Conversion history API, admin dashboard statistics, and user management endpoints |
 | Phase 5 | Frontend implementation — responsive UI, admin panel, user management interface |
-| Phase 6 | Project documentation (README), RESTful clean URL routing, API integration, GitHub Pages deployment, PDF engine optimization, and performance tuning |
+| Phase 6 | Project documentation (README), RESTful clean URL routing, API integration, GitHub Pages deployment, PDF engine optimization, performance tuning, UI/UX refinements (responsive card views, pagination controls, modal detail dialogs, mobile navigation with confirmation prompts, hamburger menu icons), tablet and mobile responsiveness (iPad Pro, Nest Hub), admin dashboard enhancements (stats grid, chart responsiveness, user management pagination), and account settings page |
 
 ---
 

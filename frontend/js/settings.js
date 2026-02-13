@@ -780,7 +780,7 @@ function initSidebarNav() {
             if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
                 UI.showConfirmDialog(
                     'Leave Settings',
-                    'Go to Main Page (OCR Conversion)?',
+                    'Go to home page?',
                     () => { window.location.href = '../index.html'; },
                     null, 'Confirm', 'Cancel', 'primary'
                 );

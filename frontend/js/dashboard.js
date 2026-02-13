@@ -416,11 +416,11 @@ const HistoryManager = {
             <div class="modal fade" id="historyDetailModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
-                            <h5 class="modal-title" style="font-size: 1rem;">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1); align-items: flex-start;">
+                            <h5 class="modal-title" style="font-size: 1rem; word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: calc(100% - 40px);">
                                 <i class="bi bi-file-text me-2"></i>${filename}
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9;"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9; flex-shrink: 0;"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">

@@ -222,11 +222,16 @@
     <div class="modal fade" id="userDetailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">User Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #00838f, #00acc1); align-items: flex-start;">
+                    <h5 class="modal-title"
+                        style="font-size: 1rem; word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: calc(100% - 40px);">
+                        <i class="bi bi-person-circle me-2"></i>User Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        style="filter: invert(1); opacity: 0.9; flex-shrink: 0;"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
                     <div class="user-detail" id="userDetailContent">
                         <!-- Populated dynamically -->
                     </div>
@@ -533,13 +538,13 @@
                             <span class="user-detail__value">${user.conversionCount || 0}</span>
                         </div>
                         ${canModify ? `
-                            <div class="user-detail__actions">
-                                <button class="btn ${user.isActive ? 'btn--secondary' : 'btn--primary'}" onclick="toggleStatus('${user._id}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
-                                    <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'}"></i> ${user.isActive ? 'Deactivate Account' : 'Activate Account'}
+                            <div class="user-detail__actions" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid var(--color-gray-100);">
+                                <button class="btn btn-sm ${user.isActive ? 'btn--secondary' : 'btn--primary'}" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="toggleStatus('${user._id}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
+                                    <i class="bi bi-${user.isActive ? 'person-x' : 'person-check'} me-1"></i>${user.isActive ? 'Deactivate' : 'Activate'}
                                 </button>
                                 ${UsersPageState.currentUser?.role === 'superadmin' ? `
-                                    <button class="btn btn--outline" onclick="toggleRole('${user._id}', '${user.role}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
-                                        <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'}"></i> ${user.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                                    <button class="btn btn-sm btn--outline" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="toggleRole('${user._id}', '${user.role}'); bootstrap.Modal.getInstance(document.getElementById('userDetailModal')).hide();">
+                                        <i class="bi bi-${user.role === 'admin' ? 'arrow-down' : 'arrow-up'} me-1"></i>${user.role === 'admin' ? 'Demote' : 'Promote'}
                                     </button>
                                 ` : ''}
                             </div>
@@ -704,7 +709,7 @@
                         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
                             UI.showConfirmDialog(
                                 'Leave Users Page',
-                                'Go to Main Page (OCR Conversion)?',
+                                'Go to home page?',
                                 () => {
                                     window.location.href = '../index.html';
                                 },
