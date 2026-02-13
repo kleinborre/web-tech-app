@@ -1,13 +1,13 @@
 /**
  * ImageToTextOnline - Authentication Routes
  * 
- * Routes for user authentication (register, login, logout).
+ * Routes for user authentication (register, login, logout, account settings).
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import express from 'express';
-import { register, login, logout, getMe, checkEmail } from '../controllers/auth.controller.js';
+import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -54,5 +54,33 @@ router.post('/logout', protect, logout);
  * @access  Private
  */
 router.get('/me', protect, getMe);
+
+/**
+ * @route   PATCH /api/auth/update-username
+ * @desc    Update username
+ * @access  Private
+ */
+router.patch('/update-username', protect, updateUsername);
+
+/**
+ * @route   PATCH /api/auth/update-email
+ * @desc    Update email
+ * @access  Private
+ */
+router.patch('/update-email', protect, updateEmail);
+
+/**
+ * @route   PATCH /api/auth/update-password
+ * @desc    Update password
+ * @access  Private
+ */
+router.patch('/update-password', protect, updatePassword);
+
+/**
+ * @route   POST /api/auth/verify-password
+ * @desc    Verify current password (for real-time validation)
+ * @access  Private
+ */
+router.post('/verify-password', protect, verifyPassword);
 
 export default router;

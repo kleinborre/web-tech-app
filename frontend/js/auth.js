@@ -399,10 +399,10 @@ const UI = {
      * Show double confirmation dialog (for critical actions).
      * First dialog uses primary (turquoise), second uses secondary (gray).
      */
-    showDoubleConfirmDialog: (title1, message1, title2, message2, onConfirm) => {
+    showDoubleConfirmDialog: (title1, message1, title2, message2, onConfirm, secondType = 'primary') => {
         UI.showConfirmDialog(title1, message1, () => {
-            UI.showConfirmDialog(title2, message2, onConfirm, null, 'Yes, I am sure', 'Cancel', 'secondary');
-        }, null, 'Yes', 'Cancel', 'primary');
+            UI.showConfirmDialog(title2, message2, onConfirm, null, 'Confirm', 'Cancel', secondType);
+        }, null, 'Confirm', 'Cancel', 'primary');
     }
 };
 
@@ -738,7 +738,7 @@ const FormHandlers = {
                         }
                     },
                     null,
-                    'Sign Out',
+                    'Confirm',
                     'Cancel'
                 );
             });

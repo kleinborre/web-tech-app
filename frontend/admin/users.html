@@ -88,11 +88,18 @@
          ======================================================================== -->
     <div class="dashboard">
         <!-- Dashboard Header -->
-        <header class="dashboard__header">
+        <header class="dashboard__header" style="position: relative;">
             <a href="../index.html" class="dashboard__logo">
                 <i class="bi bi-file-text"></i>
                 ImageToTextOnline
             </a>
+
+            <!-- Hamburger Toggle (visible <992px) -->
+            <button class="dashboard__hamburger" id="hamburgerToggle" aria-label="Toggle menu">
+                <span class="dashboard__hamburger-line"></span>
+                <span class="dashboard__hamburger-line"></span>
+                <span class="dashboard__hamburger-line"></span>
+            </button>
 
             <div class="dashboard__user">
                 <span id="welcomeUser" style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
@@ -102,6 +109,29 @@
                     <i class="bi bi-box-arrow-right"></i>
                     Sign Out
                 </a>
+            </div>
+
+            <!-- Mobile Dropdown Menu -->
+            <div class="dashboard__mobile-menu" id="mobileMenu">
+                <nav class="dashboard__mobile-nav">
+                    <div class="dashboard__mobile-links">
+                        <a href="dashboard.html" class="dashboard__mobile-link">
+                            <i class="bi bi-grid me-1"></i> Dashboard
+                        </a>
+                        <a href="../index.html" class="dashboard__mobile-link">
+                            <i class="bi bi-file-text me-1"></i> Convert
+                        </a>
+                        <a href="users.html" class="dashboard__mobile-link dashboard__mobile-link--active">
+                            <i class="bi bi-people me-1"></i> Users
+                        </a>
+                        <a href="settings.html" class="dashboard__mobile-link">
+                            <i class="bi bi-gear me-1"></i> Settings
+                        </a>
+                        <a href="#" class="dashboard__mobile-link" id="mobileLogoutBtn">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                        </a>
+                    </div>
+                </nav>
             </div>
         </header>
 
@@ -127,6 +157,12 @@
                             <a href="users.html" class="dashboard__nav-link dashboard__nav-link--active">
                                 <i class="bi bi-people"></i>
                                 Users
+                            </a>
+                        </li>
+                        <li class="dashboard__nav-item">
+                            <a href="settings.html" class="dashboard__nav-link">
+                                <i class="bi bi-gear"></i>
+                                Settings
                             </a>
                         </li>
                     </ul>
@@ -448,9 +484,9 @@
             if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
                 UI.showDoubleConfirmDialog(
                     `${user?.isActive ? 'Deactivate' : 'Reactivate'} User`,
-                    `Are you sure you want to ${action} ${user?.username}?`,
+                    `${action.charAt(0).toUpperCase() + action.slice(1)} ${user?.username}?`,
                     'Final Confirmation',
-                    `This decision is final! ${user?.isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
+                    `${user?.isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
                     async () => {
                         const result = await UsersAPI.toggleStatus(userId);
                         if (result.success) {
@@ -459,7 +495,8 @@
                         } else {
                             showToast(result.error, 'danger');
                         }
-                    }
+                    },
+                    user?.isActive ? 'danger' : 'primary'
                 );
             } else {
                 const result = await UsersAPI.toggleStatus(userId);
@@ -480,9 +517,9 @@
             if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
                 UI.showDoubleConfirmDialog(
                     `${newRole === 'admin' ? 'Promote' : 'Demote'} User`,
-                    `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} ${user?.username}?`,
+                    `${newRole === 'admin' ? 'Promote' : 'Demote'} ${user?.username}?`,
                     'Final Confirmation',
-                    `This decision is final! Are you absolutely sure?`,
+                    `Are you sure you want to ${newRole === 'admin' ? 'promote' : 'demote'} this user?`,
                     async () => {
                         const result = await UsersAPI.changeRole(userId, newRole);
                         if (result.success) {
@@ -491,7 +528,8 @@
                         } else {
                             showToast(result.error, 'danger');
                         }
-                    }
+                    },
+                    'primary'
                 );
             } else {
                 const result = await UsersAPI.changeRole(userId, newRole);
@@ -538,6 +576,48 @@
                     loadUsers(1);
                 });
 
+                // === Hamburger Toggle ===
+                const hamburger = document.getElementById('hamburgerToggle');
+                const mobileMenu = document.getElementById('mobileMenu');
+                if (hamburger && mobileMenu) {
+                    hamburger.addEventListener('click', () => {
+                        hamburger.classList.toggle('dashboard__hamburger--active');
+                        mobileMenu.classList.toggle('dashboard__mobile-menu--open');
+                    });
+                    mobileMenu.querySelectorAll('.dashboard__mobile-link').forEach(link => {
+                        if (link.id !== 'mobileLogoutBtn') {
+                            link.addEventListener('click', () => {
+                                hamburger.classList.remove('dashboard__hamburger--active');
+                                mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                            });
+                        }
+                    });
+                }
+
+                // === Mobile Sign Out ===
+                const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+                if (mobileLogoutBtn) {
+                    mobileLogoutBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        hamburger?.classList.remove('dashboard__hamburger--active');
+                        mobileMenu?.classList.remove('dashboard__mobile-menu--open');
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Sign Out',
+                                'Are you sure you want to sign out?',
+                                async () => {
+                                    if (typeof AuthService !== 'undefined') {
+                                        await AuthService.logout();
+                                    }
+                                    localStorage.removeItem('user');
+                                    window.location.href = '/';
+                                },
+                                null, 'Confirm', 'Cancel', 'primary'
+                            );
+                        }
+                    });
+                }
+
                 // Convert link confirmation
                 const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
                 if (convertLink) {
@@ -546,12 +626,12 @@
                         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
                             UI.showConfirmDialog(
                                 'Leave Users Page',
-                                'Are you sure you want to leave and go to the Convert page?',
+                                'Go to Main Page (OCR Conversion)?',
                                 () => {
                                     window.location.href = '../index.html';
                                 },
                                 null,
-                                'Yes, Leave',
+                                'Confirm',
                                 'Cancel',
                                 'primary'
                             );
@@ -578,7 +658,7 @@
                                     window.location.href = '/';
                                 },
                                 null,
-                                'Sign Out',
+                                'Confirm',
                                 'Cancel',
                                 'primary'
                             );
@@ -594,12 +674,12 @@
                         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
                             UI.showConfirmDialog(
                                 'Leave Users Page',
-                                'Are you sure you want to leave and go to the home page?',
+                                'Go to home page?',
                                 () => {
                                     window.location.href = '../index.html';
                                 },
                                 null,
-                                'Yes, Leave',
+                                'Confirm',
                                 'Cancel',
                                 'primary'
                             );

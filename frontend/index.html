@@ -480,7 +480,7 @@
                                 window.location.href = '/';
                             },
                             null,
-                            'Sign Out',
+                            'Confirm',
                             'Cancel',
                             'primary'
                         );
@@ -495,13 +495,13 @@
                     e.preventDefault();
                     if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
                         UI.showConfirmDialog(
-                            'Return to Dashboard',
-                            'Do you want to return to your dashboard?',
+                            'Go to Dashboard',
+                            'Go to Dashboard?',
                             () => {
                                 window.location.href = 'admin/dashboard.html';
                             },
                             null,
-                            'Yes, Return',
+                            'Confirm',
                             'Cancel',
                             'primary'
                         );

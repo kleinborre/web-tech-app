@@ -169,6 +169,10 @@ app.get('/admin/users', (req, res) => {
     res.sendFile(path.join(frontendPath, 'admin', 'users.html'));
 });
 
+app.get('/admin/settings', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'admin', 'settings.html'));
+});
+
 /* ==========================================================================
    FRONTEND ROUTING (SPA Support)
    ========================================================================== */

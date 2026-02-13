@@ -460,12 +460,13 @@ const AdminManager = {
         if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
             UI.showDoubleConfirmDialog(
                 `${isActive ? 'Deactivate' : 'Reactivate'} User`,
-                `Are you sure you want to ${action} ${username}?`,
+                `${action.charAt(0).toUpperCase() + action.slice(1)} ${username}?`,
                 'Final Confirmation',
-                `This decision is final! ${isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
+                `${isActive ? 'The user will be locked out.' : 'The user will regain access.'}`,
                 async () => {
                     await AdminManager.performStatusToggle(userId);
-                }
+                },
+                isActive ? 'danger' : 'primary'
             );
         } else {
             await AdminManager.performStatusToggle(userId);
@@ -498,12 +499,13 @@ const AdminManager = {
         if (typeof UI !== 'undefined' && UI.showDoubleConfirmDialog) {
             UI.showDoubleConfirmDialog(
                 `${newRole === 'admin' ? 'Promote' : 'Demote'} User`,
-                `Are you sure you want to ${action} ${username}?`,
+                `${action.charAt(0).toUpperCase() + action.slice(1)} ${username}?`,
                 'Final Confirmation',
-                `This decision is final! Are you absolutely sure you want to ${action}?`,
+                `Are you sure you want to ${action}?`,
                 async () => {
                     await AdminManager.performRoleChange(userId, newRole);
-                }
+                },
+                'primary'
             );
         } else {
             await AdminManager.performRoleChange(userId, newRole);
@@ -552,7 +554,7 @@ const ViewManager = {
                     ViewManager.update();
                 },
                 null,
-                'Switch',
+                'Confirm',
                 'Cancel'
             );
         } else {

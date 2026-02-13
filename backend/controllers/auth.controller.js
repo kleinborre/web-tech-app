@@ -328,3 +328,275 @@ export const checkEmail = async (req, res) => {
         });
     }
 };
+
+/* ==========================================================================
+   ACCOUNT SETTINGS METHODS
+   ========================================================================== */
+
+/**
+ * @desc    Update username
+ * @route   PATCH /api/auth/update-username
+ * @access  Private
+ */
+export const updateUsername = async (req, res) => {
+    try {
+        const { username } = req.body;
+
+        if (!username || username.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Username is required'
+            });
+        }
+
+        const trimmed = username.trim();
+
+        if (trimmed.length < 3) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username must be at least 3 characters'
+            });
+        }
+
+        if (trimmed.length > 30) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username cannot exceed 30 characters'
+            });
+        }
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username can only contain letters, numbers, underscores, and hyphens'
+            });
+        }
+
+        // Check if username already taken by another user
+        const existing = await User.findOne({
+            username: trimmed.toLowerCase(),
+            _id: { $ne: req.user.id }
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                error: 'Username already taken'
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { username: trimmed },
+            { new: true, runValidators: true }
+        );
+
+        console.log(`[Auth] Username updated for user: ${user._id}`);
+
+        res.status(200).json({
+            success: true,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('[Auth] UpdateUsername error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while updating username'
+        });
+    }
+};
+
+/**
+ * @desc    Update email
+ * @route   PATCH /api/auth/update-email
+ * @access  Private
+ */
+export const updateEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || email.trim() === '') {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        const trimmed = email.trim().toLowerCase();
+
+        // Validate email format
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Please provide a valid email address'
+            });
+        }
+
+        // Check if email already taken by another user
+        const existing = await User.findOne({
+            email: trimmed,
+            _id: { $ne: req.user.id }
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email already registered to another account'
+            });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { email: trimmed },
+            { new: true, runValidators: true }
+        );
+
+        console.log(`[Auth] Email updated for user: ${user._id}`);
+
+        res.status(200).json({
+            success: true,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                isActive: user.isActive,
+                createdAt: user.createdAt
+            }
+        });
+
+    } catch (error) {
+        console.error('[Auth] UpdateEmail error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while updating email'
+        });
+    }
+};
+
+/**
+ * @desc    Update password
+ * @route   PATCH /api/auth/update-password
+ * @access  Private
+ */
+export const updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Current password and new password are required'
+            });
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'New passwords do not match'
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                error: 'New password must be at least 6 characters'
+            });
+        }
+
+        // Check for special character
+        if (!/[!@#$%^&*(),.?":{}<>]/.test(newPassword)) {
+            return res.status(400).json({
+                success: false,
+                error: 'New password must contain at least one special character'
+            });
+        }
+
+        // Get user with password
+        const user = await User.findById(req.user.id).select('+password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Verify current password
+        const isMatch = await user.comparePassword(currentPassword);
+
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                error: 'Current password is incorrect'
+            });
+        }
+
+        // Set new password (pre-save hook will hash it)
+        user.password = newPassword;
+        await user.save();
+
+        console.log(`[Auth] Password updated for user: ${user._id}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully'
+        });
+
+    } catch (error) {
+        console.error('[Auth] UpdatePassword error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while updating password'
+        });
+    }
+};
+
+/**
+ * @desc    Verify current password (for real-time validation)
+ * @route   POST /api/auth/verify-password
+ * @access  Private
+ */
+export const verifyPassword = async (req, res) => {
+    try {
+        const { password } = req.body;
+
+        if (!password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password is required'
+            });
+        }
+
+        const user = await User.findById(req.user.id).select('+password');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        const isMatch = await user.comparePassword(password);
+
+        res.status(200).json({
+            success: true,
+            valid: isMatch
+        });
+
+    } catch (error) {
+        console.error('[Auth] VerifyPassword error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while verifying password'
+        });
+    }
+};
