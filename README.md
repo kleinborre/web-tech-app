@@ -87,7 +87,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 |-----------|:------------------:|:----:|:-----:|:----------:|
 | Perform OCR Image Conversion | ✅ | ✅ | ✅ | ✅ |
 | Copy Extracted Text / Download as TXT | ✅ | ✅ | ✅ | ✅ |
-| Temporarily Store Converted Data ¹ | ✅ | ❌ | ❌ | ❌ |
+| Temporarily Store Converted Data (Will Reset on Refresh or New Conversion) ¹ | ✅ | ✅ | ✅ | ✅ |
 | Permanently Save to Conversion History | ❌ | ✅ | ✅ | ✅ |
 | View Own Conversion History | ❌ | ✅ | ✅ | ✅ |
 | Delete Own Conversion History | ❌ | ✅ | ✅ | ✅ |
@@ -97,7 +97,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 | View Platform Statistics | ❌ | ❌ | ✅ | ✅ |
 | Change User Roles | ❌ | ❌ | ❌ | ✅ |
 
-> ¹ **Temporarily Store Converted Data:** Guest users (without an account) can perform OCR conversions and view, copy, or download extracted text during their session. However, converted data is stored only in the browser and is automatically cleared upon page refresh. Registered users' conversions are automatically and permanently saved to their conversion history.
+> ¹ **Temporarily Store Converted Data:** All users — including guests, registered users, admins, and superadmins — can view, copy, and download extracted text during their active session. This data is temporarily stored in the browser and is automatically cleared upon page refresh or when a new conversion is performed. For registered users, admins, and superadmins, conversions are additionally and permanently saved to their conversion history for future reference.
 
 ---
 
@@ -130,7 +130,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 - ✅ **Role-Based Access Control (RBAC)** — Four-tier authorization: guest, user, admin, superadmin
 - ✅ **Server-Side Validation** — Input validation and sanitization for all API endpoints
 - ✅ **HEIC Conversion** — Automatic HEIC-to-JPEG conversion for Apple device photographs
-- ✅ **PDF Text Extraction** — Direct text extraction from PDF documents using pdf-parse
+- ✅ **PDF Text Extraction** — Direct text extraction from PDF documents using unpdf
 - ✅ **Responsive Design** — Mobile-friendly layout utilizing the Bootstrap 5 grid system
 
 ---
@@ -150,7 +150,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 | **jsonwebtoken** | 9.0.3 | JWT token generation, signing, and verification |
 | **multer** | 2.0.2 | Multipart form-data file upload handling |
 | **heic-convert** | 2.1.0 | HEIC/HEIF to JPEG image format conversion |
-| **pdf-parse** | 1.1.1 | PDF document text extraction (serverless compatible) |
+| **unpdf** | 1.4.0 | PDF text extraction (serverless compatible, no native dependencies) |
 | **cookie-parser** | 1.4.7 | HTTP cookie parsing middleware |
 | **cors** | 2.8.6 | Cross-Origin Resource Sharing policy management |
 | **dotenv** | 17.2.4 | Environment variable configuration loader |
@@ -183,7 +183,6 @@ The following accounts are created by the database seeder (`seeder.js`):
 web-tech-app/
 ├── .gitignore                          # Git ignore configuration
 ├── README.md                           # Project documentation (this file)
-├── vercel.json                         # Vercel serverless deployment configuration
 │
 ├── backend/                            # Server-side application
 │   ├── .env                            # Environment variables (not committed)
@@ -491,8 +490,7 @@ After starting the server, open a web browser and navigate to any of the followi
 | Phase 3 | OCR engine integration with Tesseract.js, multi-format image support (HEIC, PDF) |
 | Phase 4 | Conversion history API, admin dashboard statistics, and user management endpoints |
 | Phase 5 | Frontend implementation — responsive UI, admin panel, user management interface |
-| Phase 6 | Project documentation (README), RESTful clean URL routing, API integration plan |
-| Phase 6.3 | GitHub Pages & Vercel deployment, PDF engine replacement (pdf-parse), performance optimization |
+| Phase 6 | Project documentation (README), RESTful clean URL routing, API integration, GitHub Pages deployment, PDF engine optimization, and performance tuning |
 
 ---
 

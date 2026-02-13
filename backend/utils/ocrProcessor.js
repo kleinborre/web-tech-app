@@ -3,12 +3,13 @@
  * 
  * High-performance Tesseract.js OCR using persistent worker pool.
  * Handles text extraction from image buffers with minimal latency.
- * Supports PDF text extraction and HEIC conversion for OCR processing.
+ * Supports PDF text extraction (via unpdf) and HEIC conversion for OCR.
  * 
- * @version 2.3.0 - Replaced pdf-to-img with pdf-parse for serverless compatibility
+ * @version 2.4.0 - Replaced pdf-to-img/pdf-parse with unpdf (serverless compatible)
  */
 
 import { createWorker, createScheduler } from 'tesseract.js';
+import { extractText } from 'unpdf';
 import convert from 'heic-convert';
 
 /* ==========================================================================
@@ -84,9 +85,8 @@ if (!process.env.VERCEL) {
    ========================================================================== */
 
 /**
- * Extracts text directly from a PDF buffer using pdf-parse.
- * This approach extracts embedded text content without rendering pages,
- * making it compatible with serverless environments (no native canvas needed).
+ * Extracts text directly from a PDF buffer using unpdf.
+ * Uses a bundled serverless-compatible PDF.js — no native canvas bindings needed.
  * 
  * @param {Buffer} pdfBuffer - The PDF file data as a buffer
  * @param {string} filename - Original filename for logging
@@ -96,24 +96,26 @@ const extractTextFromPdf = async (pdfBuffer, filename) => {
     const startTime = Date.now();
 
     try {
-        // Dynamic import for pdf-parse (CommonJS module in ESM context)
-        const pdfParse = (await import('pdf-parse')).default;
-
         console.log(`[OCR] Extracting text from PDF: ${filename}`);
-        const pdfData = await pdfParse(pdfBuffer);
+
+        // Convert Buffer to Uint8Array for unpdf compatibility
+        const uint8Array = new Uint8Array(pdfBuffer);
+
+        // Extract text from all pages, merged into a single string
+        const { totalPages, text } = await extractText(uint8Array, { mergePages: true });
 
         const processingTime = Date.now() - startTime;
-        const extractedText = pdfData.text.trim();
+        const extractedText = typeof text === 'string' ? text.trim() : (Array.isArray(text) ? text.join('\n').trim() : '');
 
         if (extractedText.length > 0) {
-            console.log(`[OCR] PDF text extraction complete: ${filename} (${processingTime}ms, ${pdfData.numpages} pages)`);
+            console.log(`[OCR] PDF text extraction complete: ${filename} (${processingTime}ms, ${totalPages} pages)`);
 
             return {
                 success: true,
                 text: extractedText,
                 confidence: 100, // Direct text extraction = 100% accuracy
                 processingTime: processingTime,
-                pageCount: pdfData.numpages
+                pageCount: totalPages
             };
         } else {
             // PDF has no embedded text (scanned/image-only PDF)
@@ -123,7 +125,7 @@ const extractTextFromPdf = async (pdfBuffer, filename) => {
                 text: '',
                 error: 'This PDF appears to be a scanned document with no selectable text. Please convert it to an image format (JPG, PNG) first, then upload the image for OCR processing.',
                 processingTime: processingTime,
-                pageCount: pdfData.numpages
+                pageCount: totalPages
             };
         }
 
@@ -144,7 +146,7 @@ const extractTextFromPdf = async (pdfBuffer, filename) => {
 
 /**
  * Extracts text from an image buffer using Tesseract.js OCR.
- * If the file is a PDF, extracts embedded text directly using pdf-parse.
+ * If the file is a PDF, extracts embedded text directly using unpdf.
  * Uses pre-initialized worker pool for maximum speed.
  * 
  * @param {Buffer} imageBuffer - The image/PDF data as a buffer
