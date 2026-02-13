@@ -39,14 +39,14 @@
                     ImageToTextOnline
                 </a>
 
-                <!-- Navigation - Logged Out -->
-                <nav class="header__nav" data-auth="logged-out">
+                <!-- Desktop Navigation - Logged Out (visible ≥992px) -->
+                <nav class="header__nav header__nav--desktop" data-auth="logged-out">
                     <a href="./auth/login.html" class="btn btn--outline">Sign In</a>
                     <a href="./auth/register.html" class="btn btn--primary">Register</a>
                 </nav>
 
-                <!-- Navigation - Logged In -->
-                <nav class="header__nav" data-auth="logged-in" style="display: none;">
+                <!-- Desktop Navigation - Logged In (visible ≥992px) -->
+                <nav class="header__nav header__nav--desktop" data-auth="logged-in" style="display: none;">
                     <a href="./admin/dashboard.html" class="btn btn--outline">
                         <i class="bi bi-grid me-1"></i> Dashboard
                     </a>
@@ -54,9 +54,37 @@
                         <i class="bi bi-box-arrow-right me-1"></i> Sign Out
                     </button>
                 </nav>
+
+                <!-- Hamburger Toggle (visible <992px) -->
+                <button class="header__hamburger" id="hamburgerToggle" aria-label="Toggle menu">
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                </button>
+            </div>
+
+            <!-- Mobile Dropdown Menu (anchored below header) -->
+            <div class="header__mobile-menu" id="mobileMenu">
+                <nav class="header__mobile-nav">
+                    <!-- Mobile Nav - Logged Out -->
+                    <div class="header__mobile-links" data-auth="logged-out">
+                        <a href="./auth/login.html" class="header__mobile-link">Sign In</a>
+                        <a href="./auth/register.html" class="header__mobile-link">Register</a>
+                    </div>
+                    <!-- Mobile Nav - Logged In -->
+                    <div class="header__mobile-links" data-auth="logged-in" style="display: none;">
+                        <a href="./admin/dashboard.html" class="header__mobile-link">
+                            <i class="bi bi-grid me-1"></i> Dashboard
+                        </a>
+                        <a href="#" class="header__mobile-link" id="mobileLogoutBtn">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                        </a>
+                    </div>
+                </nav>
             </div>
         </div>
     </header>
+
 
     <!-- ========================================================================
          HERO SECTION

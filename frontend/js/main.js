@@ -1088,25 +1088,77 @@ const FAQ = (() => {
    ========================================================================== */
 
 /**
- * Handles mobile navigation menu.
+ * Handles the responsive hamburger menu for mobile and tablet views.
+ * Toggles overlay, animates hamburger icon, and manages body scroll lock.
  */
 const MobileMenu = (() => {
+    let isOpen = false;
+
+    /**
+     * Toggles the mobile menu open/closed state.
+     */
+    const toggle = () => {
+        const hamburger = $('#hamburgerToggle');
+        const mobileMenu = $('#mobileMenu');
+        if (!hamburger || !mobileMenu) return;
+
+        isOpen = !isOpen;
+
+        hamburger.classList.toggle('header__hamburger--active', isOpen);
+        mobileMenu.classList.toggle('header__mobile-menu--open', isOpen);
+    };
+
+    /**
+     * Closes the mobile menu if open.
+     */
+    const close = () => {
+        if (!isOpen) return;
+        isOpen = false;
+
+        const hamburger = $('#hamburgerToggle');
+        const mobileMenu = $('#mobileMenu');
+        if (hamburger) hamburger.classList.remove('header__hamburger--active');
+        if (mobileMenu) mobileMenu.classList.remove('header__mobile-menu--open');
+    };
+
     /**
      * Initializes mobile menu functionality.
      */
     const init = () => {
-        const menuToggle = $('.mobile-menu-toggle');
-        const mobileNav = $('.mobile-nav');
+        const hamburger = $('#hamburgerToggle');
+        if (!hamburger) return;
 
-        if (!menuToggle || !mobileNav) return;
+        // Toggle on hamburger click
+        hamburger.addEventListener('click', toggle);
 
-        menuToggle.addEventListener('click', () => {
-            mobileNav.classList.toggle('mobile-nav--active');
-            menuToggle.classList.toggle('mobile-menu-toggle--active');
+        // Close when any mobile link is clicked
+        $$('.header__mobile-link').forEach(link => {
+            link.addEventListener('click', close);
+        });
+
+        // Mobile logout button — mirror desktop logout behavior
+        const mobileLogoutBtn = $('#mobileLogoutBtn');
+        if (mobileLogoutBtn) {
+            mobileLogoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                close();
+                // Trigger the same logout as desktop headerLogoutBtn
+                const headerLogoutBtn = $('#headerLogoutBtn');
+                if (headerLogoutBtn) {
+                    headerLogoutBtn.click();
+                }
+            });
+        }
+
+        // Close menu if window resizes to desktop width
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 992) {
+                close();
+            }
         });
     };
 
-    return { init };
+    return { init, close };
 })();
 
 /* ==========================================================================
