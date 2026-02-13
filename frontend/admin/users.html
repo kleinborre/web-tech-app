@@ -256,7 +256,9 @@
             filteredUsers: [],
             page: 1,
             totalPages: 1,
-            searchQuery: ''
+            searchQuery: '',
+            cardPage: 1,
+            CARDS_PER_PAGE: 3
         };
 
         // API calls
@@ -362,9 +364,16 @@
                 }).join('');
             }
 
-            // === Card rendering (mobile) ===
+            // === Card rendering (mobile) with pagination ===
             if (cardsContainer) {
-                cardsContainer.innerHTML = users.map(user => {
+                const perPage = UsersPageState.CARDS_PER_PAGE;
+                const totalCardPages = Math.ceil(users.length / perPage);
+                if (UsersPageState.cardPage > totalCardPages) UsersPageState.cardPage = totalCardPages;
+                if (UsersPageState.cardPage < 1) UsersPageState.cardPage = 1;
+                const start = (UsersPageState.cardPage - 1) * perPage;
+                const pageUsers = users.slice(start, start + perPage);
+
+                let html = pageUsers.map(user => {
                     const isSelf = user._id === UsersPageState.currentUser?._id;
                     const isSuperadmin = user.role === 'superadmin';
                     const canModify = !isSelf && !isSuperadmin;
@@ -398,6 +407,19 @@
                         </div>
                     `;
                 }).join('');
+
+                // Card pagination controls
+                if (totalCardPages > 1) {
+                    html += `<div class="history-card-pagination">`;
+                    html += `<button class="btn btn--secondary btn--sm" ${UsersPageState.cardPage === 1 ? 'disabled' : ''} onclick="goCardPage(${UsersPageState.cardPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+                    for (let i = 1; i <= totalCardPages; i++) {
+                        html += `<button class="btn btn--sm ${i === UsersPageState.cardPage ? 'btn--primary' : 'btn--secondary'}" onclick="goCardPage(${i})">${i}</button>`;
+                    }
+                    html += `<button class="btn btn--secondary btn--sm" ${UsersPageState.cardPage === totalCardPages ? 'disabled' : ''} onclick="goCardPage(${UsersPageState.cardPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
+                    html += `</div>`;
+                }
+
+                cardsContainer.innerHTML = html;
             }
         }
 
@@ -443,6 +465,7 @@
                         UsersPageState.filteredUsers = [];
                         renderUsers();
                     }
+                    UsersPageState.cardPage = 1;
                     renderPagination();
                 }
             } catch (error) {
@@ -451,9 +474,16 @@
             }
         }
 
+        // Card page navigation
+        function goCardPage(page) {
+            UsersPageState.cardPage = page;
+            renderUsers();
+        }
+
         // Filter users
         function filterUsers(query) {
             UsersPageState.searchQuery = query.toLowerCase();
+            UsersPageState.cardPage = 1;
             if (!query) {
                 UsersPageState.filteredUsers = [];
             } else {

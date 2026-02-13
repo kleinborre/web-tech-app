@@ -1783,6 +1783,16 @@ img {
     .admin-users-cards-wrapper {
         display: block;
     }
+
+    .view-switcher {
+        text-align: center;
+    }
+
+    .view-switcher .btn {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
 }
 
 /**

@@ -31,7 +31,10 @@ const DashboardState = {
     allHistoryItems: [],
     historySearchQuery: '',
     cardPage: 1,
-    CARDS_PER_PAGE: 3
+    CARDS_PER_PAGE: 3,
+    adminUsersPage: 1,
+    ADMIN_USERS_PER_PAGE: 2,
+    adminAllUsers: []
 };
 
 /* ==========================================================================
@@ -522,6 +525,8 @@ const AdminManager = {
             const result = await DashboardAPI.getUsers(page);
             if (result.success) {
                 DashboardState.usersPage = page;
+                DashboardState.adminAllUsers = result.data;
+                DashboardState.adminUsersPage = 1;
                 AdminManager.renderUsers(result.data, result.pagination);
             }
         } catch (error) {
@@ -530,13 +535,19 @@ const AdminManager = {
     },
 
     renderUsers(users, pagination) {
-        // Limit to max 3 users for dashboard preview
-        const previewUsers = users.slice(0, 3);
+        // Paginate at 2 per page
+        const perPage = DashboardState.ADMIN_USERS_PER_PAGE;
+        const allUsers = users || DashboardState.adminAllUsers;
+        const totalPages = Math.ceil(allUsers.length / perPage);
+        if (DashboardState.adminUsersPage > totalPages) DashboardState.adminUsersPage = totalPages;
+        if (DashboardState.adminUsersPage < 1) DashboardState.adminUsersPage = 1;
+        const start = (DashboardState.adminUsersPage - 1) * perPage;
+        const pageUsers = allUsers.slice(start, start + perPage);
 
         // === Table rendering (desktop) ===
         const tbody = document.getElementById('usersTableBody');
         if (tbody) {
-            tbody.innerHTML = previewUsers.map(user => {
+            tbody.innerHTML = pageUsers.map(user => {
                 const isSelf = user._id === DashboardState.user?._id;
                 const isSuperadmin = user.role === 'superadmin';
                 const canModify = !isSelf && !isSuperadmin;
@@ -577,7 +588,7 @@ const AdminManager = {
         // === Card rendering (mobile) ===
         const cardsContainer = document.getElementById('adminUsersCardsContainer');
         if (cardsContainer) {
-            cardsContainer.innerHTML = previewUsers.map(user => {
+            cardsContainer.innerHTML = pageUsers.map(user => {
                 const isSelf = user._id === DashboardState.user?._id;
                 const isSuperadmin = user.role === 'superadmin';
                 const canModify = !isSelf && !isSuperadmin;
@@ -611,6 +622,26 @@ const AdminManager = {
                 `;
             }).join('');
         }
+
+        // === Pagination controls ===
+        const paginationContainer = document.getElementById('adminUsersPagination');
+        if (paginationContainer && totalPages > 1) {
+            let phtml = `<div class="history-card-pagination">`;
+            phtml += `<button class="btn btn--secondary btn--sm" ${DashboardState.adminUsersPage === 1 ? 'disabled' : ''} onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                phtml += `<button class="btn btn--sm ${i === DashboardState.adminUsersPage ? 'btn--primary' : 'btn--secondary'}" onclick="AdminManager.goUsersPage(${i})">${i}</button>`;
+            }
+            phtml += `<button class="btn btn--secondary btn--sm" ${DashboardState.adminUsersPage === totalPages ? 'disabled' : ''} onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
+            phtml += `</div>`;
+            paginationContainer.innerHTML = phtml;
+        } else if (paginationContainer) {
+            paginationContainer.innerHTML = '';
+        }
+    },
+
+    goUsersPage(page) {
+        DashboardState.adminUsersPage = page;
+        AdminManager.renderUsers(DashboardState.adminAllUsers);
     },
 
     async toggleStatus(userId) {
