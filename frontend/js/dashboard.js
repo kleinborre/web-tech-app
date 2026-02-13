@@ -27,7 +27,9 @@ const DashboardState = {
     isAdmin: false,
     currentView: 'user', // 'user' or 'admin'
     historyPage: 1,
-    usersPage: 1
+    usersPage: 1,
+    allHistoryItems: [],
+    historySearchQuery: ''
 };
 
 /* ==========================================================================
@@ -140,7 +142,8 @@ const HistoryManager = {
             const result = await DashboardAPI.getHistory(page);
             if (result.success) {
                 DashboardState.historyPage = page;
-                HistoryManager.render(result.data, result.pagination);
+                DashboardState.allHistoryItems = result.data;
+                HistoryManager.renderFiltered(result.pagination);
             } else {
                 DashboardUI.showToast(result.error || 'Failed to load history', 'danger');
             }
@@ -150,7 +153,31 @@ const HistoryManager = {
         }
     },
 
-    render(items, pagination) {
+    /**
+     * Filter items by search query then render both views
+     */
+    renderFiltered(pagination) {
+        const query = DashboardState.historySearchQuery.toLowerCase().trim();
+        let items = DashboardState.allHistoryItems;
+
+        if (query) {
+            items = items.filter(item => {
+                const filename = (item.originalFileName || '').toLowerCase();
+                const dateStr = DashboardUI.formatDate(item.conversionDate).toLowerCase();
+                const text = (item.extractedText || '').toLowerCase();
+                return filename.includes(query) || dateStr.includes(query) || text.includes(query);
+            });
+        }
+
+        HistoryManager.renderTable(items);
+        HistoryManager.renderCards(items);
+        HistoryManager.renderPagination(pagination);
+    },
+
+    /**
+     * Desktop: table rows
+     */
+    renderTable(items) {
         const tbody = document.getElementById('historyTableBody');
         if (!tbody) return;
 
@@ -159,7 +186,7 @@ const HistoryManager = {
                 <tr>
                     <td colspan="4" class="text-center py-4 text-muted">
                         <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                        <p class="mt-2 mb-0">No conversion history yet</p>
+                        <p class="mt-2 mb-0">${DashboardState.historySearchQuery ? 'No results found' : 'No conversion history yet'}</p>
                     </td>
                 </tr>
             `;
@@ -187,9 +214,50 @@ const HistoryManager = {
                 </tr>
             `).join('');
         }
+    },
 
-        // Render pagination
-        HistoryManager.renderPagination(pagination);
+    /**
+     * Mobile/Tablet: card layout
+     */
+    renderCards(items) {
+        const container = document.getElementById('historyCardsContainer');
+        if (!container) return;
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="history-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>${DashboardState.historySearchQuery ? 'No results found' : 'No conversion history yet'}</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = items.map(item => {
+                const encodedText = encodeURIComponent(item.extractedText || '');
+                const filename = item.originalFileName || 'Untitled';
+                return `
+                    <div class="history-card" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
+                        <div class="history-card__header">
+                            <span class="history-card__filename">
+                                <i class="bi bi-file-earmark-text me-1"></i>${filename}
+                            </span>
+                            <span class="history-card__date">${DashboardUI.formatDate(item.conversionDate)}</span>
+                        </div>
+                        <div class="history-card__snippet">${DashboardUI.truncateText(item.extractedText, 120) || 'No text extracted'}</div>
+                        <div class="history-card__actions" onclick="event.stopPropagation();">
+                            <button class="btn btn--secondary" title="Copy" onclick="HistoryManager.copy('${item._id}', '${encodedText}')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                            <button class="btn btn--secondary" title="Download" onclick="HistoryManager.download('${filename}', '${encodedText}')">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button class="btn btn--secondary" style="color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
     },
 
     renderPagination(pagination) {
@@ -227,6 +295,29 @@ const HistoryManager = {
 
         html += '</ul></nav>';
         container.innerHTML = html;
+    },
+
+    /**
+     * Initialize search input + refresh button
+     */
+    initSearch() {
+        const searchInput = document.getElementById('historySearchInput');
+        const refreshBtn = document.getElementById('historyRefreshBtn');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                DashboardState.historySearchQuery = searchInput.value;
+                HistoryManager.renderFiltered();
+            });
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                DashboardState.historySearchQuery = '';
+                HistoryManager.load(1);
+            });
+        }
     },
 
     copy(id, encodedText) {
@@ -632,6 +723,9 @@ async function initDashboard() {
         // Initialize view
         ViewManager.init();
         ViewManager.update();
+
+        // Initialize history search
+        HistoryManager.initSearch();
 
     } catch (error) {
         console.error('Dashboard init error:', error);

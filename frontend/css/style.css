@@ -1512,6 +1512,181 @@ img {
     color: var(--color-gray-500);
 }
 
+/**
+ * History Search Bar (matches Users Management search design)
+ */
+.history-search {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+    max-width: 400px;
+}
+
+.history-search input {
+    flex: 1;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: var(--spacing-md);
+}
+
+/**
+ * Users Management Header + Search
+ */
+.users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.users-search {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+    max-width: 400px;
+}
+
+.users-search input {
+    flex: 1;
+}
+
+@media (max-width: 575.98px) {
+    .users-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .users-search {
+        max-width: 100%;
+    }
+
+    .history-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .history-search {
+        max-width: 100%;
+    }
+}
+
+/**
+ * History Cards (Mobile/Tablet card layout)
+ */
+.history-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.history-card {
+    background-color: var(--color-white);
+    border: 1px solid var(--color-gray-200);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.history-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.history-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.history-card__filename {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-base);
+    color: var(--color-gray-900);
+    word-break: break-word;
+}
+
+.history-card__date {
+    font-size: var(--font-size-xs);
+    color: var(--color-gray-500);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.history-card__snippet {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-600);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.history-card__actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: flex-end;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-gray-100);
+}
+
+.history-card__actions .btn {
+    padding: 0.4rem 0.65rem;
+    font-size: 1rem;
+}
+
+/**
+ * Responsive: Table ↔ Cards Toggle
+ * Desktop (≥992px): show table, hide cards
+ * Mobile/Tablet (<992px): hide table, show cards
+ */
+.history-table-wrapper {
+    display: block;
+}
+
+.history-cards-wrapper {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .history-table-wrapper {
+        display: none;
+    }
+
+    .history-cards-wrapper {
+        display: block;
+    }
+}
+
+/**
+ * History empty state (cards mode)
+ */
+.history-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--color-gray-500);
+}
+
+.history-empty i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: var(--spacing-sm);
+}
+
 /* ==========================================================================
    UTILITY CLASSES
    ========================================================================== */

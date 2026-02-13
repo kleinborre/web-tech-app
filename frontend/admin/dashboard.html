@@ -284,31 +284,53 @@
                      USER VIEW
                      ============================================================ -->
                 <div data-view="user">
-                    <!-- History Table -->
+                    <!-- History Card -->
                     <div class="dashboard__card">
-                        <div class="dashboard__card-header">
-                            <h2 class="dashboard__card-title">Conversion History</h2>
+                        <div class="history-header">
+                            <h2 class="dashboard__card-title" style="margin-bottom: 0;">Conversion History</h2>
+                            <div class="history-search">
+                                <input type="text" id="historySearchInput" class="form-control"
+                                    placeholder="Search by date, file name...">
+                                <button class="btn btn--secondary" id="historyRefreshBtn" title="Refresh">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div style="overflow-x: auto;">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>File Name</th>
-                                        <th>Text Snippet</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="historyTableBody">
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4">
-                                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                                            Loading history...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                        <!-- Desktop: Table view -->
+                        <div class="history-table-wrapper">
+                            <div style="overflow-x: auto;">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>File Name</th>
+                                            <th>Text Snippet</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4">
+                                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                                Loading history...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+
+                        <!-- Mobile/Tablet: Card view -->
+                        <div class="history-cards-wrapper">
+                            <div id="historyCardsContainer" class="history-cards">
+                                <div class="history-empty">
+                                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                                    <p class="mt-2 mb-0">Loading history...</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="historyPagination" class="mt-3 d-flex justify-content-center"></div>
                     </div>
                 </div>
@@ -435,6 +457,24 @@
                         );
                     } else {
                         window.location.href = 'users.html';
+                    }
+                });
+            }
+
+            // Settings link confirmation
+            const settingsLink = document.querySelector('a[href="settings.html"].dashboard__nav-link');
+            if (settingsLink) {
+                settingsLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                        UI.showConfirmDialog(
+                            'Leave Dashboard',
+                            'Go to Settings?',
+                            () => { window.location.href = 'settings.html'; },
+                            null, 'Confirm', 'Cancel', 'primary'
+                        );
+                    } else {
+                        window.location.href = 'settings.html';
                     }
                 });
             }

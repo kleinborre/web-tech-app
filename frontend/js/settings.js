@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initCredentialsTab();
         initPasswordEyeToggles();
         initHamburger();
+        initSidebarNav();
         initLogout();
         showAdminLinks();
     } catch (error) {
@@ -745,6 +746,84 @@ function closeResultPopup(returnTab) {
     if (returnTab) {
         const tabBtn = document.querySelector(`.settings-tabs__btn[data-tab="${returnTab}"]`);
         if (tabBtn) tabBtn.click();
+    }
+}
+
+/* ==========================================================================
+   SIDEBAR NAV CONFIRMATIONS (Desktop only)
+   ========================================================================== */
+
+function initSidebarNav() {
+    // Dashboard link
+    const dashboardLink = document.querySelector('a[href="dashboard.html"].dashboard__nav-link');
+    if (dashboardLink) {
+        dashboardLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Leave Settings',
+                    'Go to Dashboard?',
+                    () => { window.location.href = 'dashboard.html'; },
+                    null, 'Confirm', 'Cancel', 'primary'
+                );
+            } else {
+                window.location.href = 'dashboard.html';
+            }
+        });
+    }
+
+    // Convert link
+    const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
+    if (convertLink) {
+        convertLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Leave Settings',
+                    'Go to Main Page (OCR Conversion)?',
+                    () => { window.location.href = '../index.html'; },
+                    null, 'Confirm', 'Cancel', 'primary'
+                );
+            } else {
+                window.location.href = '../index.html';
+            }
+        });
+    }
+
+    // Users link
+    const usersLink = document.querySelector('a[href="users.html"].dashboard__nav-link');
+    if (usersLink) {
+        usersLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Leave Settings',
+                    'Go to User Management?',
+                    () => { window.location.href = 'users.html'; },
+                    null, 'Confirm', 'Cancel', 'primary'
+                );
+            } else {
+                window.location.href = 'users.html';
+            }
+        });
+    }
+
+    // Logo link
+    const logoLink = document.querySelector('.dashboard__logo');
+    if (logoLink) {
+        logoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Leave Settings',
+                    'Go to home page?',
+                    () => { window.location.href = '../index.html'; },
+                    null, 'Confirm', 'Cancel', 'primary'
+                );
+            } else {
+                window.location.href = '../index.html';
+            }
+        });
     }
 }
 
