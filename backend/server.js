@@ -26,9 +26,6 @@ import connectDB from './config/db.js';
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
-
 // ES Module directory resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,6 +66,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  * Parses cookies for authentication.
  */
 app.use(cookieParser());
+
+/**
+ * Database Connection Middleware
+ * Ensures MongoDB is connected before handling any request.
+ * Critical for Vercel serverless cold starts.
+ */
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.error('[Database] Connection failed:', error.message);
+        res.status(503).json({ error: 'Database connection failed. Please try again.' });
+    }
+});
 
 /**
  * Request Logging Middleware
