@@ -88,9 +88,14 @@ if (NODE_ENV === 'development') {
 /**
  * Serve Frontend Static Files
  * The frontend folder is served at the root URL.
+ * Cache static assets (CSS, JS, images) for faster subsequent loads.
  */
 const frontendPath = path.join(__dirname, '..', 'frontend');
-app.use(express.static(frontendPath));
+app.use(express.static(frontendPath, {
+    maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+    etag: true,
+    lastModified: true
+}));
 
 /* ==========================================================================
    API ROUTES

@@ -3,17 +3,13 @@
  * 
  * High-performance Tesseract.js OCR using persistent worker pool.
  * Handles text extraction from image buffers with minimal latency.
- * Supports PDF and HEIC conversion for OCR processing.
+ * Supports PDF text extraction and HEIC conversion for OCR processing.
  * 
- * @version 2.2.0 - Added PDF and HEIC support
+ * @version 2.3.0 - Replaced pdf-to-img with pdf-parse for serverless compatibility
  */
 
 import { createWorker, createScheduler } from 'tesseract.js';
 import convert from 'heic-convert';
-
-// NOTE: pdf-to-img is loaded dynamically (lazy import) inside the PDF
-// processing block because pdfjs-dist requires native canvas bindings
-// (@napi-rs/canvas) that are unavailable in serverless environments (Vercel).
 
 /* ==========================================================================
    WORKER POOL CONFIGURATION
@@ -84,12 +80,71 @@ if (!process.env.VERCEL) {
 }
 
 /* ==========================================================================
+   PDF TEXT EXTRACTION
+   ========================================================================== */
+
+/**
+ * Extracts text directly from a PDF buffer using pdf-parse.
+ * This approach extracts embedded text content without rendering pages,
+ * making it compatible with serverless environments (no native canvas needed).
+ * 
+ * @param {Buffer} pdfBuffer - The PDF file data as a buffer
+ * @param {string} filename - Original filename for logging
+ * @returns {Promise<Object>} Object containing extracted text and metadata
+ */
+const extractTextFromPdf = async (pdfBuffer, filename) => {
+    const startTime = Date.now();
+
+    try {
+        // Dynamic import for pdf-parse (CommonJS module in ESM context)
+        const pdfParse = (await import('pdf-parse')).default;
+
+        console.log(`[OCR] Extracting text from PDF: ${filename}`);
+        const pdfData = await pdfParse(pdfBuffer);
+
+        const processingTime = Date.now() - startTime;
+        const extractedText = pdfData.text.trim();
+
+        if (extractedText.length > 0) {
+            console.log(`[OCR] PDF text extraction complete: ${filename} (${processingTime}ms, ${pdfData.numpages} pages)`);
+
+            return {
+                success: true,
+                text: extractedText,
+                confidence: 100, // Direct text extraction = 100% accuracy
+                processingTime: processingTime,
+                pageCount: pdfData.numpages
+            };
+        } else {
+            // PDF has no embedded text (scanned/image-only PDF)
+            console.log(`[OCR] PDF has no embedded text, likely a scanned document: ${filename}`);
+            return {
+                success: false,
+                text: '',
+                error: 'This PDF appears to be a scanned document with no selectable text. Please convert it to an image format (JPG, PNG) first, then upload the image for OCR processing.',
+                processingTime: processingTime,
+                pageCount: pdfData.numpages
+            };
+        }
+
+    } catch (pdfError) {
+        console.error(`[OCR] PDF extraction error:`, pdfError.message);
+        return {
+            success: false,
+            text: '',
+            error: `PDF text extraction failed: ${pdfError.message}`,
+            processingTime: Date.now() - startTime
+        };
+    }
+};
+
+/* ==========================================================================
    OCR PROCESSOR
    ========================================================================== */
 
 /**
  * Extracts text from an image buffer using Tesseract.js OCR.
- * If the file is a PDF, converts it to images first.
+ * If the file is a PDF, extracts embedded text directly using pdf-parse.
  * Uses pre-initialized worker pool for maximum speed.
  * 
  * @param {Buffer} imageBuffer - The image/PDF data as a buffer
@@ -98,11 +153,20 @@ if (!process.env.VERCEL) {
  */
 export const extractTextFromImage = async (imageBuffer, filename) => {
     try {
-        // Ensure workers are initialized
-        await initializeWorkers();
-
         console.log(`[OCR] Processing: ${filename}`);
         const startTime = Date.now();
+
+        // Check if file is PDF — use direct text extraction (no OCR needed)
+        const isPdf = filename.toLowerCase().endsWith('.pdf') ||
+            (imageBuffer[0] === 0x25 && imageBuffer[1] === 0x50 &&
+                imageBuffer[2] === 0x44 && imageBuffer[3] === 0x46); // %PDF magic bytes
+
+        if (isPdf) {
+            return await extractTextFromPdf(imageBuffer, filename);
+        }
+
+        // Ensure Tesseract workers are initialized (for image OCR only)
+        await initializeWorkers();
 
         // Check if file is HEIC and convert to JPEG
         const isHeic = filename.toLowerCase().endsWith('.heic') || filename.toLowerCase().endsWith('.heif');
@@ -128,60 +192,17 @@ export const extractTextFromImage = async (imageBuffer, filename) => {
             }
         }
 
-        // Check if file is PDF
-        const isPdf = filename.toLowerCase().endsWith('.pdf') ||
-            (processBuffer[0] === 0x25 && processBuffer[1] === 0x50 &&
-                processBuffer[2] === 0x44 && processBuffer[3] === 0x46); // %PDF magic bytes
-
-        let combinedText = '';
-        let totalConfidence = 0;
-        let pageCount = 0;
-
-        if (isPdf) {
-            console.log(`[OCR] Detected PDF file, converting pages to images...`);
-
-            try {
-                // Dynamically import pdf-to-img (avoids crash in serverless environments)
-                const { pdf } = await import('pdf-to-img');
-                const pdfDocument = await pdf(imageBuffer, { scale: 2.0 });
-
-                for await (const image of pdfDocument) {
-                    pageCount++;
-                    console.log(`[OCR] Processing PDF page ${pageCount}...`);
-
-                    // OCR each page image
-                    const result = await scheduler.addJob('recognize', image);
-                    combinedText += result.data.text.trim() + '\n\n';
-                    totalConfidence += result.data.confidence;
-                }
-
-                console.log(`[OCR] Processed ${pageCount} PDF pages`);
-            } catch (pdfError) {
-                console.error(`[OCR] PDF conversion error:`, pdfError.message);
-                return {
-                    success: false,
-                    text: '',
-                    error: `PDF conversion failed: ${pdfError.message}`,
-                    processingTime: Date.now() - startTime
-                };
-            }
-        } else {
-            // Regular image processing (includes converted HEIC)
-            const result = await scheduler.addJob('recognize', processBuffer);
-            combinedText = result.data.text.trim();
-            totalConfidence = result.data.confidence;
-            pageCount = 1;
-        }
-
+        // Regular image processing (includes converted HEIC)
+        const result = await scheduler.addJob('recognize', processBuffer);
         const processingTime = Date.now() - startTime;
         console.log(`[OCR] Completed: ${filename} (${processingTime}ms)`);
 
         return {
             success: true,
-            text: combinedText.trim(),
-            confidence: pageCount > 0 ? totalConfidence / pageCount : 0,
+            text: result.data.text.trim(),
+            confidence: result.data.confidence,
             processingTime: processingTime,
-            pageCount: pageCount
+            pageCount: 1
         };
 
     } catch (error) {
@@ -204,9 +225,6 @@ export const extractTextFromImage = async (imageBuffer, filename) => {
  */
 export const processMultipleImages = async (files) => {
     console.log(`[OCR] Starting batch processing of ${files.length} file(s)`);
-
-    // Ensure workers are initialized
-    await initializeWorkers();
 
     // Process all files concurrently - scheduler handles distribution
     const results = await Promise.all(

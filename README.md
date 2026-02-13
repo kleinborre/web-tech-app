@@ -1,12 +1,5 @@
 # 🔍 ImageToTextOnline — OCR Web Application
 
-🌐 **Live Deployments:**
-
-| Platform | URL | Scope |
-|----------|-----|-------|
-| **GitHub Pages** | [https://kleinborre.github.io/web-tech-app/](https://kleinborre.github.io/web-tech-app/) | Frontend implementation only — limited to Milestone 1 scope |
-| **Vercel** | [https://web-tech-app.vercel.app/](https://web-tech-app.vercel.app/) | Outside MS1 & Course scope — demonstrates full web app capability and functionality |
-
 > A full-stack web application that converts images to editable text using Optical Character Recognition (OCR) technology, built with Node.js, Express.js, MongoDB, and Tesseract.js.
 
 | | |
@@ -24,18 +17,19 @@
 
 1. [Description](#-description)
 2. [Purpose & Goal](#-purpose--goal)
-3. [Features](#-features)
-4. [Tech Stack](#-tech-stack)
-5. [Project Directory Structure](#-project-directory-structure)
-6. [Architecture & Design Patterns](#-architecture--design-patterns)
-7. [Database Schema](#-database-schema)
-8. [REST API Endpoints](#-rest-api-endpoints)
-9. [Setup & Installation](#-setup--installation)
-10. [Accessing the Application](#-accessing-the-application)
-11. [Default User Accounts & Role Access](#-default-user-accounts--role-access)
-12. [Project Documentation Links](#-project-documentation-links)
-13. [Security Implementation](#-security-implementation)
-14. [Development Phases](#-development-phases)
+3. [Live Deployments](#-live-deployments)
+4. [Default User Accounts & Role Access](#-default-user-accounts--role-access)
+5. [Features](#-features)
+6. [Tech Stack](#-tech-stack)
+7. [Project Directory Structure](#-project-directory-structure)
+8. [Architecture & Design Patterns](#-architecture--design-patterns)
+9. [Database Schema](#-database-schema)
+10. [REST API Endpoints](#-rest-api-endpoints)
+11. [Setup & Installation](#-setup--installation)
+12. [Accessing the Application](#-accessing-the-application)
+13. [Project Documentation Links](#-project-documentation-links)
+14. [Security Implementation](#-security-implementation)
+15. [Development Phases](#-development-phases)
 
 ---
 
@@ -69,6 +63,44 @@ To provide a free, accessible, and user-friendly online tool for converting imag
 
 ---
 
+## 🌐 Live Deployments
+
+| Platform | URL | Scope |
+|----------|-----|-------|
+| **GitHub Pages** | [https://kleinborre.github.io/web-tech-app/](https://kleinborre.github.io/web-tech-app/) | Frontend implementation only — limited by GitHub Pages static hosting, no backend or API access |
+| **Vercel** | [https://web-tech-app.vercel.app/](https://web-tech-app.vercel.app/) | Full-stack deployment — demonstrates both frontend and backend capabilities of the web application |
+
+---
+
+## 👤 Default User Accounts & Role Access
+
+The following accounts are created by the database seeder (`seeder.js`):
+
+| Username | Role | Password |
+|----------|------|----------|
+| admin-user | **superadmin** | `eX6LooLPiVfCuZF6` |
+| test-user | **user** | `VitBxRJVNwqdHLsQ` |
+
+### Role-Based Access Control Matrix
+
+| Permission | Guest (No Account) | User | Admin | Superadmin |
+|-----------|:------------------:|:----:|:-----:|:----------:|
+| Perform OCR Image Conversion | ✅ | ✅ | ✅ | ✅ |
+| Copy Extracted Text / Download as TXT | ✅ | ✅ | ✅ | ✅ |
+| Temporarily Store Converted Data ¹ | ✅ | ❌ | ❌ | ❌ |
+| Permanently Save to Conversion History | ❌ | ✅ | ✅ | ✅ |
+| View Own Conversion History | ❌ | ✅ | ✅ | ✅ |
+| Delete Own Conversion History | ❌ | ✅ | ✅ | ✅ |
+| Access Admin Dashboard | ❌ | ❌ | ✅ | ✅ |
+| View All Registered Users | ❌ | ❌ | ✅ | ✅ |
+| Activate / Deactivate Users | ❌ | ❌ | ✅ | ✅ |
+| View Platform Statistics | ❌ | ❌ | ✅ | ✅ |
+| Change User Roles | ❌ | ❌ | ❌ | ✅ |
+
+> ¹ **Temporarily Store Converted Data:** Guest users (without an account) can perform OCR conversions and view, copy, or download extracted text during their session. However, converted data is stored only in the browser and is automatically cleared upon page refresh. Registered users' conversions are automatically and permanently saved to their conversion history.
+
+---
+
 ## ✨ Features
 
 ### Core Features
@@ -95,10 +127,10 @@ To provide a free, accessible, and user-friendly online tool for converting imag
 - ✅ **RESTful API** — Clean, standardized REST endpoints organized under the `/api` prefix
 - ✅ **Clean URL Routing** — Industry-standard page URLs without `.html` extensions
 - ✅ **JWT Authentication** — Secure token-based authentication stored in HTTPOnly cookies
-- ✅ **Role-Based Access Control (RBAC)** — Three-tier authorization: user, admin, superadmin
+- ✅ **Role-Based Access Control (RBAC)** — Four-tier authorization: guest, user, admin, superadmin
 - ✅ **Server-Side Validation** — Input validation and sanitization for all API endpoints
 - ✅ **HEIC Conversion** — Automatic HEIC-to-JPEG conversion for Apple device photographs
-- ✅ **PDF Processing** — Multi-page PDF extraction with page-by-page OCR
+- ✅ **PDF Text Extraction** — Direct text extraction from PDF documents using pdf-parse
 - ✅ **Responsive Design** — Mobile-friendly layout utilizing the Bootstrap 5 grid system
 
 ---
@@ -118,7 +150,7 @@ To provide a free, accessible, and user-friendly online tool for converting imag
 | **jsonwebtoken** | 9.0.3 | JWT token generation, signing, and verification |
 | **multer** | 2.0.2 | Multipart form-data file upload handling |
 | **heic-convert** | 2.1.0 | HEIC/HEIF to JPEG image format conversion |
-| **pdf-to-img** | 5.0.0 | PDF document to image conversion for OCR processing |
+| **pdf-parse** | 1.1.1 | PDF document text extraction (serverless compatible) |
 | **cookie-parser** | 1.4.7 | HTTP cookie parsing middleware |
 | **cors** | 2.8.6 | Cross-Origin Resource Sharing policy management |
 | **dotenv** | 17.2.4 | Environment variable configuration loader |
@@ -151,6 +183,7 @@ To provide a free, accessible, and user-friendly online tool for converting imag
 web-tech-app/
 ├── .gitignore                          # Git ignore configuration
 ├── README.md                           # Project documentation (this file)
+├── vercel.json                         # Vercel serverless deployment configuration
 │
 ├── backend/                            # Server-side application
 │   ├── .env                            # Environment variables (not committed)
@@ -419,30 +452,6 @@ After starting the server, open a web browser and navigate to any of the followi
 
 ---
 
-## 👤 Default User Accounts & Role Access
-
-The following accounts are created by the database seeder (`seeder.js`):
-
-| Username | Role | Password |
-|----------|------|----------|
-| admin-user | **superadmin** | `eX6LooLPiVfCuZF6` |
-| test-user | **user** | `VitBxRJVNwqdHLsQ` |
-
-### Role-Based Access Control Matrix
-
-| Permission | User | Admin | Superadmin |
-|-----------|:----:|:-----:|:----------:|
-| Perform OCR Image Conversion | ✅ | ✅ | ✅ |
-| View Own Conversion History | ✅ | ✅ | ✅ |
-| Delete Own Conversion History | ✅ | ✅ | ✅ |
-| Access Admin Dashboard | ❌ | ✅ | ✅ |
-| View All Registered Users | ❌ | ✅ | ✅ |
-| Activate / Deactivate Users | ❌ | ✅ | ✅ |
-| View Platform Statistics | ❌ | ✅ | ✅ |
-| Change User Roles | ❌ | ❌ | ✅ |
-
----
-
 ## 📄 Project Documentation Links
 
 | Document | Link |
@@ -463,7 +472,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 | **Password Hashing** | bcrypt with salt rounds for irreversible password storage |
 | **JWT Authentication** | JSON Web Tokens stored in HTTPOnly cookies (not localStorage) |
 | **HTTPOnly Cookies** | Prevents client-side JavaScript from accessing authentication tokens (XSS protection) |
-| **Role-Based Access Control** | Three-tier middleware authorization chain (user → admin → superadmin) |
+| **Role-Based Access Control** | Four-tier middleware authorization chain (guest → user → admin → superadmin) |
 | **Input Validation** | Server-side validation and sanitization for all user inputs and file uploads |
 | **File Type Validation** | Whitelist-based MIME type verification for uploaded files |
 | **File Size Limits** | Maximum 10MB per file, 5 files per request to prevent abuse |
@@ -483,6 +492,7 @@ The following accounts are created by the database seeder (`seeder.js`):
 | Phase 4 | Conversion history API, admin dashboard statistics, and user management endpoints |
 | Phase 5 | Frontend implementation — responsive UI, admin panel, user management interface |
 | Phase 6 | Project documentation (README), RESTful clean URL routing, API integration plan |
+| Phase 6.3 | GitHub Pages & Vercel deployment, PDF engine replacement (pdf-parse), performance optimization |
 
 ---
 
