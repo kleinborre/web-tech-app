@@ -19,6 +19,7 @@ import ocrRoutes from './routes/ocr.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import historyRoutes from './routes/history.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 // Database connection
 import connectDB from './config/db.js';
@@ -136,6 +137,12 @@ app.use('/api/history', historyRoutes);
  * Handles admin panel functionality.
  */
 app.use('/api/admin', adminRoutes);
+
+/**
+ * Notification API Routes
+ * Handles user notification management.
+ */
+app.use('/api/notifications', notificationRoutes);
 
 /**
  * Health Check Endpoint

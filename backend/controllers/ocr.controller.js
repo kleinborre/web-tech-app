@@ -9,6 +9,7 @@
 
 import { processMultipleImages } from '../utils/ocrProcessor.js';
 import ConversionLog from '../models/ConversionLog.model.js';
+import Notification from '../models/Notification.model.js';
 
 /* ==========================================================================
    OCR CONTROLLER
@@ -45,6 +46,17 @@ export const convertImages = async (req, res) => {
                     }));
                 await Promise.all(savePromises);
                 console.log(`[OCR] Saved ${savePromises.length} conversion(s) for user ${req.user.username}`);
+
+                // Send notification for successful conversion(s)
+                try {
+                    const fileNames = results.filter(r => r.success).map(r => r.filename);
+                    const msg = fileNames.length === 1
+                        ? `Successfully converted "${fileNames[0]}"`
+                        : `Successfully converted ${fileNames.length} file(s)`;
+                    await Notification.notify(req.user._id, 'conversion', msg);
+                } catch (notifError) {
+                    console.error('[OCR] Failed to send notification:', notifError.message);
+                }
             } catch (logError) {
                 console.error('[OCR] Failed to save conversion log:', logError.message);
             }

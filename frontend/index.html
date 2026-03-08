@@ -46,10 +46,11 @@
                 </nav>
 
                 <!-- Desktop Navigation - Logged In (visible ≥992px) -->
-                <nav class="header__nav header__nav--desktop" data-auth="logged-in" style="display: none;">
+                <nav class="header__nav header__nav--desktop" id="headerLoggedInNav" data-auth="logged-in" style="display: none;">
                     <a href="./admin/dashboard.html" class="btn btn--outline">
                         <i class="bi bi-grid me-1"></i> Dashboard
                     </a>
+                    <div id="notif-container-main" style="display: inline-flex; align-items: center;"></div>
                     <button class="btn btn--secondary" id="headerLogoutBtn">
                         <i class="bi bi-box-arrow-right me-1"></i> Sign Out
                     </button>
@@ -514,6 +515,23 @@
                     }
                 });
             }
+        });
+    </script>
+    <!-- Notification System -->
+    <script src="./js/notifications.js"></script>
+    <script>
+        // Initialize notifications after auth is confirmed
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for auth check to complete, then init notifications
+            const checkAuth = setInterval(() => {
+                const loggedInNav = document.querySelector('[data-auth="logged-in"]');
+                if (loggedInNav && loggedInNav.style.display !== 'none') {
+                    clearInterval(checkAuth);
+                    NotificationManager.init('notif-container-main');
+                }
+            }, 500);
+            // Stop checking after 10 seconds
+            setTimeout(() => clearInterval(checkAuth), 10000);
         });
     </script>
 </body>

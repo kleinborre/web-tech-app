@@ -439,6 +439,7 @@
                 <span id="welcomeUser" style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
                     User</span>
                 <div id="userAvatar" class="dashboard__avatar">U</div>
+                <div id="notif-container-settings" style="display: inline-flex; align-items: center;"></div>
                 <a href="#" id="logoutBtn" class="btn btn--outline btn--sm">
                     <i class="bi bi-box-arrow-right"></i>
                     Sign Out
@@ -668,6 +669,13 @@
     <script src="../js/auth.js"></script>
     <!-- Settings JS -->
     <script src="../js/settings.js"></script>
+    <!-- Notification System -->
+    <script src="../js/notifications.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            NotificationManager.init('notif-container-settings');
+        });
+    </script>
 </body>
 
 </html>

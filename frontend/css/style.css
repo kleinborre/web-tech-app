@@ -1222,6 +1222,8 @@ img {
 .dashboard__body {
     display: flex;
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .dashboard__sidebar {
@@ -1379,8 +1381,12 @@ img {
 
 .dashboard__content {
     flex: 1;
+    min-width: 0;
     padding: var(--spacing-lg);
     background-color: var(--color-gray-50);
+    overflow-x: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /**
@@ -1392,6 +1398,8 @@ img {
     box-shadow: var(--shadow-sm);
     padding: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .dashboard__card-header {
@@ -1464,6 +1472,7 @@ img {
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .data-table th,
@@ -1471,6 +1480,9 @@ img {
     padding: var(--spacing-md);
     text-align: left;
     border-bottom: 1px solid var(--color-gray-200);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .data-table th {
@@ -1482,6 +1494,7 @@ img {
 
 .data-table td {
     color: var(--color-gray-800);
+    max-width: 0;
 }
 
 .data-table tbody tr:hover {
@@ -1492,6 +1505,42 @@ img {
     display: flex;
     gap: var(--spacing-xs);
 }
+
+/**
+ * History Table Column Widths (Date | File Name | Text Snippet | Actions)
+ */
+.history-table-wrapper .data-table th:nth-child(1),
+.history-table-wrapper .data-table td:nth-child(1) { width: 18%; }
+
+.history-table-wrapper .data-table th:nth-child(2),
+.history-table-wrapper .data-table td:nth-child(2) { width: 25%; }
+
+.history-table-wrapper .data-table th:nth-child(3),
+.history-table-wrapper .data-table td:nth-child(3) { width: 40%; }
+
+.history-table-wrapper .data-table th:nth-child(4),
+.history-table-wrapper .data-table td:nth-child(4) { width: 17%; white-space: normal; }
+
+/**
+ * Admin Users Table Column Widths (User | Email | Role | Joined | Status | Actions)
+ */
+.admin-users-table-wrapper .data-table th:nth-child(1),
+.admin-users-table-wrapper .data-table td:nth-child(1) { width: 18%; }
+
+.admin-users-table-wrapper .data-table th:nth-child(2),
+.admin-users-table-wrapper .data-table td:nth-child(2) { width: 24%; }
+
+.admin-users-table-wrapper .data-table th:nth-child(3),
+.admin-users-table-wrapper .data-table td:nth-child(3) { width: 12%; }
+
+.admin-users-table-wrapper .data-table th:nth-child(4),
+.admin-users-table-wrapper .data-table td:nth-child(4) { width: 14%; }
+
+.admin-users-table-wrapper .data-table th:nth-child(5),
+.admin-users-table-wrapper .data-table td:nth-child(5) { width: 12%; }
+
+.admin-users-table-wrapper .data-table th:nth-child(6),
+.admin-users-table-wrapper .data-table td:nth-child(6) { width: 20%; white-space: normal; }
 
 /**
  * Chart Placeholder
@@ -2145,4 +2194,55 @@ img {
 html,
 body {
     overflow-x: hidden;
+}
+
+/* ==========================================================================
+   PAGINATION THEME OVERRIDES (Bootstrap → App Colors)
+   ========================================================================== */
+
+/**
+ * Override Bootstrap pagination to use the app's primary teal color.
+ * Applies to history pagination on the user dashboard
+ * and any other Bootstrap-rendered pagination.
+ */
+.pagination .page-link {
+    color: var(--color-primary, #0097b2);
+    border-color: var(--color-gray-200);
+    font-family: 'Poppins', sans-serif;
+    font-size: var(--font-size-sm);
+    transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+    color: var(--color-white);
+    background-color: var(--color-primary-light, #33b5cc);
+    border-color: var(--color-primary-light, #33b5cc);
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 151, 178, 0.25);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--color-primary, #0097b2);
+    border-color: var(--color-primary, #0097b2);
+    color: var(--color-white);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: var(--color-gray-400);
+    background-color: var(--color-gray-50);
+    border-color: var(--color-gray-200);
+}
+
+/**
+ * Card pagination (used in mobile card views).
+ * Ensures consistent centering and gap.
+ */
+.history-card-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 1rem 0 0.5rem;
 }

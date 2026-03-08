@@ -9,6 +9,7 @@
 
 import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
+import Notification from '../models/Notification.model.js';
 
 /* ==========================================================================
    HELPER FUNCTIONS
@@ -136,6 +137,16 @@ export const register = async (req, res) => {
         });
 
         console.log(`[Auth] New user registered: ${user.username}`);
+
+        // Notify all admins/superadmins about the new registration
+        try {
+            await Notification.notifyAdmins(
+                'new_user',
+                `New user registered: ${user.username} (${user.email})`
+            );
+        } catch (notifError) {
+            console.error('[Auth] Failed to send admin notification:', notifError.message);
+        }
 
         sendTokenResponse(user, 201, res);
 
@@ -405,6 +416,13 @@ export const updateUsername = async (req, res) => {
             }
         });
 
+        // Send notification (after response to avoid delay)
+        try {
+            await Notification.notify(user._id, 'profile_update', `Username updated to "${user.username}"`);
+        } catch (notifError) {
+            console.error('[Auth] Notification error:', notifError.message);
+        }
+
     } catch (error) {
         console.error('[Auth] UpdateUsername error:', error.message);
         res.status(500).json({
@@ -472,6 +490,13 @@ export const updateEmail = async (req, res) => {
                 createdAt: user.createdAt
             }
         });
+
+        // Send notification (after response)
+        try {
+            await Notification.notify(user._id, 'profile_update', `Email updated to "${user.email}"`);
+        } catch (notifError) {
+            console.error('[Auth] Notification error:', notifError.message);
+        }
 
     } catch (error) {
         console.error('[Auth] UpdateEmail error:', error.message);
@@ -550,6 +575,13 @@ export const updatePassword = async (req, res) => {
             success: true,
             message: 'Password updated successfully'
         });
+
+        // Send notification (after response)
+        try {
+            await Notification.notify(user._id, 'profile_update', 'Your password was updated successfully');
+        } catch (notifError) {
+            console.error('[Auth] Notification error:', notifError.message);
+        }
 
     } catch (error) {
         console.error('[Auth] UpdatePassword error:', error.message);
