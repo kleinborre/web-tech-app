@@ -15,10 +15,10 @@
 const SettingsConfig = {
     AUTH_API: '/api/auth',
     LOGIN_PAGE: '/auth/login',
-    USERNAME_REGEX: /^[a-zA-Z0-9_-]{3,30}$/,
+    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    PW_MIN_LENGTH: 6,
-    PW_SPECIAL_REGEX: /[!@#$%^&*(),.?":{}|<>]/,
+    PW_MIN_LENGTH: 8,
+    PW_SPECIAL_REGEX: /[!@#$%^&*(),.?":{}|<>_]/,
     VERIFY_DEBOUNCE_MS: 600,
     POPUP_AUTO_CLOSE_MS: 2000
 };
@@ -299,10 +299,17 @@ function validateUsername(val, input, errorEl) {
         errorEl.textContent = 'Username must not exceed 30 characters.';
         return false;
     }
-    if (!/^[a-zA-Z0-9_-]+$/.test(val)) {
+    if (!SettingsConfig.USERNAME_REGEX.test(val)) {
         input.classList.add('settings-form__input--error');
         input.classList.remove('settings-form__input--success');
-        errorEl.textContent = 'Only letters, numbers, underscores, and hyphens allowed.';
+        errorEl.textContent = 'Only letters, numbers, dots, and underscores allowed.';
+        return false;
+    }
+    // Only one separator type (dot or underscore, not both)
+    if (val.includes('.') && val.includes('_')) {
+        input.classList.add('settings-form__input--error');
+        input.classList.remove('settings-form__input--success');
+        errorEl.textContent = 'Use either dot or underscore, not both.';
         return false;
     }
     input.classList.remove('settings-form__input--error');
@@ -608,10 +615,28 @@ function validateNewPassword(val, input, errorEl) {
         errorEl.textContent = `Minimum ${SettingsConfig.PW_MIN_LENGTH} characters required.`;
         return false;
     }
+    if (!/[A-Z]/.test(val)) {
+        input.classList.add('settings-form__input--error');
+        input.classList.remove('settings-form__input--success');
+        errorEl.textContent = 'Must contain at least one uppercase letter.';
+        return false;
+    }
+    if (!/[a-z]/.test(val)) {
+        input.classList.add('settings-form__input--error');
+        input.classList.remove('settings-form__input--success');
+        errorEl.textContent = 'Must contain at least one lowercase letter.';
+        return false;
+    }
+    if (!/[0-9]/.test(val)) {
+        input.classList.add('settings-form__input--error');
+        input.classList.remove('settings-form__input--success');
+        errorEl.textContent = 'Must contain at least one number.';
+        return false;
+    }
     if (!SettingsConfig.PW_SPECIAL_REGEX.test(val)) {
         input.classList.add('settings-form__input--error');
         input.classList.remove('settings-form__input--success');
-        errorEl.textContent = 'Must contain at least one special character.';
+        errorEl.textContent = 'Must contain at least one special character (. _ ! @ # $ etc.)';
         return false;
     }
     input.classList.remove('settings-form__input--error');
@@ -754,77 +779,8 @@ function closeResultPopup(returnTab) {
    ========================================================================== */
 
 function initSidebarNav() {
-    // Dashboard link
-    const dashboardLink = document.querySelector('a[href="dashboard.html"].dashboard__nav-link');
-    if (dashboardLink) {
-        dashboardLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Leave Settings',
-                    'Go to Dashboard?',
-                    () => { window.location.href = 'dashboard.html'; },
-                    null, 'Confirm', 'Cancel', 'primary'
-                );
-            } else {
-                window.location.href = 'dashboard.html';
-            }
-        });
-    }
-
-    // Convert link
-    const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
-    if (convertLink) {
-        convertLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Leave Settings',
-                    'Go to home page?',
-                    () => { window.location.href = '../index.html'; },
-                    null, 'Confirm', 'Cancel', 'primary'
-                );
-            } else {
-                window.location.href = '../index.html';
-            }
-        });
-    }
-
-    // Users link
-    const usersLink = document.querySelector('a[href="users.html"].dashboard__nav-link');
-    if (usersLink) {
-        usersLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Leave Settings',
-                    'Go to User Management?',
-                    () => { window.location.href = 'users.html'; },
-                    null, 'Confirm', 'Cancel', 'primary'
-                );
-            } else {
-                window.location.href = 'users.html';
-            }
-        });
-    }
-
-    // Logo link
-    const logoLink = document.querySelector('.dashboard__logo');
-    if (logoLink) {
-        logoLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Leave Settings',
-                    'Go to home page?',
-                    () => { window.location.href = '../index.html'; },
-                    null, 'Confirm', 'Cancel', 'primary'
-                );
-            } else {
-                window.location.href = '../index.html';
-            }
-        });
-    }
+    // No confirmation dialogs — sidebar links navigate directly
+    // (only logout retains confirmation)
 }
 
 /* ==========================================================================

@@ -386,7 +386,7 @@ const HistoryManager = {
                 null,
                 'Delete',
                 'Cancel',
-                'danger'
+                'primary'
             );
         } else if (confirm('Are you sure you want to delete this record?')) {
             await HistoryManager.performDelete(id);

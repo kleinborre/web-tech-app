@@ -15,10 +15,10 @@ const AUTH_CONFIG = {
     REDIRECT_AFTER_LOGIN: '/admin/dashboard',
     REDIRECT_AFTER_LOGOUT: '/',
     LOGIN_PAGE: '/auth/login',
-    MIN_PASSWORD_LENGTH: 6, // Lowered from 8
-    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>]/, // Optional special char
+    MIN_PASSWORD_LENGTH: 8,
+    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>_]/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    USERNAME_REGEX: /^[a-zA-Z0-9_-]+$/
+    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/
 };
 
 /* ==========================================================================
@@ -53,7 +53,13 @@ const Validators = {
             return { valid: false, message: 'Username cannot exceed 30 characters' };
         }
         if (!AUTH_CONFIG.USERNAME_REGEX.test(username)) {
-            return { valid: false, message: 'Username can only contain letters, numbers, underscores, and hyphens' };
+            return { valid: false, message: 'Username can only contain letters, numbers, dots, and underscores' };
+        }
+        // Only one separator type allowed (dot or underscore, not both)
+        const hasDot = username.includes('.');
+        const hasUnderscore = username.includes('_');
+        if (hasDot && hasUnderscore) {
+            return { valid: false, message: 'Username can use either a dot or underscore, not both' };
         }
         return { valid: true, message: '' };
     },
@@ -74,11 +80,29 @@ const Validators = {
             };
         }
 
-        // Calculate strength (0-4) but only require length
-        let strength = 1;
-        if (password.length >= 8) strength++;
-        if (AUTH_CONFIG.PASSWORD_REGEX.test(password)) strength++;
-        if (/[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password)) strength++;
+        // Check required character types
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasLowercase = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = AUTH_CONFIG.PASSWORD_REGEX.test(password);
+
+        if (!hasUppercase) {
+            return { valid: false, message: 'Password must contain at least one uppercase letter', strength: 1 };
+        }
+        if (!hasLowercase) {
+            return { valid: false, message: 'Password must contain at least one lowercase letter', strength: 1 };
+        }
+        if (!hasNumber) {
+            return { valid: false, message: 'Password must contain at least one number', strength: 1 };
+        }
+        if (!hasSpecial) {
+            return { valid: false, message: 'Password must contain at least one special character (. _ ! @ # $ etc.)', strength: 2 };
+        }
+
+        // Calculate strength (all required criteria met)
+        let strength = 2; // Base: meets all requirements
+        if (password.length >= 10) strength++;
+        if (password.length >= 12) strength++;
 
         return { valid: true, message: 'Password accepted', strength };
     },
@@ -471,45 +495,28 @@ const FormHandlers = {
         const form = document.getElementById('loginForm');
         if (!form) return;
 
-        const usernameInput = form.querySelector('#username') || form.querySelector('[name="username"]');
-        const emailInput = form.querySelector('#email') || form.querySelector('[name="email"]');
+        const identifierInput = form.querySelector('#loginIdentifier') || form.querySelector('[name="loginIdentifier"]');
         const passwordInput = form.querySelector('#password') || form.querySelector('[name="password"]');
         const submitBtn = form.querySelector('button[type="submit"]');
 
-        // Live validation
-        if (usernameInput) {
-            usernameInput.addEventListener('input', () => {
-                const result = Validators.username(usernameInput.value);
-                if (usernameInput.value === '') {
-                    UI.clearValidation(usernameInput);
-                } else if (result.valid) {
-                    UI.showSuccess(usernameInput);
-                } else {
-                    UI.showError(usernameInput, result.message);
+        // Live validation — only red errors, no green checkmarks on login
+        if (identifierInput) {
+            identifierInput.addEventListener('input', () => {
+                // Clear any error state when user types
+                if (identifierInput.value.trim().length > 0) {
+                    identifierInput.classList.remove('is-invalid');
                 }
-            });
-        }
-
-        if (emailInput) {
-            emailInput.addEventListener('input', () => {
-                const result = Validators.email(emailInput.value);
-                if (emailInput.value === '') {
-                    UI.clearValidation(emailInput);
-                } else if (result.valid) {
-                    UI.showSuccess(emailInput);
-                } else {
-                    UI.showError(emailInput, result.message);
-                }
+                // Remove any green success indicator
+                identifierInput.classList.remove('is-valid');
             });
         }
 
         if (passwordInput) {
             passwordInput.addEventListener('input', () => {
-                if (passwordInput.value === '') {
-                    UI.clearValidation(passwordInput);
-                } else if (passwordInput.value.length >= 1) {
-                    UI.showSuccess(passwordInput);
+                if (passwordInput.value.length > 0) {
+                    passwordInput.classList.remove('is-invalid');
                 }
+                passwordInput.classList.remove('is-valid');
             });
         }
 
@@ -517,27 +524,24 @@ const FormHandlers = {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const credentials = {};
+            const identifier = identifierInput ? identifierInput.value.trim() : '';
+            const password = passwordInput ? passwordInput.value : '';
 
-            // Support both username and email login
-            if (usernameInput && usernameInput.value) {
-                credentials.username = usernameInput.value.trim();
-            }
-            if (emailInput && emailInput.value) {
-                credentials.email = emailInput.value.trim();
-            }
-            if (passwordInput) {
-                credentials.password = passwordInput.value;
-            }
-
-            // Basic validation
-            if (!credentials.username && !credentials.email) {
-                UI.showToast('Please enter your username or email', 'danger');
+            if (!identifier) {
+                UI.showToast('Please enter your email or username', 'danger');
                 return;
             }
-            if (!credentials.password) {
+            if (!password) {
                 UI.showToast('Please enter your password', 'danger');
                 return;
+            }
+
+            // Auto-detect: if input looks like email, send as email; otherwise as username
+            const credentials = { password };
+            if (AUTH_CONFIG.EMAIL_REGEX.test(identifier)) {
+                credentials.email = identifier;
+            } else {
+                credentials.username = identifier;
             }
 
             UI.showLoading(submitBtn, 'Logging in...');
@@ -546,16 +550,14 @@ const FormHandlers = {
                 const result = await AuthService.login(credentials);
 
                 if (result.success) {
-                    // Store user info in localStorage for frontend use
                     localStorage.setItem('user', JSON.stringify(result.user));
 
-                    // Show success modal with countdown before redirect
                     UI.showSuccessModal(
                         'Login Successful!',
                         `Welcome back, <strong>${result.user.username}</strong>!`,
                         AUTH_CONFIG.REDIRECT_AFTER_LOGIN,
                         'Go to Dashboard',
-                        true // Enable auto-redirect with countdown
+                        true
                     );
                 } else {
                     UI.showToast(result.error || 'Login failed', 'danger');

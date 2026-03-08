@@ -176,6 +176,10 @@ app.get('/auth/forgot-password', (req, res) => {
     res.sendFile(path.join(frontendPath, 'auth', 'forgot-password.html'));
 });
 
+app.get('/auth/update-password', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'auth', 'update-password.html'));
+});
+
 /**
  * Admin Pages
  * Serves admin panel HTML pages using clean URLs.

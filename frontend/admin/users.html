@@ -773,41 +773,7 @@
                     });
                 }
 
-                // Dashboard link confirmation
-                const dashboardLink = document.querySelector('a[href="dashboard.html"].dashboard__nav-link');
-                if (dashboardLink) {
-                    dashboardLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                            UI.showConfirmDialog(
-                                'Leave Users Page',
-                                'Go to Dashboard?',
-                                () => { window.location.href = 'dashboard.html'; },
-                                null, 'Confirm', 'Cancel', 'primary'
-                            );
-                        } else {
-                            window.location.href = 'dashboard.html';
-                        }
-                    });
-                }
-
-                // Settings link confirmation
-                const settingsLink = document.querySelector('a[href="settings.html"].dashboard__nav-link');
-                if (settingsLink) {
-                    settingsLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                            UI.showConfirmDialog(
-                                'Leave Users Page',
-                                'Go to Settings?',
-                                () => { window.location.href = 'settings.html'; },
-                                null, 'Confirm', 'Cancel', 'primary'
-                            );
-                        } else {
-                            window.location.href = 'settings.html';
-                        }
-                    });
-                }
+                // Dashboard and Settings links — no confirmation needed, natural navigation
 
             } catch (error) {
                 console.error('Init error:', error);

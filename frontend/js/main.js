@@ -613,20 +613,16 @@ const Results = (() => {
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
-                            <h5 class="modal-title">
-                                <i class="bi bi-trash me-2"></i>Delete Confirmation
-                            </h5>
+                            <h5 class="modal-title">Delete Confirmation</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body text-center py-4">
-                            <i class="bi bi-trash" style="font-size: 3rem; color: #dc3545;"></i>
-                            <p class="mt-3 mb-2" style="word-wrap: break-word; overflow-wrap: break-word;"><strong>Delete "${result.filename}"?</strong></p>
-                            <p class="text-danger mb-0"><i class="bi bi-exclamation-circle me-1"></i>This action is final and cannot be undone!</p>
+                            <p class="mb-0" style="word-wrap: break-word; overflow-wrap: break-word;">Remove "${result.filename}"?</p>
                         </div>
                         <div class="modal-footer justify-content-center">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                                <i class="bi bi-trash me-2"></i>Delete Permanently
+                            <button type="button" class="btn text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);" id="confirmDeleteBtn">
+                                Confirm
                             </button>
                         </div>
                     </div>

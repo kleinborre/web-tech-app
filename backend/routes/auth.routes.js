@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword } from '../controllers/auth.controller.js';
+import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -36,6 +36,20 @@ router.post('/login', login);
  * @access  Public
  */
 router.post('/check-email', checkEmail);
+
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Send password reset email
+ * @access  Public
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password using token from email
+ * @access  Public
+ */
+router.post('/reset-password', resetPassword);
 
 /* ==========================================================================
    PROTECTED ROUTES

@@ -10,6 +10,8 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
 import Notification from '../models/Notification.model.js';
+import PasswordResetToken from '../models/PasswordResetToken.model.js';
+import { sendPasswordResetEmail } from '../utils/email.js';
 
 /* ==========================================================================
    HELPER FUNCTIONS
@@ -95,18 +97,42 @@ export const register = async (req, res) => {
         }
 
         // Check password length
-        if (password.length < 6) {
+        if (password.length < 8) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must be at least 6 characters'
+                error: 'Password must be at least 8 characters'
             });
         }
 
-        // Check for special character in password
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        // Check for uppercase letter
+        if (!/[A-Z]/.test(password)) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must contain at least one special character'
+                error: 'Password must contain at least one uppercase letter'
+            });
+        }
+
+        // Check for lowercase letter
+        if (!/[a-z]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one lowercase letter'
+            });
+        }
+
+        // Check for number
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one number'
+            });
+        }
+
+        // Check for special character in password (including . and _)
+        if (!/[!@#$%^&*(),.?":{}|<>_]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one special character (. _ ! @ # $ etc.)'
             });
         }
 
@@ -629,6 +655,168 @@ export const verifyPassword = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Server error while verifying password'
+        });
+    }
+};
+
+/* ==========================================================================
+   PASSWORD RESET (FORGOT PASSWORD)
+   ========================================================================== */
+
+/**
+ * @desc    Send password reset email
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is required'
+            });
+        }
+
+        // Find user by email
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            // Return success anyway to prevent email enumeration
+            return res.status(200).json({
+                success: true,
+                message: 'If an account exists with this email, a reset link has been sent.'
+            });
+        }
+
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                error: 'This account has been deactivated. Contact an administrator.'
+            });
+        }
+
+        // Generate token
+        const plainToken = await PasswordResetToken.createToken(user._id);
+
+        // Build reset URL (use Origin header for proper domain on Vercel/browser, fallback for Postman/API)
+        const origin = req.get('origin') || req.get('referer')?.replace(/\/+$/, '') || `${req.protocol}://${req.get('host')}`;
+        const baseUrl = origin.replace(/\/+$/, '');
+        const resetUrl = `${baseUrl}/auth/update-password?token=${plainToken}&email=${encodeURIComponent(user.email)}`;
+
+        // Send email
+        await sendPasswordResetEmail(user.email, resetUrl, user.username);
+
+        console.log(`[Auth] Password reset email sent to: ${user.email}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset link has been sent to your email.'
+        });
+
+    } catch (error) {
+        console.error('[Auth] ForgotPassword error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while processing password reset request'
+        });
+    }
+};
+
+/**
+ * @desc    Reset password using token
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, email, password } = req.body;
+
+        if (!token || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Token, email, and new password are required'
+            });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must be at least 8 characters'
+            });
+        }
+        if (!/[A-Z]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one uppercase letter'
+            });
+        }
+        if (!/[a-z]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one lowercase letter'
+            });
+        }
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one number'
+            });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>_]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Password must contain at least one special character (. _ ! @ # $ etc.)'
+            });
+        }
+
+        // Find user
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired reset token'
+            });
+        }
+
+        // Verify token
+        const tokenDoc = await PasswordResetToken.verifyToken(token, user._id);
+
+        if (!tokenDoc) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid or expired reset token. Please request a new one.'
+            });
+        }
+
+        // Update password
+        user.password = password;
+        await user.save();
+
+        // Delete the used token
+        await PasswordResetToken.deleteMany({ userId: user._id });
+
+        console.log(`[Auth] Password reset successful for user: ${user._id}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Password has been reset successfully. You can now log in.'
+        });
+
+        // Send notification (after response)
+        try {
+            await Notification.notify(user._id, 'profile_update', 'Your password was reset successfully via email link');
+        } catch (notifError) {
+            console.error('[Auth] Notification error:', notifError.message);
+        }
+
+    } catch (error) {
+        console.error('[Auth] ResetPassword error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while resetting password'
         });
     }
 };

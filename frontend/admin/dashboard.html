@@ -468,23 +468,9 @@
                 });
             }
 
-            // Settings link confirmation
+            // Settings link — no confirmation needed
             const settingsLink = document.querySelector('a[href="settings.html"].dashboard__nav-link');
-            if (settingsLink) {
-                settingsLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Leave Dashboard',
-                            'Go to Settings?',
-                            () => { window.location.href = 'settings.html'; },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        window.location.href = 'settings.html';
-                    }
-                });
-            }
+            // No event listener override — natural navigation
 
             // === Mobile Navigation Confirmations ===
             const mobileConvertLink = document.querySelector('.dashboard__mobile-link[href="../index.html"]');
@@ -525,24 +511,7 @@
                 });
             }
 
-            const mobileSettingsLink = document.querySelector('.dashboard__mobile-link[href="settings.html"]');
-            if (mobileSettingsLink) {
-                mobileSettingsLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    hamburger?.classList.remove('dashboard__hamburger--active');
-                    mobileMenu?.classList.remove('dashboard__mobile-menu--open');
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Leave Dashboard',
-                            'Go to Settings?',
-                            () => { window.location.href = 'settings.html'; },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        window.location.href = 'settings.html';
-                    }
-                });
-            }
+            // Mobile settings link — no confirmation needed, natural navigation
         });
     </script>
     <!-- Notification System -->
