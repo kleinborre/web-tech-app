@@ -17,7 +17,7 @@ import Notification from '../models/Notification.model.js';
  * @route   GET /api/notifications
  * @access  Private
  */
-export const getNotifications = async (req, res) => {
+export const getNotifications = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
@@ -36,10 +36,7 @@ export const getNotifications = async (req, res) => {
 
     } catch (error) {
         console.error('[Notification] GetNotifications error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while fetching notifications'
-        });
+        next(error);
     }
 };
 
@@ -48,7 +45,7 @@ export const getNotifications = async (req, res) => {
  * @route   GET /api/notifications/unread-count
  * @access  Private
  */
-export const getUnreadCount = async (req, res) => {
+export const getUnreadCount = async (req, res, next) => {
     try {
         const count = await Notification.getUnreadCount(req.user._id);
 
@@ -73,10 +70,7 @@ export const getUnreadCount = async (req, res) => {
 
     } catch (error) {
         console.error('[Notification] GetUnreadCount error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while fetching unread count'
-        });
+        next(error);
     }
 };
 
@@ -85,7 +79,7 @@ export const getUnreadCount = async (req, res) => {
  * @route   PATCH /api/notifications/:id/read
  * @access  Private
  */
-export const markAsRead = async (req, res) => {
+export const markAsRead = async (req, res, next) => {
     try {
         const notification = await Notification.findOneAndUpdate(
             { _id: req.params.id, userId: req.user._id },
@@ -107,10 +101,7 @@ export const markAsRead = async (req, res) => {
 
     } catch (error) {
         console.error('[Notification] MarkAsRead error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while marking notification as read'
-        });
+        next(error);
     }
 };
 
@@ -119,7 +110,7 @@ export const markAsRead = async (req, res) => {
  * @route   PATCH /api/notifications/read-all
  * @access  Private
  */
-export const markAllAsRead = async (req, res) => {
+export const markAllAsRead = async (req, res, next) => {
     try {
         const result = await Notification.updateMany(
             { userId: req.user._id, read: false },
@@ -133,9 +124,6 @@ export const markAllAsRead = async (req, res) => {
 
     } catch (error) {
         console.error('[Notification] MarkAllAsRead error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while marking all notifications as read'
-        });
+        next(error);
     }
 };

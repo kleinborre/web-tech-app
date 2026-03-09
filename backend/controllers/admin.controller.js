@@ -14,7 +14,7 @@ import ConversionLog from '../models/ConversionLog.model.js';
  * @route   GET /api/admin/users
  * @access  Private/Admin
  */
-export const getUsers = async (req, res) => {
+export const getUsers = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -36,7 +36,7 @@ export const getUsers = async (req, res) => {
 
     } catch (error) {
         console.error('[Admin] Get users error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to fetch users' });
+        next(error);
     }
 };
 
@@ -45,7 +45,7 @@ export const getUsers = async (req, res) => {
  * @route   GET /api/admin/stats
  * @access  Private/Admin
  */
-export const getStats = async (req, res) => {
+export const getStats = async (req, res, next) => {
     try {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -88,7 +88,7 @@ export const getStats = async (req, res) => {
 
     } catch (error) {
         console.error('[Admin] Get stats error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to fetch statistics' });
+        next(error);
     }
 };
 
@@ -97,7 +97,7 @@ export const getStats = async (req, res) => {
  * @route   PATCH /api/admin/users/:id/status
  * @access  Private/Admin
  */
-export const toggleUserStatus = async (req, res) => {
+export const toggleUserStatus = async (req, res, next) => {
     try {
         const targetUser = await User.findById(req.params.id);
 
@@ -128,7 +128,7 @@ export const toggleUserStatus = async (req, res) => {
 
     } catch (error) {
         console.error('[Admin] Toggle status error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to update user status' });
+        next(error);
     }
 };
 
@@ -137,7 +137,7 @@ export const toggleUserStatus = async (req, res) => {
  * @route   PATCH /api/admin/users/:id/role
  * @access  Private/SuperAdmin
  */
-export const changeUserRole = async (req, res) => {
+export const changeUserRole = async (req, res, next) => {
     try {
         const { role } = req.body;
         const validRoles = ['user', 'admin'];
@@ -181,7 +181,7 @@ export const changeUserRole = async (req, res) => {
 
     } catch (error) {
         console.error('[Admin] Change role error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to change user role' });
+        next(error);
     }
 };
 
@@ -190,7 +190,7 @@ export const changeUserRole = async (req, res) => {
  * @route   GET /api/admin/users/:id
  * @access  Private/Admin
  */
-export const getUser = async (req, res) => {
+export const getUser = async (req, res, next) => {
     try {
         const user = await User.findById(req.params.id).select('-password');
 
@@ -208,6 +208,6 @@ export const getUser = async (req, res) => {
 
     } catch (error) {
         console.error('[Admin] Get user error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to fetch user' });
+        next(error);
     }
 };

@@ -78,7 +78,7 @@ const sendTokenResponse = (user, statusCode, res) => {
  * @route   POST /api/auth/register
  * @access  Public
  */
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
     try {
         const { username, email, password, confirmPassword } = req.body;
 
@@ -180,29 +180,7 @@ export const register = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] Registration error:', error.message);
-
-        // Handle Mongoose validation errors
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(err => err.message);
-            return res.status(400).json({
-                success: false,
-                error: messages.join(', ')
-            });
-        }
-
-        // Handle duplicate key errors
-        if (error.code === 11000) {
-            const field = Object.keys(error.keyPattern)[0];
-            return res.status(400).json({
-                success: false,
-                error: `${field} already exists`
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            error: 'Server error during registration'
-        });
+        next(error);
     }
 };
 
@@ -211,7 +189,7 @@ export const register = async (req, res) => {
  * @route   POST /api/auth/login
  * @access  Public
  */
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
     try {
         const { username, email, password } = req.body;
 
@@ -269,10 +247,7 @@ export const login = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] Login error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error during login'
-        });
+        next(error);
     }
 };
 
@@ -281,7 +256,7 @@ export const login = async (req, res) => {
  * @route   POST /api/auth/logout
  * @access  Private
  */
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
     try {
         res.cookie('token', 'none', {
             expires: new Date(Date.now() + 10 * 1000), // 10 seconds
@@ -297,10 +272,7 @@ export const logout = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] Logout error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error during logout'
-        });
+        next(error);
     }
 };
 
@@ -309,7 +281,7 @@ export const logout = async (req, res) => {
  * @route   GET /api/auth/me
  * @access  Private
  */
-export const getMe = async (req, res) => {
+export const getMe = async (req, res, next) => {
     try {
         // User is attached by auth middleware
         const user = await User.findById(req.user.id);
@@ -341,10 +313,7 @@ export const getMe = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] GetMe error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error'
-        });
+        next(error);
     }
 };
 
@@ -353,7 +322,7 @@ export const getMe = async (req, res) => {
  * @route   POST /api/auth/check-email
  * @access  Public
  */
-export const checkEmail = async (req, res) => {
+export const checkEmail = async (req, res, next) => {
     try {
         const { email } = req.body;
 
@@ -374,11 +343,7 @@ export const checkEmail = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] CheckEmail error:', error.message);
-        res.status(500).json({
-            success: false,
-            exists: false,
-            error: 'Server error'
-        });
+        next(error);
     }
 };
 
@@ -391,7 +356,7 @@ export const checkEmail = async (req, res) => {
  * @route   PATCH /api/auth/update-username
  * @access  Private
  */
-export const updateUsername = async (req, res) => {
+export const updateUsername = async (req, res, next) => {
     try {
         const { username } = req.body;
 
@@ -467,10 +432,7 @@ export const updateUsername = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] UpdateUsername error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while updating username'
-        });
+        next(error);
     }
 };
 
@@ -479,7 +441,7 @@ export const updateUsername = async (req, res) => {
  * @route   PATCH /api/auth/update-email
  * @access  Private
  */
-export const updateEmail = async (req, res) => {
+export const updateEmail = async (req, res, next) => {
     try {
         const { email } = req.body;
 
@@ -542,10 +504,7 @@ export const updateEmail = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] UpdateEmail error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while updating email'
-        });
+        next(error);
     }
 };
 
@@ -554,7 +513,7 @@ export const updateEmail = async (req, res) => {
  * @route   PATCH /api/auth/update-password
  * @access  Private
  */
-export const updatePassword = async (req, res) => {
+export const updatePassword = async (req, res, next) => {
     try {
         const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
@@ -627,10 +586,7 @@ export const updatePassword = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] UpdatePassword error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while updating password'
-        });
+        next(error);
     }
 };
 
@@ -639,7 +595,7 @@ export const updatePassword = async (req, res) => {
  * @route   POST /api/auth/verify-password
  * @access  Private
  */
-export const verifyPassword = async (req, res) => {
+export const verifyPassword = async (req, res, next) => {
     try {
         const { password } = req.body;
 
@@ -668,10 +624,7 @@ export const verifyPassword = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] VerifyPassword error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while verifying password'
-        });
+        next(error);
     }
 };
 
@@ -684,7 +637,7 @@ export const verifyPassword = async (req, res) => {
  * @route   POST /api/auth/forgot-password
  * @access  Public
  */
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
     try {
         const { email } = req.body;
 
@@ -733,10 +686,7 @@ export const forgotPassword = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] ForgotPassword error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while processing password reset request'
-        });
+        next(error);
     }
 };
 
@@ -745,7 +695,7 @@ export const forgotPassword = async (req, res) => {
  * @route   POST /api/auth/reset-password
  * @access  Public
  */
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (req, res, next) => {
     try {
         const { token, email, password } = req.body;
 
@@ -830,10 +780,7 @@ export const resetPassword = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] ResetPassword error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while resetting password'
-        });
+        next(error);
     }
 };
 
@@ -846,7 +793,7 @@ export const resetPassword = async (req, res) => {
  * @route   POST /api/auth/profile-picture
  * @access  Private
  */
-export const uploadProfilePicture = async (req, res) => {
+export const uploadProfilePicture = async (req, res, next) => {
     try {
         if (!req.file) {
             return res.status(400).json({
@@ -906,10 +853,7 @@ export const uploadProfilePicture = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] UploadProfilePicture error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while uploading profile picture'
-        });
+        next(error);
     }
 };
 
@@ -918,7 +862,7 @@ export const uploadProfilePicture = async (req, res) => {
  * @route   DELETE /api/auth/profile-picture
  * @access  Private
  */
-export const deleteProfilePicture = async (req, res) => {
+export const deleteProfilePicture = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -954,9 +898,6 @@ export const deleteProfilePicture = async (req, res) => {
 
     } catch (error) {
         console.error('[Auth] DeleteProfilePicture error:', error.message);
-        res.status(500).json({
-            success: false,
-            error: 'Server error while deleting profile picture'
-        });
+        next(error);
     }
 };

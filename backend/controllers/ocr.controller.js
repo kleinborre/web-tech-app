@@ -21,7 +21,7 @@ import Notification from '../models/Notification.model.js';
  * @param {Object} req - Express request object with files array
  * @param {Object} res - Express response object
  */
-export const convertImages = async (req, res) => {
+export const convertImages = async (req, res, next) => {
     try {
         const files = req.files;
         console.log(`[Controller] Received ${files.length} file(s) for OCR processing`);
@@ -83,13 +83,8 @@ export const convertImages = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[Controller] OCR processing error:', error);
-
-        res.status(500).json({
-            success: false,
-            error: 'An error occurred while processing the images',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        console.error('[Controller] OCR processing error:', error.message);
+        next(error);
     }
 };
 

@@ -9,6 +9,7 @@
 
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,6 +24,7 @@ import historyRoutes from './routes/history.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import { globalLimiter } from './middleware/rateLimiter.middleware.js';
+import errorHandler from './middleware/error.middleware.js';
 
 // Database connection
 import connectDB from './config/db.js';
@@ -59,6 +61,16 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
+}));
+
+/**
+ * Helmet.js Security Headers
+ * Sets various HTTP headers to secure the app.
+ * CSP disabled to allow inline scripts in the frontend.
+ */
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false
 }));
 
 /**
@@ -245,35 +257,10 @@ app.use('/api/{*splat}', (req, res) => {
 });
 
 /**
- * Global Error Handler
- * Catches and processes all unhandled errors.
+ * Centralized Error Handler
+ * Catches all errors forwarded via next(error) from controllers.
  */
-app.use((err, req, res, next) => {
-    console.error(`[ERROR] ${err.message}`);
-    console.error(err.stack);
-
-    // Multer file size error
-    if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-            success: false,
-            error: 'File size exceeds the maximum limit of 10MB'
-        });
-    }
-
-    // Multer file count error
-    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-        return res.status(400).json({
-            success: false,
-            error: 'Maximum of 5 files allowed per request'
-        });
-    }
-
-    // Generic server error
-    res.status(err.status || 500).json({
-        success: false,
-        error: NODE_ENV === 'development' ? err.message : 'Internal server error'
-    });
-});
+app.use(errorHandler);
 
 /* ==========================================================================
    SERVER INITIALIZATION

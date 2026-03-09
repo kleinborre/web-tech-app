@@ -14,7 +14,7 @@ import Notification from '../models/Notification.model.js';
  * @route   GET /api/history
  * @access  Private
  */
-export const getHistory = async (req, res) => {
+export const getHistory = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 5;
@@ -40,7 +40,7 @@ export const getHistory = async (req, res) => {
 
     } catch (error) {
         console.error('[History] Get error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to fetch history' });
+        next(error);
     }
 };
 
@@ -49,7 +49,7 @@ export const getHistory = async (req, res) => {
  * @route   GET /api/history/:id
  * @access  Private
  */
-export const getHistoryItem = async (req, res) => {
+export const getHistoryItem = async (req, res, next) => {
     try {
         const item = await ConversionLog.findOne({
             _id: req.params.id,
@@ -64,7 +64,7 @@ export const getHistoryItem = async (req, res) => {
 
     } catch (error) {
         console.error('[History] Get item error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to fetch record' });
+        next(error);
     }
 };
 
@@ -73,7 +73,7 @@ export const getHistoryItem = async (req, res) => {
  * @route   DELETE /api/history/:id
  * @access  Private
  */
-export const deleteHistory = async (req, res) => {
+export const deleteHistory = async (req, res, next) => {
     try {
         const item = await ConversionLog.findOneAndDelete({
             _id: req.params.id,
@@ -124,7 +124,7 @@ export const deleteHistory = async (req, res) => {
 
     } catch (error) {
         console.error('[History] Delete error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to delete record' });
+        next(error);
     }
 };
 
@@ -133,7 +133,7 @@ export const deleteHistory = async (req, res) => {
  * @route   DELETE /api/history
  * @access  Private
  */
-export const clearHistory = async (req, res) => {
+export const clearHistory = async (req, res, next) => {
     try {
         const result = await ConversionLog.deleteMany({ userId: req.user._id });
 
@@ -151,7 +151,7 @@ export const clearHistory = async (req, res) => {
 
     } catch (error) {
         console.error('[History] Clear error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to clear history' });
+        next(error);
     }
 };
 
@@ -160,7 +160,7 @@ export const clearHistory = async (req, res) => {
  * @route   POST /api/history/bulk-delete
  * @access  Private
  */
-export const bulkDeleteHistory = async (req, res) => {
+export const bulkDeleteHistory = async (req, res, next) => {
     try {
         const { ids } = req.body;
 
@@ -201,6 +201,6 @@ export const bulkDeleteHistory = async (req, res) => {
 
     } catch (error) {
         console.error('[History] Bulk delete error:', error.message);
-        res.status(500).json({ success: false, error: 'Failed to bulk delete records' });
+        next(error);
     }
 };
