@@ -1,15 +1,13 @@
 # 🔍 ImageToTextOnline — OCR Web Application
 
-> A full-stack web application that converts images to editable text using Optical Character Recognition (OCR) technology, built with Node.js, Express.js, MongoDB, Tesseract.js, Firebase Storage, and Google OAuth 2.0.
+![Node](https://img.shields.io/badge/node-v20.x-green.svg)
+![Express](https://img.shields.io/badge/express-v5.x-blue.svg)
+![MongoDB](https://img.shields.io/badge/mongodb-Atlas-green.svg)
+![Firebase](https://img.shields.io/badge/firebase-Storage-orange.svg)
+![OAuth](https://img.shields.io/badge/auth-Google_OAuth_2.0-red.svg)
+![Helmet](https://img.shields.io/badge/security-Helmet.js-blueviolet.svg)
 
-| | |
-|---|---|
-| **Course** | MO-IT149 - Web Technology Application |
-| **Term / Section** | Term 2 — Section A3101 |
-| **Institution** | Mapua Malayan Digital College |
-| **Mentor** | Sir Mario Pison Jr. |
-| **Developer** | Oliver Jann Klein Borre |
-| **Version** | 2.0.0 |
+> A full-stack OCR web application that converts images to editable text using Tesseract.js, with JWT + Google OAuth authentication, Firebase Storage, SMTP password reset, real-time notifications, role-based access control, and a full admin dashboard.
 
 ---
 
@@ -25,42 +23,26 @@
 8. [Architecture & Design Patterns](#-architecture--design-patterns)
 9. [Database Schema](#-database-schema)
 10. [REST API Endpoints](#-rest-api-endpoints)
-11. [Setup & Installation](#-setup--installation)
-12. [Accessing the Application](#-accessing-the-application)
-13. [Project Documentation Links](#-project-documentation-links)
-14. [Security Implementation](#-security-implementation)
-15. [Development Phases](#-development-phases)
+11. [Setup & Installation (Local)](#-setup--installation-local)
+12. [Deploying to Vercel](#-deploying-to-vercel)
+13. [Accessing the Application](#-accessing-the-application)
+14. [Project Documentation Links](#-project-documentation-links)
+15. [Security Implementation](#-security-implementation)
+16. [Development Phases](#-development-phases)
 
 ---
 
 ## 📝 Description
 
-**ImageToTextOnline** is a web-based OCR (Optical Character Recognition) application that enables users to upload images and extract text from them instantly. The application supports a wide range of image formats including **JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, and PDF** files. It features a complete user authentication system with JWT and Google OAuth 2.0, role-based access control (RBAC) across four tiers, conversion history tracking with pagination and bulk operations, real-time notifications, a forgot-password flow via SMTP email, profile picture management via Firebase Storage, and a fully featured admin dashboard for user management and system monitoring.
+**ImageToTextOnline** is a web-based OCR application that lets users upload images (JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, PDF) and extract text instantly. It supports batch processing (up to 5 files), user authentication via JWT and Google OAuth 2.0, profile picture storage on Firebase, password reset via SMTP email, real-time notifications, conversion history with bulk operations, and a four-tier RBAC system (guest → user → admin → superadmin) with a full admin dashboard.
 
-The project is built on a **client-server architecture** with a RESTful API backend powered by Node.js and Express.js, a MongoDB database layer managed through Mongoose ODM, Firebase Storage for file management, and a responsive frontend built with vanilla HTML, CSS, and JavaScript enhanced by the Bootstrap 5 framework.
-
-All API endpoints adhere to **REST conventions** with clean URL routing, proper HTTP methods, consistent JSON response formatting, industry-standard status codes, input validation via express-validator, rate limiting via express-rate-limit, and security headers via Helmet.js. Authentication is handled through **JWT tokens** stored in secure HTTPOnly cookies, with Google OAuth 2.0 as an alternative login method.
+Built with Node.js, Express 5, MongoDB Atlas, and a vanilla HTML/CSS/JS + Bootstrap 5 frontend.
 
 ---
 
 ## 🎯 Purpose & Goal
 
-### Purpose
-
-To provide a free, accessible, and user-friendly online tool for converting images containing text into editable, copy-paste-ready digital text — eliminating the need to manually transcribe content from photographs, scanned documents, screenshots, or other image-based sources.
-
-### Goals
-
-| Goal | Description |
-|------|-------------|
-| **Accessibility** | Enable anyone with a browser to extract text from images without installing third-party software |
-| **Multi-Format Support** | Accept a wide range of image formats including JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, and PDF |
-| **Batch Processing** | Allow up to 5 images to be processed simultaneously in a single request |
-| **User Management** | Provide a tiered role-based access control system with user, admin, and superadmin roles |
-| **History Tracking** | Enable authenticated users to save, review, and manage their past conversions |
-| **Admin Oversight** | Equip administrators with a dashboard to manage users, monitor conversion activity, and view real-time system statistics |
-| **Security** | Implement industry-standard security measures including Helmet.js, rate limiting, input validation, and centralized error handling |
-| **RESTful Architecture** | Implement industry-standard REST API design principles for maintainability and scalability |
+Provide a free, browser-based tool for extracting text from images — no software installation required. Key goals include multi-format support, batch processing, secure authentication (local + OAuth), admin oversight with user management, and industry-standard security (Helmet.js, rate limiting, input validation, centralized error handling).
 
 ---
 
@@ -68,88 +50,63 @@ To provide a free, accessible, and user-friendly online tool for converting imag
 
 | Platform | URL | Scope |
 |----------|-----|-------|
-| **GitHub Pages** | [https://kleinborre.github.io/web-tech-app/](https://kleinborre.github.io/web-tech-app/) | Frontend implementation only — limited by GitHub Pages static hosting, no backend or API access |
-| **Vercel** | [https://web-tech-app.vercel.app/](https://web-tech-app.vercel.app/) | Full-stack deployment — demonstrates both frontend and backend capabilities of the web application |
+| **Vercel** | [web-tech-app.vercel.app](https://web-tech-app.vercel.app/) | Full-stack — frontend + backend + database + Firebase + OAuth |
+| **GitHub Pages** | [kleinborre.github.io/web-tech-app](https://kleinborre.github.io/web-tech-app/) | Frontend only — no backend/API access |
 
 ---
 
 ## 👤 Default User Accounts & Role Access
 
-The following accounts are created by the database seeder (`seeder.js`):
+Seeded by `seeder.js`:
 
 | Username | Role | Password |
 |----------|------|----------|
 | admin-user | **superadmin** | `eX6LooLPiVfCuZF6` |
 | test-user | **user** | `VitBxRJVNwqdHLsQ` |
 
-### Role-Based Access Control Matrix
+### RBAC Permission Matrix
 
-| Permission | Guest (No Account) | User | Admin | Superadmin |
-|-----------|:------------------:|:----:|:-----:|:----------:|
-| Perform OCR Image Conversion | ✅ | ✅ | ✅ | ✅ |
-| Copy Extracted Text / Download as TXT | ✅ | ✅ | ✅ | ✅ |
-| Temporarily Store Converted Data ¹ | ✅ | ✅ | ✅ | ✅ |
-| Register / Login with Email & Password | ✅ | ✅ | ✅ | ✅ |
-| Register / Login with Google OAuth | ✅ | ✅ | ✅ | ✅ |
-| Permanently Save to Conversion History | ❌ | ✅ | ✅ | ✅ |
-| View / Delete Own Conversion History | ❌ | ✅ | ✅ | ✅ |
-| Receive Real-Time Notifications | ❌ | ✅ | ✅ | ✅ |
-| Manage Profile (Username, Email, Password) | ❌ | ✅ | ✅ | ✅ |
+| Permission | Guest | User | Admin | Superadmin |
+|-----------|:-----:|:----:|:-----:|:----------:|
+| OCR Conversion + Copy/Download | ✅ | ✅ | ✅ | ✅ |
+| Register / Login (Email or Google) | ✅ | ✅ | ✅ | ✅ |
+| Save Conversion History | ❌ | ✅ | ✅ | ✅ |
+| View / Delete Own History | ❌ | ✅ | ✅ | ✅ |
+| Real-Time Notifications | ❌ | ✅ | ✅ | ✅ |
+| Profile Management (Username, Email, Password) | ❌ | ✅ | ✅ | ✅ |
 | Upload / Delete Profile Picture | ❌ | ✅ | ✅ | ✅ |
 | Reset Password via Email | ❌ | ✅ | ✅ | ✅ |
-| Access Admin Dashboard | ❌ | ❌ | ✅ | ✅ |
-| View All Registered Users | ❌ | ❌ | ✅ | ✅ |
-| Activate / Deactivate Users | ❌ | ❌ | ✅ | ✅ |
-| View Platform Statistics | ❌ | ❌ | ✅ | ✅ |
+| Admin Dashboard + User Management | ❌ | ❌ | ✅ | ✅ |
 | Change User Roles | ❌ | ❌ | ❌ | ✅ |
-
-> ¹ **Temporarily Store Converted Data:** All users — including guests — can view, copy, and download extracted text during their active session. This data is temporarily stored in the browser and is automatically cleared upon page refresh or when a new conversion is performed.
 
 ---
 
 ## ✨ Features
 
-### Core Features
-- ✅ **Image-to-Text Conversion** — Upload images and extract text using the Tesseract.js OCR engine
-- ✅ **Multi-Format Support** — JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, and PDF
-- ✅ **Batch Upload** — Process up to 5 images at once (max 10MB each)
-- ✅ **Copy to Clipboard** — One-click copying of extracted text to the system clipboard
-- ✅ **Download as TXT** — Export extracted text as a downloadable `.txt` file
-- ✅ **Confidence Score** — Each conversion displays the OCR accuracy percentage
+### Core
+- ✅ **OCR Conversion** — Tesseract.js engine, batch upload (up to 5), confidence scores
+- ✅ **Multi-Format** — JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, PDF
+- ✅ **Copy / Download** — One-click clipboard copy or `.txt` export
 
-### User Features
-- ✅ **User Registration & Login** — Secure authentication with email and password
-- ✅ **Google OAuth 2.0** — One-click sign-in/sign-up via Google account
-- ✅ **Forgot Password** — Password reset via SMTP email with secure tokenized links
-- ✅ **Profile Management** — Update username, email, and password from the settings page
-- ✅ **Profile Picture** — Upload, change, or delete profile pictures stored on Firebase Storage
-- ✅ **Conversion History** — View, search, and manage past conversions with pagination and bulk selection
-- ✅ **Real-Time Notifications** — Bell icon notifications for conversions and profile updates
-- ✅ **Auto-Save** — Authenticated users' conversions are automatically persisted to history
-- ✅ **Guest Mode** — Unauthenticated users can perform OCR conversions without an account (history not saved)
+### User
+- ✅ **Email + Password Auth** — Registration, login, logout with JWT cookies
+- ✅ **Google OAuth 2.0** — One-click sign-in/sign-up via Google
+- ✅ **Forgot Password** — SMTP email with tokenized reset link (1-hour expiry)
+- ✅ **Profile Management** — Update username, email, password from settings
+- ✅ **Profile Picture** — Upload/delete via Firebase Storage
+- ✅ **Conversion History** — Paginated, searchable, bulk select + delete
+- ✅ **Notifications** — Bell icon with unread badge, mark as read
 
-### Admin Features
-- ✅ **Admin Dashboard** — Real-time statistics including total users, conversions, and weekly activity trends
-- ✅ **Conversions Chart** — Visual bar chart displaying conversion trends over the last 7 days
-- ✅ **User Management** — View, search, activate/deactivate, and manage all user accounts
-- ✅ **Role Management** — Superadmins can promote or demote user roles across the platform
+### Admin
+- ✅ **Dashboard** — Real-time stats, 7-day conversion chart
+- ✅ **User Management** — View, search, activate/deactivate users
+- ✅ **Role Management** — Superadmin-exclusive role promotion/demotion
 
-### Technical Features
-- ✅ **RESTful API** — Clean, standardized REST endpoints organized under the `/api` prefix
-- ✅ **Clean URL Routing** — Industry-standard page URLs without `.html` extensions
-- ✅ **JWT Authentication** — Secure token-based authentication stored in HTTPOnly cookies
-- ✅ **Google OAuth 2.0** — Passport.js integration with Google strategy
-- ✅ **Firebase Storage** — Cloud storage for profile pictures with automatic cleanup
-- ✅ **Role-Based Access Control (RBAC)** — Four-tier authorization: guest, user, admin, superadmin
-- ✅ **Input Validation** — express-validator rules for all endpoints with structured error responses
-- ✅ **Rate Limiting** — express-rate-limit with global (100/15min), auth (10/15min), and login (5/15min) tiers
-- ✅ **Helmet.js** — HTTP security headers (X-Frame-Options, HSTS, X-Content-Type-Options, etc.)
-- ✅ **Centralized Error Handling** — AppError class with consistent JSON error responses and Mongoose/JWT/Multer error mapping
-- ✅ **SMTP Email** — Password reset emails via Gmail SMTP with HTML templates
-- ✅ **HEIC Conversion** — Automatic HEIC-to-JPEG conversion for Apple device photographs
-- ✅ **PDF Text Extraction** — Direct text extraction from PDF documents using unpdf
-- ✅ **Responsive Design** — Mobile-friendly layout utilizing the Bootstrap 5 grid system
-- ✅ **Loading Overlays** — Visible navigation transitions between pages
+### Security
+- ✅ **Helmet.js** — HTTP security headers
+- ✅ **Rate Limiting** — Global (100/15min), auth (10/15min), login (5/15min)
+- ✅ **Input Validation** — express-validator on all endpoints
+- ✅ **Centralized Error Handler** — AppError class with Mongoose/JWT/Multer error mapping
 
 ---
 
@@ -157,50 +114,34 @@ The following accounts are created by the database seeder (`seeder.js`):
 
 ### Backend
 
-| Technology | Version | Purpose |
-|-----------|---------| --------|
-| **Node.js** | 18+ | JavaScript runtime environment |
-| **Express.js** | 5.x | Web application framework for routing and middleware |
-| **MongoDB** | Cloud (Atlas) | NoSQL document database for persistent data storage |
-| **Mongoose** | 9.x | MongoDB Object Data Modeling (ODM) library |
-| **Tesseract.js** | 7.x | OCR engine for optical character recognition |
-| **Firebase Admin SDK** | 13.x | Firebase Storage for profile picture uploads |
-| **Passport.js** | 0.7.x | Authentication middleware for Google OAuth 2.0 |
-| **passport-google-oauth20** | 2.x | Google OAuth 2.0 strategy for Passport |
-| **bcrypt** | 6.x | Cryptographic password hashing with salt rounds |
-| **jsonwebtoken** | 9.x | JWT token generation, signing, and verification |
-| **multer** | 2.x | Multipart form-data file upload handling |
-| **nodemailer** | 6.x | SMTP email sending for password reset |
-| **helmet** | 8.x | HTTP security headers middleware |
-| **express-validator** | 7.x | Input validation and sanitization |
-| **express-rate-limit** | 7.x | API rate limiting and brute-force protection |
-| **heic-convert** | 2.x | HEIC/HEIF to JPEG image format conversion |
-| **unpdf** | 1.x | PDF text extraction (serverless compatible) |
-| **cookie-parser** | 1.x | HTTP cookie parsing middleware |
-| **cors** | 2.x | Cross-Origin Resource Sharing policy management |
-| **dotenv** | 17.x | Environment variable configuration loader |
+| Technology | Purpose |
+|-----------|---------|
+| Node.js (v20+) | JavaScript runtime |
+| Express.js (v5) | Web framework |
+| MongoDB Atlas + Mongoose | Database + ODM |
+| Tesseract.js | OCR engine |
+| Firebase Admin SDK | Profile picture storage |
+| Passport.js + Google OAuth 2.0 | Social authentication |
+| bcrypt | Password hashing |
+| jsonwebtoken | JWT token management |
+| nodemailer | SMTP email (password reset) |
+| helmet | HTTP security headers |
+| express-validator | Input validation |
+| express-rate-limit | Rate limiting |
+| multer | File upload handling |
+| heic-convert | HEIC → JPEG conversion |
+| unpdf | PDF text extraction |
+| cookie-parser | Cookie parsing |
+| cors | Cross-origin policy |
+| dotenv | Environment configuration |
 
 ### Frontend
 
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| **HTML5** | — | Semantic page structure and markup |
-| **CSS3** | — | Custom styling, animations, and responsive design |
-| **JavaScript (ES6+)** | — | Client-side application logic and API communication |
-| **Bootstrap** | 5.3.2 | Responsive grid system, UI components, and utilities |
-| **Bootstrap Icons** | 1.11.1 | Scalable vector icon library |
-| **Google Fonts (Poppins)** | — | Modern web typography |
-
-### Development & Tooling
-
-| Tool | Purpose |
-|------|---------|
-| **Git** | Version control and source code management |
-| **Postman** | API testing, endpoint validation, and documentation |
-| **MongoDB Atlas** | Cloud-hosted database management |
-| **Firebase Console** | Cloud storage management for profile pictures |
-| **Google Cloud Console** | OAuth 2.0 client credentials management |
-| **npm** | Package management and script execution |
+| Technology | Purpose |
+|-----------|---------|
+| HTML5 / CSS3 / JavaScript (ES6+) | Structure, styling, logic |
+| Bootstrap 5.3.2 + Icons | UI framework + icon library |
+| Google Fonts (Poppins) | Typography |
 
 ---
 
@@ -208,306 +149,261 @@ The following accounts are created by the database seeder (`seeder.js`):
 
 ```
 web-tech-app/
-├── .gitignore                              # Git ignore configuration
-├── README.md                               # Project documentation (this file)
-├── index.html                              # GitHub Pages redirect entry point
-├── vercel.json                             # Vercel deployment configuration
+├── .gitignore
+├── README.md
+├── index.html                              # GitHub Pages redirect
+├── vercel.json                             # Vercel deployment config
 │
-├── backend/                                # Server-side application
+├── backend/
 │   ├── .env                                # Environment variables (not committed)
 │   ├── firebase-service-account.json       # Firebase credentials (not committed)
-│   ├── package.json                        # Node.js dependencies and scripts
-│   ├── server.js                           # Main Express server entry point
-│   ├── seeder.js                           # Database seeder for default accounts
-│   ├── eng.traineddata                     # Tesseract OCR English language data
+│   ├── package.json
+│   ├── server.js                           # Express entry point
+│   ├── seeder.js                           # Default account seeder
+│   ├── eng.traineddata                     # Tesseract English data
 │   │
-│   ├── config/                             # Configuration files
-│   │   ├── db.js                           # MongoDB connection with retry logic
-│   │   └── passport.js                     # Google OAuth 2.0 Passport strategy
+│   ├── config/
+│   │   ├── db.js                           # MongoDB connection + retry
+│   │   └── passport.js                     # Google OAuth strategy
 │   │
-│   ├── controllers/                        # Business logic layer (request handlers)
-│   │   ├── admin.controller.js             # Admin operations (stats, user management)
-│   │   ├── auth.controller.js              # Authentication, profile, password reset
-│   │   ├── history.controller.js           # Conversion history CRUD + bulk operations
-│   │   ├── notification.controller.js      # Notification retrieval and read marking
-│   │   └── ocr.controller.js              # OCR image processing and text extraction
+│   ├── controllers/
+│   │   ├── admin.controller.js             # Stats, user management
+│   │   ├── auth.controller.js              # Auth, profile, password reset
+│   │   ├── history.controller.js           # History CRUD + bulk ops
+│   │   ├── notification.controller.js      # Notifications
+│   │   └── ocr.controller.js              # OCR processing
 │   │
-│   ├── middleware/                          # Express middleware functions
-│   │   ├── admin.middleware.js             # Admin & superadmin role authorization
-│   │   ├── auth.middleware.js              # JWT authentication & optional auth
-│   │   ├── error.middleware.js             # Centralized error handler (AppError class)
-│   │   ├── rateLimiter.middleware.js       # Rate limiting (global, auth, strict login)
-│   │   ├── upload.middleware.js            # Multer file upload configuration
-│   │   ├── validate.middleware.js          # express-validator rules for all endpoints
-│   │   └── validateFile.middleware.js      # File type and size validation
+│   ├── middleware/
+│   │   ├── admin.middleware.js             # adminOnly, superadminOnly
+│   │   ├── auth.middleware.js              # protect, optionalAuth
+│   │   ├── error.middleware.js             # Centralized error handler
+│   │   ├── rateLimiter.middleware.js       # Rate limiting tiers
+│   │   ├── upload.middleware.js            # Multer config
+│   │   ├── validate.middleware.js          # express-validator rules
+│   │   └── validateFile.middleware.js      # File type/size checks
 │   │
-│   ├── models/                             # Mongoose database schemas
-│   │   ├── ConversionLog.model.js          # Conversion history records
-│   │   ├── Notification.model.js           # User notifications with referenceIds
-│   │   ├── PasswordResetToken.model.js     # Tokenized password reset requests
-│   │   └── User.model.js                  # User accounts (local + Google OAuth)
+│   ├── models/
+│   │   ├── ConversionLog.model.js          # OCR history records
+│   │   ├── Notification.model.js           # User notifications
+│   │   ├── PasswordResetToken.model.js     # Password reset tokens
+│   │   └── User.model.js                  # User accounts
 │   │
-│   ├── routes/                             # API route definitions
-│   │   ├── admin.routes.js                # /api/admin/* endpoints
-│   │   ├── auth.routes.js                 # /api/auth/* endpoints (incl. OAuth)
-│   │   ├── history.routes.js              # /api/history/* endpoints
-│   │   ├── notification.routes.js         # /api/notifications/* endpoints
-│   │   └── ocr.routes.js                 # /api/ocr/* endpoints
+│   ├── routes/
+│   │   ├── admin.routes.js                # /api/admin/*
+│   │   ├── auth.routes.js                 # /api/auth/* (incl. OAuth)
+│   │   ├── history.routes.js              # /api/history/*
+│   │   ├── notification.routes.js         # /api/notifications/*
+│   │   └── ocr.routes.js                 # /api/ocr/*
 │   │
-│   └── utils/                              # Utility functions and helpers
-│       ├── email.js                        # SMTP email sending (password reset)
-│       ├── firebase.js                     # Firebase Storage upload/delete helpers
-│       └── ocrProcessor.js                # Tesseract.js worker pool and OCR engine
+│   └── utils/
+│       ├── email.js                        # SMTP email sending
+│       ├── firebase.js                     # Firebase upload/delete
+│       └── ocrProcessor.js                # Tesseract worker pool
 │
-└── frontend/                               # Client-side application
-    ├── index.html                          # Landing page and OCR converter interface
-    │
-    ├── admin/                              # Admin panel pages
-    │   ├── dashboard.html                  # Admin dashboard with stats and charts
-    │   ├── settings.html                   # Account settings (profile, password)
-    │   └── users.html                     # User management and role administration
-    │
-    ├── auth/                               # Authentication pages
-    │   ├── forgot-password.html            # Password recovery form
-    │   ├── login.html                      # User login form (with Google OAuth button)
-    │   ├── register.html                   # User registration form
-    │   └── update-password.html            # Password reset form (from email link)
-    │
-    ├── css/                                # Stylesheets
-    │   └── style.css                       # Main application stylesheet
-    │
-    ├── js/                                 # JavaScript modules
-    │   ├── auth.js                         # Authentication logic (login, register, OAuth)
-    │   ├── bulk-selection.js               # Bulk checkbox selection for history table
-    │   ├── dashboard.js                    # Admin dashboard logic (stats, charts, users)
-    │   ├── loading-overlay.js              # Loading animation for page transitions
-    │   ├── main.js                         # Core application logic (OCR, UI, utilities)
-    │   ├── notifications.js                # Notification manager (bell icon, badge, list)
-    │   └── settings.js                    # Settings page logic (profile, password updates)
-    │
-    └── assets/                             # Static assets (images, icons, media)
+└── frontend/
+    ├── index.html                          # Landing page + OCR converter
+    ├── admin/
+    │   ├── dashboard.html                  # Admin dashboard
+    │   ├── settings.html                   # Account settings
+    │   └── users.html                     # User management
+    ├── auth/
+    │   ├── forgot-password.html            # Forgot password form
+    │   ├── login.html                      # Login (with Google OAuth)
+    │   ├── register.html                   # Registration
+    │   └── update-password.html            # Reset password (email link)
+    ├── css/
+    │   └── style.css                       # Main stylesheet
+    ├── js/
+    │   ├── auth.js                         # Auth logic
+    │   ├── bulk-selection.js               # Checkbox bulk selection
+    │   ├── dashboard.js                    # Dashboard logic
+    │   ├── loading-overlay.js              # Page transition animations
+    │   ├── main.js                         # Core OCR + UI logic
+    │   ├── notifications.js                # Notification manager
+    │   └── settings.js                    # Settings page logic
+    └── assets/                             # Static assets
 ```
 
 ---
 
 ## 🏗 Architecture & Design Patterns
 
-### MVC Architecture (Model-View-Controller)
-
-The backend follows the **MVC pattern** to maintain a clean separation of concerns:
+### MVC Pattern
 
 ```
-Client Request
-      │
-      ▼
-   Routes          ─── Define URL endpoints and attach middleware
-      │
-      ▼
-  Middleware        ─── Auth, validation, rate limiting, file upload, error handling
-      │
-      ▼
-  Controllers      ─── Business logic and response handling → next(error) on failure
-      │
-      ▼
-   Models           ─── Database schemas and data operations
-      │
-      ▼
-  MongoDB           ─── Persistent data storage (Atlas)
-  Firebase          ─── Profile picture storage
+Client Request → Routes → Middleware → Controllers → Models → MongoDB / Firebase
 ```
 
 | Layer | Location | Responsibility |
 |-------|----------|---------------|
-| **Model** | `models/*.model.js` | Define database schemas, data validation rules, and Mongoose hooks |
-| **View** | `frontend/**/*.html` | Render the user interface (served as static files by Express) |
-| **Controller** | `controllers/*.controller.js` | Process requests, execute business logic, call `next(error)` on failures |
-| **Routes** | `routes/*.routes.js` | Map URL endpoints to controllers with middleware chains |
-| **Middleware** | `middleware/*.middleware.js` | Auth, validation, rate limiting, file uploads, error handling |
-| **Config** | `config/db.js`, `config/passport.js` | Database connection + Google OAuth strategy |
-| **Utils** | `utils/` | OCR processing, Firebase Storage, SMTP email |
-
-### RESTful API Design Principles
-
-| Principle | Implementation |
-|-----------|---------------|
-| **Resource-Based URIs** | Nouns for resource names (`/users`, `/history`, `/notifications`) |
-| **HTTP Methods** | `GET` (read), `POST` (create), `DELETE` (remove), `PATCH` (update) |
-| **API Prefix** | All data endpoints grouped under `/api` |
-| **Consistent Responses** | Uniform JSON: `{ success: true/false, data/error, message }` |
-| **Status Codes** | `200`, `201`, `400`, `401`, `403`, `404`, `429`, `500` |
-| **Pagination** | Query parameters `?page=1&limit=10` for list endpoints |
-| **Clean URLs** | Page routes without `.html` extensions (e.g., `/auth/login`) |
-| **Input Validation** | express-validator rules with structured field-level error responses |
-| **Rate Limiting** | Per-IP request limits with standard RateLimit-* headers |
+| **Model** | `models/` | Database schemas, validation, Mongoose hooks |
+| **View** | `frontend/` | HTML/CSS/JS served as static files |
+| **Controller** | `controllers/` | Business logic, `next(error)` on failure |
+| **Routes** | `routes/` | URL mapping + middleware chains |
+| **Middleware** | `middleware/` | Auth, validation, rate limiting, error handling |
+| **Config** | `config/` | Database connection, OAuth strategy |
+| **Utils** | `utils/` | OCR engine, Firebase storage, SMTP email |
 
 ---
 
 ## 🗄 Database Schema
 
-### User Model (`User.model.js`)
+### User (`User.model.js`)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `username` | String | Unique display name (3-30 chars, required) |
-| `email` | String | Unique email address (required, indexed) |
-| `password` | String | Bcrypt-hashed password (required for local auth, optional for Google OAuth) |
-| `role` | String | Access level: `user`, `admin`, or `superadmin` (default: `user`) |
-| `isActive` | Boolean | Account status flag (default: `true`) |
-| `googleId` | String | Google OAuth unique identifier (optional) |
-| `profilePicture` | String | Firebase Storage URL for user's profile picture (optional) |
-| `createdAt` | Date | Account creation timestamp (auto-generated) |
-| `updatedAt` | Date | Last modification timestamp (auto-generated) |
+| `username` | String | Unique display name (3-30 chars) |
+| `email` | String | Unique email (indexed) |
+| `password` | String | Bcrypt hash (optional for Google-only users) |
+| `role` | String | `user` / `admin` / `superadmin` |
+| `isActive` | Boolean | Account status (default: `true`) |
+| `googleId` | String | Google OAuth ID (optional) |
+| `profilePicture` | String | Firebase Storage URL (optional) |
+| `createdAt` / `updatedAt` | Date | Timestamps |
 
-### ConversionLog Model (`ConversionLog.model.js`)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Reference to the User who performed the conversion |
-| `originalFileName` | String | Name of the uploaded file |
-| `extractedText` | String | OCR-extracted text content |
-| `conversionDate` | Date | Conversion timestamp (auto-generated) |
-
-### Notification Model (`Notification.model.js`)
+### ConversionLog (`ConversionLog.model.js`)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `userId` | ObjectId | Reference to the user receiving the notification |
-| `type` | String | Notification type: `conversion`, `profile_update`, `new_user` |
-| `message` | String | Notification content text |
-| `read` | Boolean | Whether the user has read the notification (default: `false`) |
-| `referenceIds` | [ObjectId] | Array of ConversionLog IDs linked to this notification |
-| `createdAt` | Date | Notification timestamp (auto-generated) |
+| `userId` | ObjectId | Reference to User |
+| `originalFileName` | String | Uploaded file name |
+| `extractedText` | String | OCR output |
+| `conversionDate` | Date | Timestamp |
 
-### PasswordResetToken Model (`PasswordResetToken.model.js`)
+### Notification (`Notification.model.js`)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `userId` | ObjectId | Reference to the user requesting the reset |
-| `token` | String | Bcrypt-hashed reset token |
-| `expiresAt` | Date | Token expiration timestamp (1 hour from creation) |
-| `createdAt` | Date | Token creation timestamp (auto-generated) |
+| `userId` | ObjectId | Recipient user |
+| `type` | String | `conversion` / `profile_update` / `new_user` |
+| `message` | String | Content text |
+| `read` | Boolean | Read status |
+| `referenceIds` | [ObjectId] | Linked ConversionLog IDs |
+| `createdAt` | Date | Timestamp |
+
+### PasswordResetToken (`PasswordResetToken.model.js`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | ObjectId | User requesting reset |
+| `token` | String | Bcrypt-hashed token |
+| `expiresAt` | Date | 1-hour expiration |
 
 ---
 
 ## 📡 REST API Endpoints
 
-**Base URL:** `http://localhost:3000/api`
+**Base URL:** `/api`
 
-### Authentication Endpoints
+### Authentication
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 1 | User Registration | `/auth/register` | `POST` | username, email, password, confirmPassword (body) | success, token (cookie), user (_id, username, email, role, isActive, profilePicture, createdAt) |
-| 2 | User Login | `/auth/login` | `POST` | email, password (body) | success, token (cookie), user (_id, username, email, role, isActive, profilePicture, createdAt) |
-| 3 | User Logout | `/auth/logout` | `POST` | None (requires auth cookie) | success, message |
-| 4 | Get Current User | `/auth/me` | `GET` | None (requires auth cookie) | success, user (_id, username, email, role, isActive, profilePicture, hasPassword, isGoogleUser, createdAt) |
-| 5 | Check Email Exists | `/auth/check-email` | `POST` | email (body) | success, exists (boolean) |
-| 6 | Forgot Password | `/auth/forgot-password` | `POST` | email (body) | success, message |
-| 7 | Reset Password | `/auth/reset-password` | `POST` | token, email, password (body) | success, message |
+| # | Feature | Endpoint | Method | Parameters | Response |
+|---|---------|----------|--------|-----------|----------|
+| 1 | Register | `/auth/register` | POST | username, email, password, confirmPassword | success, token, user |
+| 2 | Login | `/auth/login` | POST | email, password | success, token, user |
+| 3 | Logout | `/auth/logout` | POST | auth cookie | success, message |
+| 4 | Get Current User | `/auth/me` | GET | auth cookie | success, user |
+| 5 | Check Email | `/auth/check-email` | POST | email | success, exists |
+| 6 | Forgot Password | `/auth/forgot-password` | POST | email | success, message |
+| 7 | Reset Password | `/auth/reset-password` | POST | token, email, password | success, message |
 
-### Google OAuth Endpoints
+### Google OAuth
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 8 | Initiate Google Login | `/auth/google` | `GET` | None (browser redirect) | Redirects to Google consent screen |
-| 9 | Google OAuth Callback | `/auth/google/callback` | `GET` | code (query, auto from Google) | Sets JWT cookie, redirects to /admin/dashboard |
+| # | Feature | Endpoint | Method | Description |
+|---|---------|----------|--------|-------------|
+| 8 | Initiate Login | `/auth/google` | GET | Redirects to Google consent screen |
+| 9 | Callback | `/auth/google/callback` | GET | Sets JWT cookie → redirects to dashboard |
 
-### Profile Management Endpoints (Requires Authentication)
+### Profile Management (Auth Required)
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 10 | Update Username | `/auth/update-username` | `PATCH` | username (body) | success, user |
-| 11 | Update Email | `/auth/update-email` | `PATCH` | email (body) | success, user |
-| 12 | Update Password | `/auth/update-password` | `PATCH` | currentPassword, newPassword, confirmNewPassword (body) | success, message |
-| 13 | Verify Password | `/auth/verify-password` | `POST` | password (body) | success, valid (boolean) |
-| 14 | Upload Profile Picture | `/auth/profile-picture` | `POST` | profilePicture (multipart/form-data, max 2MB) | success, profilePicture (URL) |
-| 15 | Delete Profile Picture | `/auth/profile-picture` | `DELETE` | None | success, message |
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 10 | Update Username | `/auth/update-username` | PATCH | username |
+| 11 | Update Email | `/auth/update-email` | PATCH | email |
+| 12 | Update Password | `/auth/update-password` | PATCH | currentPassword, newPassword, confirmNewPassword |
+| 13 | Verify Password | `/auth/verify-password` | POST | password |
+| 14 | Upload Profile Pic | `/auth/profile-picture` | POST | profilePicture (form-data, max 2MB) |
+| 15 | Delete Profile Pic | `/auth/profile-picture` | DELETE | — |
 
-### OCR Endpoint
+### OCR
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 16 | OCR Image Conversion | `/ocr/convert` | `POST` | images (multipart/form-data, max 5 files, 10MB each) | success, message, summary, results[] |
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 16 | Convert Images | `/ocr/convert` | POST | images (form-data, max 5 files, 10MB each) |
 
-### History Endpoints (Requires Authentication)
+### History (Auth Required)
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 17 | Get Conversion History | `/history` | `GET` | page, limit (query params) | success, history[], pagination |
-| 18 | Get Single History Item | `/history/:id` | `GET` | id (URL param) | success, history |
-| 19 | Delete History Item | `/history/:id` | `DELETE` | id (URL param) | success, message |
-| 20 | Bulk Delete History | `/history/bulk-delete` | `POST` | ids (body, array of ObjectId strings) | success, message, deletedCount |
-| 21 | Clear All History | `/history` | `DELETE` | None | success, message, deletedCount |
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 17 | Get History | `/history` | GET | page, limit |
+| 18 | Get Single Item | `/history/:id` | GET | id |
+| 19 | Delete Item | `/history/:id` | DELETE | id |
+| 20 | Bulk Delete | `/history/bulk-delete` | POST | ids (array) |
+| 21 | Clear All | `/history` | DELETE | — |
 
-### Notification Endpoints (Requires Authentication)
+### Notifications (Auth Required)
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 22 | Get Notifications | `/notifications` | `GET` | page, limit (query params) | success, notifications[], pagination |
-| 23 | Get Unread Count | `/notifications/unread-count` | `GET` | None | success, count, latestUnreadAt |
-| 24 | Mark All as Read | `/notifications/read-all` | `PATCH` | None | success, message |
-| 25 | Mark Single as Read | `/notifications/:id/read` | `PATCH` | id (URL param) | success, notification |
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 22 | Get Notifications | `/notifications` | GET | page, limit |
+| 23 | Unread Count | `/notifications/unread-count` | GET | — |
+| 24 | Mark All Read | `/notifications/read-all` | PATCH | — |
+| 25 | Mark One Read | `/notifications/:id/read` | PATCH | id |
 
-### Admin Endpoints (Requires Admin Role)
+### Admin (Admin Role Required)
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 26 | Get Dashboard Stats | `/admin/stats` | `GET` | None | success, data.users (total, active, admins, new), data.conversions (total, recent, daily[]) |
-| 27 | Get All Users | `/admin/users` | `GET` | page, limit (query params) | success, data[] (users), pagination |
-| 28 | Get Single User | `/admin/users/:id` | `GET` | id (URL param) | success, data (user + conversionCount) |
-| 29 | Toggle User Status | `/admin/users/:id/status` | `PATCH` | id (URL param) | success, message, data (isActive) |
-| 30 | Change User Role | `/admin/users/:id/role` | `PATCH` | id (URL param), role (body). **Superadmin only** | success, message, data (role) |
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 26 | Dashboard Stats | `/admin/stats` | GET | — |
+| 27 | All Users | `/admin/users` | GET | page, limit |
+| 28 | Single User | `/admin/users/:id` | GET | id |
+| 29 | Toggle Status | `/admin/users/:id/status` | PATCH | id |
+| 30 | Change Role | `/admin/users/:id/role` | PATCH | id, role (**superadmin only**) |
 
-### Utility Endpoint
+### Utility
 
-| # | Feature | Endpoint | Method | Parameters | Response Fields |
-|---|---------|----------|--------|-----------|----------------|
-| 31 | Health Check | `/health` | `GET` | None | status, timestamp, environment |
+| # | Feature | Endpoint | Method | Response |
+|---|---------|----------|--------|----------|
+| 31 | Health Check | `/health` | GET | status, timestamp, environment |
 
 ---
 
-## 🚀 Setup & Installation
+## 🚀 Setup & Installation (Local)
 
 ### Prerequisites
 
-Ensure the following are available before proceeding:
+- **Node.js** v20+ — [nodejs.org](https://nodejs.org/)
+- **Git** — [git-scm.com](https://git-scm.com/)
+- **MongoDB Atlas** account — [mongodb.com/atlas](https://www.mongodb.com/atlas)
+- **Firebase project** with Storage enabled — [console.firebase.google.com](https://console.firebase.google.com/)
+- **Google Cloud** OAuth 2.0 credentials — [console.cloud.google.com](https://console.cloud.google.com/)
+- **Gmail App Password** for SMTP — [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
 
-1. **Node.js** (v18 or higher) — [https://nodejs.org/](https://nodejs.org/)
-2. **npm** (included with Node.js)
-3. **Git** — [https://git-scm.com/](https://git-scm.com/)
-4. **MongoDB Atlas Account** — [https://www.mongodb.com/atlas](https://www.mongodb.com/atlas)
-5. **Firebase Project** — [https://console.firebase.google.com/](https://console.firebase.google.com/) (for profile picture storage)
-6. **Google Cloud OAuth 2.0 Credentials** — [https://console.cloud.google.com/](https://console.cloud.google.com/) (for Google sign-in)
-
-### Step 1: Clone the Repository
+### Step 1 — Clone & Install
 
 ```bash
 git clone https://github.com/kleinborre/web-tech-app.git
-cd web-tech-app
-```
-
-### Step 2: Install Backend Dependencies
-
-```bash
-cd backend
+cd web-tech-app/backend
 npm install
 ```
 
-### Step 3: Add Firebase Service Account Key
+### Step 2 — Firebase Service Account
 
-Download the Firebase service account JSON file and place it in the `backend/` directory:
+Download the Firebase service account JSON and place it at `backend/firebase-service-account.json`:
 
-- **File name:** `firebase-service-account.json`
-- **Location:** `backend/firebase-service-account.json`
-- **Download link:** [Firebase Service Account Key (Google Drive)](https://drive.google.com/file/d/1XDrP_eZ6B_mfM_7tkojuM3uLD_dbP0cX/view?usp=sharing)
+📥 **Download:** [firebase-service-account.json (Google Drive)](https://drive.google.com/file/d/1XDrP_eZ6B_mfM_7tkojuM3uLD_dbP0cX/view?usp=sharing)
 
-> **Important:** This file is excluded from version control via `.gitignore`. It provides the backend with access to `imagetotextonline.firebasestorage.app` for profile picture storage.
+> This file is excluded from Git via `.gitignore`. It grants the backend access to `imagetotextonline.firebasestorage.app`.
 
-### Step 4: Configure Environment Variables
+### Step 3 — Environment Variables
 
-Create a `.env` file inside the `backend/` directory:
+Create `backend/.env` with the following:
 
 ```env
+# =============================================================================
+# Environment Configuration
+# =============================================================================
+
 # Server Configuration
 PORT=3000
 NODE_ENV=development
@@ -517,90 +413,189 @@ MAX_FILE_SIZE=10485760
 MAX_FILES=5
 
 # MongoDB Configuration
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<db_username>:<db_password>@<cluster>.mongodb.net/<database_name>
 
 # JWT Configuration
-JWT_SECRET=your_jwt_secret_key_here
+JWT_SECRET=<your_jwt_secret_key>
 JWT_EXPIRE=7d
 JWT_COOKIE_EXPIRE=7
 
-# SMTP Configuration (Password Reset Emails)
+# SMTP for Password Reset
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_gmail_app_password
+SMTP_USER=<your_gmail_address>
+SMTP_PASS=<your_gmail_app_password>
 BASE_URL=http://localhost:3000
 
 # Firebase Storage (Profile Pictures)
 FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./firebase-service-account.json
-FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+FIREBASE_STORAGE_BUCKET=<your_project>.firebasestorage.app
 
-# Google OAuth 2.0
-GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+# Google OAuth
+GOOGLE_CLIENT_ID=<your_client_id>.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=<your_client_secret>
 ```
-
-> **Important:** Replace all placeholder values with your actual credentials. The `.env` file is excluded from version control via `.gitignore`.
 
 #### Environment Variables Reference
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Server port (default: 3000) |
-| `NODE_ENV` | Environment mode (`development` or `production`) |
-| `MAX_FILE_SIZE` | Maximum upload file size in bytes (default: 10MB) |
-| `MAX_FILES` | Maximum files per OCR request (default: 5) |
-| `MONGO_URI` | MongoDB Atlas connection string |
-| `JWT_SECRET` | Secret key for JWT signing |
-| `JWT_EXPIRE` | JWT token expiration (default: 7d) |
-| `JWT_COOKIE_EXPIRE` | Cookie expiration in days (default: 7) |
-| `SMTP_HOST` | SMTP server hostname |
-| `SMTP_PORT` | SMTP server port |
-| `SMTP_SECURE` | Use TLS directly (false for STARTTLS on port 587) |
-| `SMTP_USER` | SMTP email address (sender) |
-| `SMTP_PASS` | SMTP password or Gmail App Password |
-| `BASE_URL` | Application base URL for email links |
-| `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` | Path to Firebase service account JSON |
-| `FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket name |
-| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret |
+| Variable | Required | Description |
+|----------|:--------:|-------------|
+| `PORT` | ✅ | Server port (default: 3000) |
+| `NODE_ENV` | ✅ | `development` or `production` |
+| `MAX_FILE_SIZE` | ✅ | Max upload size in bytes (10MB = 10485760) |
+| `MAX_FILES` | ✅ | Max files per OCR request |
+| `MONGO_URI` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | Secret key for signing JWT tokens |
+| `JWT_EXPIRE` | ✅ | Token lifetime (e.g., `7d`) |
+| `JWT_COOKIE_EXPIRE` | ✅ | Cookie expiry in days |
+| `SMTP_HOST` | ✅ | SMTP server (e.g., `smtp.gmail.com`) |
+| `SMTP_PORT` | ✅ | SMTP port (587 for STARTTLS) |
+| `SMTP_SECURE` | ✅ | `false` for STARTTLS on port 587 |
+| `SMTP_USER` | ✅ | Sender email address |
+| `SMTP_PASS` | ✅ | Gmail App Password (not regular password) |
+| `BASE_URL` | ✅ | App URL for email links (local or Vercel) |
+| `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` | ✅ | Path to Firebase JSON (local: `./firebase-service-account.json`) |
+| `FIREBASE_STORAGE_BUCKET` | ✅ | Firebase Storage bucket name |
+| `GOOGLE_CLIENT_ID` | ✅ | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | ✅ | Google OAuth client secret |
 
-### Step 5: Seed Default Accounts
+### Step 4 — Seed Default Accounts
 
 ```bash
 node seeder.js
 ```
 
-This populates the database with the accounts listed in [Default User Accounts](#-default-user-accounts--role-access).
-
-### Step 6: Start the Server
+### Step 5 — Start the Server
 
 ```bash
-# Production mode
-npm start
-
-# Development mode (auto-restart on file changes)
-npm run dev
+npm run dev     # Development (auto-restart)
+npm start       # Production
 ```
 
-The server will be accessible at `http://localhost:3000`.
+Server runs at `http://localhost:3000`.
+
+---
+
+## ☁️ Deploying to Vercel
+
+This guide covers how to make **Firebase Storage**, **Google OAuth**, and **SMTP** work on Vercel.
+
+### Step 1 — Connect Repository
+
+1. Go to [vercel.com](https://vercel.com) → **New Project** → Import your GitHub repo
+2. Set **Root Directory** to `backend`
+3. Set **Framework Preset** to **Other**
+
+### Step 2 — Set Environment Variables
+
+In Vercel dashboard → **Settings** → **Environment Variables**, add all variables from your `.env` file.
+
+> **⚠️ Critical difference:** For Firebase on Vercel, you cannot use a file path. Instead, paste the **entire JSON contents** as an environment variable.
+
+#### Firebase Service Account on Vercel
+
+Since Vercel's serverless functions don't have a persistent filesystem, you **cannot** use `FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./firebase-service-account.json`. Instead:
+
+1. Open `firebase-service-account.json` and **copy the entire JSON content**
+2. In Vercel → Environment Variables, create a new variable:
+   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - **Value:** Paste the entire JSON content (single line)
+3. Update your `utils/firebase.js` to support both methods:
+
+```js
+// In firebase.js — already handles both local file and Vercel env variable
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    // Vercel: JSON is stored as environment variable
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+} else {
+    // Local: Read from file
+    serviceAccount = JSON.parse(
+        fs.readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH, 'utf8')
+    );
+}
+```
+
+#### Google OAuth on Vercel
+
+1. Add these environment variables on Vercel:
+   - `GOOGLE_CLIENT_ID` = your client ID
+   - `GOOGLE_CLIENT_SECRET` = your client secret
+2. In [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials** → your OAuth client:
+   - Add `https://web-tech-app.vercel.app/api/auth/google/callback` to **Authorized redirect URIs**
+   - Add `https://web-tech-app.vercel.app` to **Authorized JavaScript origins**
+
+#### SMTP on Vercel
+
+1. Add these environment variables on Vercel:
+   - `SMTP_HOST` = `smtp.gmail.com`
+   - `SMTP_PORT` = `587`
+   - `SMTP_SECURE` = `false`
+   - `SMTP_USER` = your Gmail address
+   - `SMTP_PASS` = your Gmail App Password
+   - `BASE_URL` = `https://web-tech-app.vercel.app`
+2. SMTP works out of the box on Vercel — no extra setup needed
+
+#### All Vercel Environment Variables
+
+| Variable | Value |
+|----------|-------|
+| `PORT` | `3000` |
+| `NODE_ENV` | `production` |
+| `MAX_FILE_SIZE` | `10485760` |
+| `MAX_FILES` | `5` |
+| `MONGO_URI` | Your MongoDB Atlas URI |
+| `JWT_SECRET` | Your secret key |
+| `JWT_EXPIRE` | `7d` |
+| `JWT_COOKIE_EXPIRE` | `7` |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_SECURE` | `false` |
+| `SMTP_USER` | Your Gmail address |
+| `SMTP_PASS` | Your Gmail App Password |
+| `BASE_URL` | `https://web-tech-app.vercel.app` |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Entire JSON content of `firebase-service-account.json` |
+| `FIREBASE_STORAGE_BUCKET` | `imagetotextonline.firebasestorage.app` |
+| `GOOGLE_CLIENT_ID` | Your Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Your Google OAuth client secret |
+
+### Step 3 — Deploy
+
+```bash
+git push    # Vercel auto-deploys on push
+```
+
+Or click **Deploy** in the Vercel dashboard.
 
 ---
 
 ## 🌐 Accessing the Application
 
+### Local Development
+
 | Page | URL |
 |------|-----|
-| **Home / OCR Converter** | `http://localhost:3000` |
-| **Login** | `http://localhost:3000/auth/login` |
-| **Register** | `http://localhost:3000/auth/register` |
-| **Google Sign-In** | `http://localhost:3000/api/auth/google` |
-| **Forgot Password** | `http://localhost:3000/auth/forgot-password` |
-| **Admin Dashboard** | `http://localhost:3000/admin/dashboard` |
-| **User Management** | `http://localhost:3000/admin/users` |
-| **Account Settings** | `http://localhost:3000/admin/settings` |
-| **API Health Check** | `http://localhost:3000/api/health` |
+| Home / OCR Converter | `http://localhost:3000` |
+| Login | `http://localhost:3000/auth/login` |
+| Register | `http://localhost:3000/auth/register` |
+| Google Sign-In | `http://localhost:3000/api/auth/google` |
+| Forgot Password | `http://localhost:3000/auth/forgot-password` |
+| Reset Password (from email) | `http://localhost:3000/auth/update-password?token=...&email=...` |
+| Admin Dashboard | `http://localhost:3000/admin/dashboard` |
+| User Management | `http://localhost:3000/admin/users` |
+| Account Settings | `http://localhost:3000/admin/settings` |
+| API Health Check | `http://localhost:3000/api/health` |
+
+### Vercel Production
+
+| Page | URL |
+|------|-----|
+| Home / OCR Converter | `https://web-tech-app.vercel.app` |
+| Login | `https://web-tech-app.vercel.app/auth/login` |
+| Google Sign-In | `https://web-tech-app.vercel.app/api/auth/google` |
+| Admin Dashboard | `https://web-tech-app.vercel.app/admin/dashboard` |
+| API Health Check | `https://web-tech-app.vercel.app/api/health` |
 
 ---
 
@@ -608,13 +603,13 @@ The server will be accessible at `http://localhost:3000`.
 
 | Document | Link |
 |----------|------|
-| API Testing Evidence Document | [Google Docs](https://docs.google.com/document/d/1Dy_AZTZUmfaXDNUsZJ2sT2C8Ql5BlMrPPcbbarUE2aY/edit?usp=sharing) |
+| API Testing Evidence | [Google Docs](https://docs.google.com/document/d/1Dy_AZTZUmfaXDNUsZJ2sT2C8Ql5BlMrPPcbbarUE2aY/edit?usp=sharing) |
 | Postman Collection & Environment Files | [Google Drive](https://drive.google.com/drive/folders/161GvthrYjIRRU98gUH0n_Kk2WSjGz86x?usp=sharing) |
 | UML Class Diagram | [Google Drive](https://drive.google.com/file/d/1N6aiYrpLr0-uCCgnmWqELqAG6obFmbSI/view?usp=sharing) |
 | Use Case Diagram | [Google Drive](https://drive.google.com/file/d/1qijDwGLEIh7zaWLz7aWpQWt5eAUfguC2/view?usp=sharing) |
 | Firebase Service Account Key | [Google Drive](https://drive.google.com/file/d/1XDrP_eZ6B_mfM_7tkojuM3uLD_dbP0cX/view?usp=sharing) |
 
-> **Note:** The Postman Collection folder also contains the `.env` configuration file and MongoDB URI text files. These files are not committed to the repository and have restricted access outside the organization.
+> **Note:** The Postman Collection folder also contains the `.env` configuration file and MongoDB URI text files. These files have restricted access outside the organization.
 
 ---
 
@@ -622,20 +617,18 @@ The server will be accessible at `http://localhost:3000`.
 
 | Feature | Implementation |
 |---------|---------------|
-| **Password Hashing** | bcrypt with salt rounds for irreversible password storage |
-| **JWT Authentication** | JSON Web Tokens stored in HTTPOnly cookies (not localStorage) |
-| **HTTPOnly Cookies** | Prevents client-side JavaScript from accessing authentication tokens (XSS protection) |
-| **Google OAuth 2.0** | Passport.js with Google strategy; cookies set with `sameSite: 'lax'` for OAuth redirect compatibility |
-| **Helmet.js** | HTTP security headers: X-Frame-Options, HSTS, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, X-Powered-By removal |
-| **Rate Limiting** | Global: 100 req/15min per IP. Auth: 10 req/15min. Login: 5 req/15min (brute-force protection) |
-| **Input Validation** | express-validator rules on all endpoints with structured field-level error responses |
-| **Centralized Error Handler** | AppError class with Mongoose, JWT, Multer, and JSON parse error mapping; stack traces in development only |
-| **Role-Based Access Control** | Four-tier middleware authorization chain (guest → user → admin → superadmin) |
-| **File Type Validation** | Whitelist-based MIME type verification for uploaded files |
-| **File Size Limits** | Max 10MB per OCR file, 2MB per profile picture, 5 files per OCR request |
-| **CORS Configuration** | Configurable cross-origin policy (permissive in dev, restrictive in production) |
-| **Password Reset Tokens** | Bcrypt-hashed tokens with 1-hour expiration, single-use |
-| **Environment Variables** | Sensitive credentials stored in `.env` + `firebase-service-account.json`, excluded from version control |
+| **Password Hashing** | bcrypt with salt rounds |
+| **JWT Authentication** | HTTPOnly cookies (not localStorage), 7-day expiry |
+| **Google OAuth 2.0** | Passport.js, `sameSite: 'lax'` for redirect compatibility |
+| **Helmet.js** | X-Frame-Options, HSTS, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, X-Powered-By removal |
+| **Rate Limiting** | Global: 100/15min, Auth: 10/15min, Login: 5/15min per IP |
+| **Input Validation** | express-validator on all endpoints with field-level errors |
+| **Centralized Error Handler** | AppError class mapping Mongoose, JWT, Multer, and JSON parse errors to proper HTTP status codes |
+| **RBAC** | Four-tier middleware: guest → user → admin → superadmin |
+| **File Validation** | MIME whitelist + size caps (10MB OCR, 2MB profile picture) |
+| **Password Reset Tokens** | Bcrypt-hashed, single-use, 1-hour expiry |
+| **CORS** | Configurable (permissive in dev, restrictive in production) |
+| **Environment Secrets** | `.env` + `firebase-service-account.json` excluded via `.gitignore` |
 
 ---
 
@@ -643,25 +636,25 @@ The server will be accessible at `http://localhost:3000`.
 
 | Phase | Description |
 |-------|-------------|
-| Phase 1 | Project initialization, folder structure, Express server setup, MongoDB Atlas configuration |
-| Phase 2 | User authentication system — registration, login, logout, JWT token management with HTTPOnly cookies |
-| Phase 3 | OCR engine integration with Tesseract.js, multi-format image support (HEIC, PDF, BMP, WebP) |
-| Phase 4 | Conversion history API with pagination, admin dashboard statistics, and user management endpoints |
-| Phase 5 | Frontend implementation — responsive UI, admin panel, user management interface with Bootstrap 5 |
-| Phase 6 | Documentation (README), RESTful clean URL routing, GitHub Pages deployment, PDF engine optimization, UI/UX refinements, responsive design for tablets and mobile, admin dashboard enhancements, and account settings page |
-| Phase 7 | Firebase Storage integration for profile picture upload, change, and deletion with automatic cleanup of old images |
-| Phase 8 | Google OAuth 2.0 integration via Passport.js — one-click login/register with Google, auto-user creation, JWT cookie on callback |
-| Phase 9 | Forgot password flow — SMTP email integration (Gmail), password reset tokens with bcrypt hashing and 1-hour expiration, update-password page |
-| Phase 10 | Google OAuth session persistence fix, real-time notification deletion sync (referenceIds), bulk selection for conversion history (v2.0), loading overlay transitions, confirmation dialogs, and UI bug fixes |
-| Phase 11 | Middleware validation enhancement — express-validator rules for all endpoints (register, login, profile updates, password reset), express-rate-limit (global 100/15min, auth 10/15min, login 5/15min), MongoDB ObjectId param validation, enhanced JWT error handling |
-| Phase 12 | RBAC refinement — added `superadminOnly` middleware to role change route, verified user-scoped history access, confirmed frontend hides role buttons for non-superadmins |
-| Phase 13 | Security & error handling — Helmet.js for HTTP security headers, centralized error handler (`AppError` class) covering Mongoose/JWT/Multer/JSON errors, refactored all 28 controller functions to use `next(error)` |
-| Phase 14 | Documentation update — comprehensive README rewrite, updated API endpoint table (31 endpoints), project directory structure, database schema, environment variables reference, and development phase history |
+| **Phase 1** | Project initialization — folder structure, Express 5 server, MongoDB Atlas connection with retry logic |
+| **Phase 2** | User authentication — registration, login, logout with JWT tokens in HTTPOnly cookies |
+| **Phase 3** | OCR engine — Tesseract.js integration, multi-format support (HEIC auto-conversion, PDF text extraction) |
+| **Phase 4** | History & admin — conversion history API with pagination, admin dashboard stats, user management endpoints |
+| **Phase 5** | Frontend — responsive UI with Bootstrap 5, admin panel, user management interface, login/register pages |
+| **Phase 6** | Polish & docs — clean URL routing, GitHub Pages + Vercel deployment, PDF engine optimization, responsive design (mobile/tablet), admin dashboard chart, account settings page, initial README |
+| **Phase 7** | Firebase Storage — profile picture upload, change, and deletion with automatic old-image cleanup |
+| **Phase 8** | Google OAuth 2.0 — Passport.js integration, one-click Google sign-in/sign-up, auto user creation, JWT on callback |
+| **Phase 9** | Forgot password — SMTP email via Gmail (nodemailer), tokenized reset links with bcrypt hashing and 1-hour expiry, update-password page |
+| **Phase 10** | Bug fixes — OAuth session persistence, notification deletion sync (referenceIds), bulk selection v2.0 for history, loading overlays, confirmation dialogs |
+| **Phase 11** | Middleware validation — express-validator rules for all endpoints, express-rate-limit (3-tier), MongoDB ObjectId param validation, enhanced JWT error messages |
+| **Phase 12** | RBAC refinement — `superadminOnly` middleware on role-change route, user-scoped history verification, frontend role-button visibility |
+| **Phase 13** | Security & error handling — Helmet.js headers, centralized `AppError` error handler, refactored all 28 controller functions to `next(error)` |
+| **Phase 14** | Documentation — comprehensive README v2.0 update, Vercel deployment guide (Firebase, OAuth, SMTP), updated API endpoint table (31 endpoints), development phase history |
 
 ---
 
 <div align="center">
   <p><strong>ImageToTextOnline</strong> — Built with ☕ by Oliver Jann Klein Borre</p>
-  <p><em>MO-IT149 - Web Technology Application — Mapua Malayan Digital College</em></p>
+  <p><em>MO-IT149 Web Technology Application — Mapua Malayan Digital College</em></p>
   <p>© 2026 Oliver Jann Klein Borre. All rights reserved.</p>
 </div>

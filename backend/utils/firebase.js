@@ -24,16 +24,30 @@ let bucket = null;
 const initFirebase = () => {
     if (bucket) return bucket;
 
-    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
     const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
+    const jsonEnvVar = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;
 
-    if (!keyPath || !storageBucket) {
-        console.error('[Firebase] Missing FIREBASE_SERVICE_ACCOUNT_KEY_PATH or FIREBASE_STORAGE_BUCKET in .env');
-        throw new Error('Firebase is not configured. Set FIREBASE_SERVICE_ACCOUNT_KEY_PATH and FIREBASE_STORAGE_BUCKET.');
+    if (!storageBucket) {
+        console.error('[Firebase] Missing FIREBASE_STORAGE_BUCKET in .env');
+        throw new Error('Firebase is not configured. Set FIREBASE_STORAGE_BUCKET.');
+    }
+
+    if (!jsonEnvVar && !keyPath) {
+        console.error('[Firebase] Missing Firebase credentials. Set FIREBASE_SERVICE_ACCOUNT_JSON (Vercel) or FIREBASE_SERVICE_ACCOUNT_KEY_PATH (local).');
+        throw new Error('Firebase is not configured. Provide service account credentials.');
     }
 
     try {
-        const serviceAccount = JSON.parse(readFileSync(path.resolve(keyPath), 'utf8'));
+        // Support both Vercel (env var JSON) and local (file path)
+        let serviceAccount;
+        if (jsonEnvVar) {
+            serviceAccount = JSON.parse(jsonEnvVar);
+            console.log('[Firebase] Using service account from environment variable');
+        } else {
+            serviceAccount = JSON.parse(readFileSync(path.resolve(keyPath), 'utf8'));
+            console.log('[Firebase] Using service account from file');
+        }
 
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
@@ -45,7 +59,7 @@ const initFirebase = () => {
         return bucket;
     } catch (error) {
         console.error('[Firebase] Initialization error:', error.message);
-        throw new Error('Failed to initialize Firebase. Check service account key path.');
+        throw new Error('Failed to initialize Firebase. Check service account credentials.');
     }
 };
 
