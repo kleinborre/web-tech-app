@@ -9,7 +9,7 @@
 import express from 'express';
 import { getUsers, getUser, getStats, toggleUserStatus, changeUserRole } from '../controllers/admin.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
-import { adminOnly } from '../middleware/admin.middleware.js';
+import { adminOnly, superadminOnly } from '../middleware/admin.middleware.js';
 import { mongoIdParam, handleValidationErrors } from '../middleware/validate.middleware.js';
 
 const router = express.Router();
@@ -46,6 +46,6 @@ router.patch('/users/:id/status', mongoIdParam, handleValidationErrors, toggleUs
  * @route   PATCH /api/admin/users/:id/role
  * @desc    Change user role (superadmin only)
  */
-router.patch('/users/:id/role', mongoIdParam, handleValidationErrors, changeUserRole);
+router.patch('/users/:id/role', superadminOnly, mongoIdParam, handleValidationErrors, changeUserRole);
 
 export default router;
