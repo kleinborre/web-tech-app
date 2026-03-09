@@ -44,12 +44,21 @@ const userSchema = new mongoose.Schema({
 
     /**
      * Hashed password using bcrypt.
+     * Not required for OAuth users.
      */
     password: {
         type: String,
-        required: [true, 'Password is required'],
         minlength: [8, 'Password must be at least 8 characters'],
         select: false // Don't include password in queries by default
+    },
+
+    /**
+     * Google OAuth ID for social login.
+     */
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
     },
 
     /**

@@ -374,6 +374,7 @@ const DropZone = (() => {
         // Show loading state
         setLoading(true);
         Results.showLoading();
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Converting...');
 
         try {
             // Send to OCR API
@@ -393,6 +394,7 @@ const DropZone = (() => {
             Results.hide();
         } finally {
             setLoading(false);
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
         }
     };
 

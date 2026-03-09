@@ -3,10 +3,11 @@
  * 
  * Handles user conversion history CRUD operations.
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import ConversionLog from '../models/ConversionLog.model.js';
+import Notification from '../models/Notification.model.js';
 
 /**
  * @desc    Get user's conversion history (paginated)
@@ -68,7 +69,7 @@ export const getHistoryItem = async (req, res) => {
 };
 
 /**
- * @desc    Delete a conversion record
+ * @desc    Delete a conversion record + related notifications
  * @route   DELETE /api/history/:id
  * @access  Private
  */
@@ -81,6 +82,40 @@ export const deleteHistory = async (req, res) => {
 
         if (!item) {
             return res.status(404).json({ success: false, error: 'Record not found' });
+        }
+
+        // Remove this ID from notification referenceIds and clean up empty ones
+        try {
+            const deletedId = item._id;
+
+            // Pull the deleted ID from referenceIds arrays
+            await Notification.updateMany(
+                { userId: req.user._id, type: 'conversion', referenceIds: deletedId },
+                { $pull: { referenceIds: deletedId } }
+            );
+
+            // Delete notifications that now have empty referenceIds
+            await Notification.deleteMany({
+                userId: req.user._id,
+                type: 'conversion',
+                referenceIds: { $exists: true, $size: 0 }
+            });
+
+            // Legacy fallback: regex match for old notifications without referenceIds
+            const filename = item.originalFileName || '';
+            if (filename) {
+                await Notification.deleteMany({
+                    userId: req.user._id,
+                    type: 'conversion',
+                    $or: [
+                        { referenceIds: { $exists: false } },
+                        { referenceIds: null }
+                    ],
+                    message: { $regex: filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
+                });
+            }
+        } catch (notifError) {
+            console.error('[History] Notification cleanup error:', notifError.message);
         }
 
         console.log(`[History] Deleted record ${req.params.id} for user ${req.user.username}`);
@@ -102,6 +137,11 @@ export const clearHistory = async (req, res) => {
     try {
         const result = await ConversionLog.deleteMany({ userId: req.user._id });
 
+        // Also clean up all conversion notifications
+        try {
+            await Notification.deleteMany({ userId: req.user._id, type: 'conversion' });
+        } catch (e) { /* ignore */ }
+
         console.log(`[History] Cleared ${result.deletedCount} records for user ${req.user.username}`);
 
         res.json({
@@ -112,5 +152,55 @@ export const clearHistory = async (req, res) => {
     } catch (error) {
         console.error('[History] Clear error:', error.message);
         res.status(500).json({ success: false, error: 'Failed to clear history' });
+    }
+};
+
+/**
+ * @desc    Bulk delete selected conversion records + related notifications
+ * @route   POST /api/history/bulk-delete
+ * @access  Private
+ */
+export const bulkDeleteHistory = async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, error: 'No IDs provided' });
+        }
+
+        const result = await ConversionLog.deleteMany({
+            _id: { $in: ids },
+            userId: req.user._id
+        });
+
+        // Clean up notifications by referenceIds
+        try {
+            // Pull all deleted IDs from referenceIds arrays
+            await Notification.updateMany(
+                { userId: req.user._id, type: 'conversion', referenceIds: { $in: ids } },
+                { $pull: { referenceIds: { $in: ids } } }
+            );
+
+            // Delete notifications with empty referenceIds
+            await Notification.deleteMany({
+                userId: req.user._id,
+                type: 'conversion',
+                referenceIds: { $exists: true, $size: 0 }
+            });
+        } catch (e) {
+            console.error('[History] Bulk notification cleanup error:', e.message);
+        }
+
+        console.log(`[History] Bulk deleted ${result.deletedCount} records for user ${req.user.username}`);
+
+        res.json({
+            success: true,
+            message: `Deleted ${result.deletedCount} records`,
+            deletedCount: result.deletedCount
+        });
+
+    } catch (error) {
+        console.error('[History] Bulk delete error:', error.message);
+        res.status(500).json({ success: false, error: 'Failed to bulk delete records' });
     }
 };

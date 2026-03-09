@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { getHistory, getHistoryItem, deleteHistory, clearHistory } from '../controllers/history.controller.js';
+import { getHistory, getHistoryItem, deleteHistory, clearHistory, bulkDeleteHistory } from '../controllers/history.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -20,6 +20,12 @@ router.use(protect);
  * @desc    Get user's conversion history (paginated)
  */
 router.get('/', getHistory);
+
+/**
+ * @route   POST /api/history/bulk-delete
+ * @desc    Bulk delete selected records
+ */
+router.post('/bulk-delete', bulkDeleteHistory);
 
 /**
  * @route   GET /api/history/:id

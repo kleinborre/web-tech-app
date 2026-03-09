@@ -44,8 +44,9 @@ export const convertImages = async (req, res) => {
                         originalFileName: r.filename,
                         extractedText: r.text || ''
                     }));
-                await Promise.all(savePromises);
-                console.log(`[OCR] Saved ${savePromises.length} conversion(s) for user ${req.user.username}`);
+                const savedLogs = await Promise.all(savePromises);
+                const logIds = savedLogs.map(log => log._id);
+                console.log(`[OCR] Saved ${savedLogs.length} conversion(s) for user ${req.user.username}`);
 
                 // Send notification for successful conversion(s)
                 try {
@@ -53,7 +54,7 @@ export const convertImages = async (req, res) => {
                     const msg = fileNames.length === 1
                         ? `Successfully converted "${fileNames[0]}"`
                         : `Successfully converted ${fileNames.length} file(s)`;
-                    await Notification.notify(req.user._id, 'conversion', msg);
+                    await Notification.notify(req.user._id, 'conversion', msg, logIds);
                 } catch (notifError) {
                     console.error('[OCR] Failed to send notification:', notifError.message);
                 }

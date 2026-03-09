@@ -55,6 +55,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        profilePicture: user.profilePicture || '',
         createdAt: user.createdAt
     };
 
@@ -245,6 +246,14 @@ export const login = async (req, res) => {
             });
         }
 
+        // Check if user has a password (Google-only users won't)
+        if (!user.password) {
+            return res.status(401).json({
+                success: false,
+                error: 'This account uses Google Sign In. Please sign in with Google.'
+            });
+        }
+
         // Check password
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
@@ -312,6 +321,9 @@ export const getMe = async (req, res) => {
             });
         }
 
+        // Need to check password field separately since it's select: false
+        const userWithPassword = await User.findById(req.user.id).select('+password');
+
         res.status(200).json({
             success: true,
             user: {
@@ -320,6 +332,9 @@ export const getMe = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 isActive: user.isActive,
+                profilePicture: user.profilePicture || '',
+                hasPassword: !!userWithPassword?.password,
+                isGoogleUser: !!user.googleId,
                 createdAt: user.createdAt
             }
         });

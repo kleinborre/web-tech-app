@@ -521,5 +521,15 @@ const NotificationManager = (() => {
         }
     };
 
-    return { init, destroy, fetchUnreadCount, closePanel };
+    /**
+     * Public refresh — re-fetches notifications and unread count.
+     * Call this after external actions that affect notifications
+     * (e.g., deleting a conversion history entry).
+     */
+    const refresh = async () => {
+        await fetchUnreadCount();
+        await fetchNotifications();
+    };
+
+    return { init, destroy, fetchUnreadCount, closePanel, refresh };
 })();

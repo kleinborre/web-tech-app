@@ -8,6 +8,8 @@
 
 import express from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import passport from '../config/passport.js';
 import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword, forgotPassword, resetPassword, uploadProfilePicture, deleteProfilePicture } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
@@ -125,5 +127,65 @@ router.post('/profile-picture', protect, profileUpload.single('profilePicture'),
  * @access  Private
  */
 router.delete('/profile-picture', protect, deleteProfilePicture);
+
+/* ==========================================================================
+   GOOGLE OAUTH ROUTES
+   ========================================================================== */
+
+/**
+ * @route   GET /api/auth/google
+ * @desc    Initiate Google OAuth consent flow
+ * @access  Public
+ */
+router.get('/google', passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false
+}));
+
+/**
+ * @route   GET /api/auth/google/callback
+ * @desc    Google OAuth callback - create JWT and redirect
+ * @access  Public
+ */
+router.get('/google/callback',
+    (req, res, next) => {
+        passport.authenticate('google', { session: false }, (err, user, info) => {
+            if (err) {
+                console.error('[Auth] Google OAuth error:', err.message);
+                return res.redirect('/auth/login?error=oauth_failed');
+            }
+
+            if (!user) {
+                console.error('[Auth] Google OAuth: No user returned', info);
+                return res.redirect('/auth/login?error=oauth_failed');
+            }
+
+            try {
+                // Generate JWT token
+                const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+                    expiresIn: process.env.JWT_EXPIRE || '7d'
+                });
+
+                // Set HTTPOnly cookie (sameSite must be 'lax' for OAuth redirects)
+                const cookieExpireDays = parseInt(process.env.JWT_COOKIE_EXPIRE) || 7;
+                res.cookie('token', token, {
+                    expires: new Date(Date.now() + cookieExpireDays * 24 * 60 * 60 * 1000),
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax'
+                });
+
+                console.log(`[Auth] Google OAuth login: ${user.username} (${user.email})`);
+
+                // Always redirect to dashboard after OAuth
+                res.redirect('/admin/dashboard');
+
+            } catch (error) {
+                console.error('[Auth] Google callback error:', error.message);
+                res.redirect('/auth/login?error=oauth_failed');
+            }
+        })(req, res, next);
+    }
+);
 
 export default router;

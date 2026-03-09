@@ -60,6 +60,14 @@ const notificationSchema = new mongoose.Schema({
     },
 
     /**
+     * Optional array of related document IDs (e.g. ConversionLog IDs).
+     * Used to clean up notifications when referenced items are deleted.
+     */
+    referenceIds: [{
+        type: mongoose.Schema.Types.ObjectId
+    }],
+
+    /**
      * Notification creation timestamp.
      */
     createdAt: {
@@ -133,8 +141,8 @@ notificationSchema.statics.getUserNotifications = async function (userId, page =
  * @param {string} message - Notification message
  * @returns {Promise<Notification>} Created notification
  */
-notificationSchema.statics.notify = async function (userId, type, message) {
-    return this.create({ userId, type, message });
+notificationSchema.statics.notify = async function (userId, type, message, referenceIds = []) {
+    return this.create({ userId, type, message, referenceIds });
 };
 
 /**

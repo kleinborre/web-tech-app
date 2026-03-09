@@ -174,6 +174,25 @@ async function loadUserData() {
     if (emailInput) {
         emailInput.value = `${SettingsState.originalEmail}  (Click to edit)`;
     }
+
+    // Handle Google-only users (no password set)
+    if (SettingsState.user.isGoogleUser && !SettingsState.user.hasPassword) {
+        const passwordForm = document.getElementById('passwordForm');
+        if (passwordForm) {
+            passwordForm.closest('.settings-card').innerHTML = `
+                <div class="settings-card__title">
+                    <i class="bi bi-lock"></i> Password
+                </div>
+                <div style="text-align: center; padding: 1.5rem; color: var(--color-gray-500);">
+                    <i class="bi bi-google" style="font-size: 2rem; color: #4285F4; display: block; margin-bottom: 0.75rem;"></i>
+                    <p style="margin: 0; font-size: var(--font-size-sm);">
+                        Your account is linked with Google.<br>
+                        Password settings are not available for Google-linked accounts.
+                    </p>
+                </div>
+            `;
+        }
+    }
 }
 
 /**
@@ -306,6 +325,7 @@ function initProfilePicture() {
         if (avatarInitials) avatarInitials.textContent = '...';
 
         try {
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Uploading photo...');
             // Auto-compress if over 2MB
             let uploadFile = file;
             if (file.size > 2 * 1024 * 1024) {
@@ -313,6 +333,7 @@ function initProfilePicture() {
             }
 
             const result = await SettingsAPI.uploadProfilePicture(uploadFile);
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
 
             if (result.success) {
                 SettingsState.user.profilePicture = result.profilePicture;
@@ -325,9 +346,7 @@ function initProfilePicture() {
                     navAvatar.innerHTML = `<img src="${result.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                 }
 
-                if (typeof UI !== 'undefined') {
-                    UI.showToast('Profile picture updated', 'success');
-                }
+                showResultPopup('success', 'Photo Updated', 'Your profile picture has been updated successfully.');
             } else {
                 if (typeof UI !== 'undefined') {
                     UI.showToast(result.error || 'Failed to upload', 'danger');
@@ -336,6 +355,7 @@ function initProfilePicture() {
                 updateSettingsAvatar(SettingsState.user.profilePicture || '', initials);
             }
         } catch (error) {
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
             console.error('[Settings] Profile picture upload error:', error);
             if (typeof UI !== 'undefined') {
                 UI.showToast('Network error. Please try again.', 'danger');
@@ -568,8 +588,10 @@ function resetUsernameField() {
 }
 
 async function submitUsernameUpdate(newUsername) {
+    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Updating username...');
     try {
         const data = await SettingsAPI.updateUsername(newUsername);
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
 
         if (data.success) {
             SettingsState.originalUsername = newUsername;
@@ -583,6 +605,7 @@ async function submitUsernameUpdate(newUsername) {
             showResultPopup('error', 'Update Failed', data.error || 'Failed to update username.');
         }
     } catch (error) {
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
         showResultPopup('error', 'Error', 'Network error. Please try again.');
     }
 }
@@ -694,8 +717,10 @@ function resetEmailField() {
 }
 
 async function submitEmailUpdate(newEmail) {
+    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Updating email...');
     try {
         const data = await SettingsAPI.updateEmail(newEmail);
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
 
         if (data.success) {
             SettingsState.originalEmail = newEmail;
@@ -705,6 +730,7 @@ async function submitEmailUpdate(newEmail) {
             showResultPopup('error', 'Update Failed', data.error || 'Failed to update email.', 'credentials');
         }
     } catch (error) {
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
         showResultPopup('error', 'Error', 'Network error. Please try again.', 'credentials');
     }
 }
@@ -944,8 +970,10 @@ function checkPasswordSubmittable() {
 }
 
 async function submitPasswordUpdate(currentPassword, newPassword, confirmNewPassword) {
+    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Updating password...');
     try {
         const data = await SettingsAPI.updatePassword(currentPassword, newPassword, confirmNewPassword);
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
 
         if (data.success) {
             document.getElementById('currentPassword').value = '';
@@ -960,6 +988,7 @@ async function submitPasswordUpdate(currentPassword, newPassword, confirmNewPass
             showResultPopup('error', 'Update Failed', data.error || 'Failed to update password.', 'credentials');
         }
     } catch (error) {
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
         showResultPopup('error', 'Error', 'Network error. Please try again.', 'credentials');
     }
 }
@@ -1012,8 +1041,47 @@ function closeResultPopup(returnTab) {
    ========================================================================== */
 
 function initSidebarNav() {
-    // No confirmation dialogs — sidebar links navigate directly
-    // (only logout retains confirmation)
+    // Add confirmation for the Convert (index.html) sidebar link
+    const convertLink = document.querySelector('.dashboard__nav-link[href="../index.html"]');
+    if (convertLink) {
+        convertLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Go to Convert',
+                    'Go to Convert page?',
+                    () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
+                    null,
+                    'Confirm',
+                    'Cancel',
+                    'primary'
+                );
+            } else {
+                if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
+            }
+        });
+    }
+
+    // Add confirmation for the Users sidebar link (admin only)
+    const usersLink = document.querySelector('.dashboard__nav-link[href="users.html"]');
+    if (usersLink) {
+        usersLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                UI.showConfirmDialog(
+                    'Navigate',
+                    'Go to User Management?',
+                    () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
+                    null,
+                    'Confirm',
+                    'Cancel',
+                    'primary'
+                );
+            } else {
+                if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
+            }
+        });
+    }
 }
 
 /* ==========================================================================
@@ -1030,13 +1098,54 @@ function initHamburger() {
             mobileMenu.classList.toggle('dashboard__mobile-menu--open');
         });
 
-        // Close menu when clicking a link (except sign out)
+        // Close menu when clicking a link (except sign out and convert)
         mobileMenu.querySelectorAll('.dashboard__mobile-link').forEach(link => {
             if (link.id !== 'mobileLogoutBtn') {
-                link.addEventListener('click', () => {
-                    hamburger.classList.remove('dashboard__hamburger--active');
-                    mobileMenu.classList.remove('dashboard__mobile-menu--open');
-                });
+                // Add confirmation for Convert link in mobile menu
+                if (link.getAttribute('href') === '../index.html') {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        hamburger.classList.remove('dashboard__hamburger--active');
+                        mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Go to Convert',
+                                'Go to Convert page?',
+                                () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
+                                null,
+                                'Confirm',
+                                'Cancel',
+                                'primary'
+                            );
+                        } else {
+                            if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
+                        }
+                    });
+                } else if (link.getAttribute('href') === 'users.html') {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        hamburger.classList.remove('dashboard__hamburger--active');
+                        mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                            UI.showConfirmDialog(
+                                'Navigate',
+                                'Go to User Management?',
+                                () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
+                                null,
+                                'Confirm',
+                                'Cancel',
+                                'primary'
+                            );
+                        } else {
+                            if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
+                        }
+                    });
+                } else {
+                    link.addEventListener('click', () => {
+                        hamburger.classList.remove('dashboard__hamburger--active');
+                        mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                    });
+                }
             }
         });
     }

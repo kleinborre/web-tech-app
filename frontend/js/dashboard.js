@@ -219,6 +219,8 @@ const HistoryManager = {
                 </tr>
             `).join('');
         }
+        // Enhance table with bulk selection checkboxes
+        if (typeof BulkSelection !== 'undefined') BulkSelection.enhanceTable('historyTable');
     },
 
     /**
@@ -250,7 +252,7 @@ const HistoryManager = {
             const encodedText = encodeURIComponent(item.extractedText || '');
             const filename = item.originalFileName || 'Untitled';
             return `
-                <div class="history-card" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
+                <div class="history-card" data-id="${item._id}" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
                     <div class="history-card__header">
                         <span class="history-card__filename">
                             <i class="bi bi-file-earmark-text me-1"></i>${filename}
@@ -285,6 +287,8 @@ const HistoryManager = {
         }
 
         container.innerHTML = html;
+        // Enhance cards with bulk selection (long-press)
+        if (typeof BulkSelection !== 'undefined') BulkSelection.enhanceCards('.history-card[data-id]');
     },
 
     goCardPage(page) {
@@ -399,6 +403,10 @@ const HistoryManager = {
             if (result.success) {
                 DashboardUI.showToast('Record deleted', 'success');
                 HistoryManager.load(DashboardState.historyPage);
+                // Refresh notifications after deletion
+                if (typeof NotificationManager !== 'undefined' && NotificationManager.refresh) {
+                    NotificationManager.refresh();
+                }
             } else {
                 DashboardUI.showToast(result.error || 'Failed to delete', 'danger');
             }
@@ -739,22 +747,27 @@ const ViewManager = {
         const targetView = DashboardState.currentView === 'user' ? 'admin' : 'user';
         const viewName = targetView === 'admin' ? 'Admin' : 'User';
 
+        const doSwitch = async () => {
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show(`Switching to ${viewName} View...`);
+            DashboardState.currentView = targetView;
+            await ViewManager.update();
+            if (typeof LoadingOverlay !== 'undefined') {
+                setTimeout(() => LoadingOverlay.hide(), 400);
+            }
+        };
+
         // Show confirmation dialog
         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
             UI.showConfirmDialog(
                 'Switch View',
                 `Switch to ${viewName} View?`,
-                () => {
-                    DashboardState.currentView = targetView;
-                    ViewManager.update();
-                },
+                doSwitch,
                 null,
                 'Confirm',
                 'Cancel'
             );
         } else {
-            DashboardState.currentView = targetView;
-            ViewManager.update();
+            doSwitch();
         }
     },
 

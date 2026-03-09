@@ -545,12 +545,14 @@ const FormHandlers = {
             }
 
             UI.showLoading(submitBtn, 'Logging in...');
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Logging in...');
 
             try {
                 const result = await AuthService.login(credentials);
 
                 if (result.success) {
                     localStorage.setItem('user', JSON.stringify(result.user));
+                    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
 
                     UI.showSuccessModal(
                         'Login Successful!',
@@ -560,11 +562,13 @@ const FormHandlers = {
                         true
                     );
                 } else {
+                    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                     UI.showToast(result.error || 'Login failed', 'danger');
                     UI.hideLoading(submitBtn);
                 }
             } catch (error) {
                 console.error('Login error:', error);
+                if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                 UI.showToast('Connection error. Please try again.', 'danger');
                 UI.hideLoading(submitBtn);
             }
@@ -689,24 +693,28 @@ const FormHandlers = {
             }
 
             UI.showLoading(submitBtn, 'Creating account...');
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Creating account...');
 
             try {
                 const result = await AuthService.register(userData);
 
                 if (result.success) {
+                    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                     UI.showSuccessModal(
                         'Registration Successful!',
                         'Your account has been created successfully!',
                         AUTH_CONFIG.LOGIN_PAGE,
                         'Go to Login',
-                        true // Enable auto-redirect with countdown
+                        true
                     );
                 } else {
+                    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                     UI.showToast(result.error || 'Registration failed', 'danger');
                     UI.hideLoading(submitBtn);
                 }
             } catch (error) {
                 console.error('Registration error:', error);
+                if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                 UI.showToast('Connection error. Please try again.', 'danger');
                 UI.hideLoading(submitBtn);
             }
@@ -783,8 +791,21 @@ const AuthState = {
     /**
      * Update UI based on auth state.
      */
-    updateUI: () => {
-        const user = AuthState.getUser();
+    updateUI: async () => {
+        let user = AuthState.getUser();
+
+        // If no user in localStorage, check server-side cookie auth (handles Google OAuth)
+        if (!user) {
+            try {
+                const result = await AuthService.getMe();
+                if (result.success && result.user) {
+                    user = result.user;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+            } catch (e) {
+                // Not logged in — that's fine
+            }
+        }
 
         // Update user display name
         const userNameElements = document.querySelectorAll('.user-name, [data-user="name"]');

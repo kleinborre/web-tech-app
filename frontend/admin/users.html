@@ -677,10 +677,32 @@
                     });
                     mobileMenu.querySelectorAll('.dashboard__mobile-link').forEach(link => {
                         if (link.id !== 'mobileLogoutBtn') {
-                            link.addEventListener('click', () => {
-                                hamburger.classList.remove('dashboard__hamburger--active');
-                                mobileMenu.classList.remove('dashboard__mobile-menu--open');
-                            });
+                            // Add confirmation for Convert link in mobile menu
+                            if (link.getAttribute('href') === '../index.html') {
+                                link.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    hamburger.classList.remove('dashboard__hamburger--active');
+                                    mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                                        UI.showConfirmDialog(
+                                            'Go to Convert',
+                                            'Go to Convert page?',
+                                            () => { window.location.href = '../index.html'; },
+                                            null,
+                                            'Confirm',
+                                            'Cancel',
+                                            'primary'
+                                        );
+                                    } else {
+                                        window.location.href = '../index.html';
+                                    }
+                                });
+                            } else {
+                                link.addEventListener('click', () => {
+                                    hamburger.classList.remove('dashboard__hamburger--active');
+                                    mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                                });
+                            }
                         }
                     });
                 }

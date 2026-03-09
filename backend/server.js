@@ -13,6 +13,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
+import passport from './config/passport.js';
+import { initializePassport } from './config/passport.js';
 
 // Route imports
 import ocrRoutes from './routes/ocr.routes.js';
@@ -26,6 +28,9 @@ import connectDB from './config/db.js';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Passport strategies (must be after dotenv.config)
+initializePassport();
 
 // ES Module directory resolution
 const __filename = fileURLToPath(import.meta.url);
@@ -67,6 +72,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
  * Parses cookies for authentication.
  */
 app.use(cookieParser());
+
+/**
+ * Passport Middleware
+ * Initializes Passport for Google OAuth.
+ */
+app.use(passport.initialize());
 
 /**
  * Database Connection Middleware
