@@ -822,7 +822,13 @@ async function initDashboard() {
         if (welcomeEl) welcomeEl.textContent = `Welcome, ${result.user.username}`;
 
         const avatarEl = document.getElementById('userAvatar');
-        if (avatarEl) avatarEl.textContent = DashboardUI.getInitials(result.user.username);
+        if (avatarEl) {
+            if (result.user.profilePicture) {
+                avatarEl.innerHTML = `<img src="${result.user.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+                avatarEl.textContent = DashboardUI.getInitials(result.user.username);
+            }
+        }
 
         // Initialize view
         ViewManager.init();

@@ -7,10 +7,25 @@
  */
 
 import express from 'express';
-import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
+import multer from 'multer';
+import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword, forgotPassword, resetPassword, uploadProfilePicture, deleteProfilePicture } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
+
+// Multer config for profile picture (memory storage, 2MB limit)
+const profileUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (allowed.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Allowed: JPEG, PNG, GIF, WebP'), false);
+        }
+    }
+});
 
 /* ==========================================================================
    PUBLIC ROUTES
@@ -96,5 +111,19 @@ router.patch('/update-password', protect, updatePassword);
  * @access  Private
  */
 router.post('/verify-password', protect, verifyPassword);
+
+/**
+ * @route   POST /api/auth/profile-picture
+ * @desc    Upload or update profile picture
+ * @access  Private
+ */
+router.post('/profile-picture', protect, profileUpload.single('profilePicture'), uploadProfilePicture);
+
+/**
+ * @route   DELETE /api/auth/profile-picture
+ * @desc    Delete profile picture
+ * @access  Private
+ */
+router.delete('/profile-picture', protect, deleteProfilePicture);
 
 export default router;

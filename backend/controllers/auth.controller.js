@@ -12,6 +12,7 @@ import User from '../models/User.model.js';
 import Notification from '../models/Notification.model.js';
 import PasswordResetToken from '../models/PasswordResetToken.model.js';
 import { sendPasswordResetEmail } from '../utils/email.js';
+import { uploadToFirebase, deleteFromFirebase, getFilePathFromUrl } from '../utils/firebase.js';
 
 /* ==========================================================================
    HELPER FUNCTIONS
@@ -817,6 +818,130 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Server error while resetting password'
+        });
+    }
+};
+
+/* ==========================================================================
+   PROFILE PICTURE
+   ========================================================================== */
+
+/**
+ * @desc    Upload or update profile picture
+ * @route   POST /api/auth/profile-picture
+ * @access  Private
+ */
+export const uploadProfilePicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: 'No image file provided'
+            });
+        }
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(req.file.mimetype)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP'
+            });
+        }
+
+        // Validate file size (2MB max)
+        if (req.file.size > 2 * 1024 * 1024) {
+            return res.status(400).json({
+                success: false,
+                error: 'File size exceeds 2MB limit'
+            });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Delete old profile picture from Firebase if exists
+        if (user.profilePicture) {
+            const oldPath = getFilePathFromUrl(user.profilePicture);
+            if (oldPath) {
+                await deleteFromFirebase(oldPath);
+            }
+        }
+
+        // Upload new picture to Firebase
+        const ext = req.file.originalname.split('.').pop().toLowerCase();
+        const filePath = `profile-pictures/${user._id}/${Date.now()}.${ext}`;
+        const publicUrl = await uploadToFirebase(req.file.buffer, filePath, req.file.mimetype);
+
+        // Update user record
+        user.profilePicture = publicUrl;
+        await user.save();
+
+        console.log(`[Auth] Profile picture updated for user: ${user.username}`);
+
+        res.status(200).json({
+            success: true,
+            profilePicture: publicUrl
+        });
+
+    } catch (error) {
+        console.error('[Auth] UploadProfilePicture error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while uploading profile picture'
+        });
+    }
+};
+
+/**
+ * @desc    Delete profile picture
+ * @route   DELETE /api/auth/profile-picture
+ * @access  Private
+ */
+export const deleteProfilePicture = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        if (!user.profilePicture) {
+            return res.status(400).json({
+                success: false,
+                error: 'No profile picture to delete'
+            });
+        }
+
+        // Delete from Firebase
+        const filePath = getFilePathFromUrl(user.profilePicture);
+        if (filePath) {
+            await deleteFromFirebase(filePath);
+        }
+
+        // Clear from user record
+        user.profilePicture = '';
+        await user.save();
+
+        console.log(`[Auth] Profile picture deleted for user: ${user.username}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Profile picture removed'
+        });
+
+    } catch (error) {
+        console.error('[Auth] DeleteProfilePicture error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Server error while deleting profile picture'
         });
     }
 };

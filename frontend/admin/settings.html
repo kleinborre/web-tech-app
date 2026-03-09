@@ -67,18 +67,75 @@
 
         /* ── Profile Avatar ── */
         .settings-avatar {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: linear-gradient(135deg, #00838f, #00acc1);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: var(--font-weight-semibold);
-            margin: 0 auto var(--spacing-lg);
+            margin: 0 auto var(--spacing-sm);
             user-select: none;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        .settings-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .settings-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .settings-avatar__overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border-radius: 50%;
+        }
+
+        .settings-avatar:hover .settings-avatar__overlay {
+            opacity: 1;
+        }
+
+        .settings-avatar__overlay i {
+            font-size: 1.4rem;
+            color: white;
+        }
+
+        .settings-avatar__overlay span {
+            font-size: 0.65rem;
+            color: white;
+            margin-top: 2px;
+        }
+
+        .settings-avatar__remove {
+            display: block;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--color-gray-500);
+            cursor: pointer;
+            margin-bottom: var(--spacing-lg);
+            transition: color 0.15s;
+        }
+
+        .settings-avatar__remove:hover {
+            color: #dc3545;
         }
 
         /* ── Settings Card ── */
@@ -527,8 +584,16 @@
                      PROFILE TAB
                      ═══════════════════════════════════════════ -->
                 <div class="settings-tab-content settings-tab-content--active" id="tab-profile">
-                    <!-- Avatar -->
-                    <div class="settings-avatar" id="profileAvatar">U</div>
+                    <!-- Avatar with upload -->
+                    <div class="settings-avatar" id="profileAvatar" title="Click to change photo">
+                        <span id="avatarInitials">U</span>
+                        <div class="settings-avatar__overlay">
+                            <i class="bi bi-camera"></i>
+                            <span>Change</span>
+                        </div>
+                    </div>
+                    <input type="file" id="profilePictureInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+                    <a class="settings-avatar__remove" id="removePhotoBtn" style="display: none;">Remove Photo</a>
 
                     <!-- Username Card -->
                     <div class="settings-card">

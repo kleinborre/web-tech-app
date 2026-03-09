@@ -65,3 +65,9 @@ tessdata/
 *.bak
 *.tmp
 *.temp
+
+# -----------------------------------------------------------------------------
+# Firebase (Service Account Keys - SENSITIVE)
+# -----------------------------------------------------------------------------
+*firebase*service*account*.json
+*serviceAccount*.json

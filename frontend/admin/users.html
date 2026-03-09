@@ -345,7 +345,7 @@
                         <tr data-id="${user._id}" style="cursor: pointer;" onclick="viewUser('${user._id}')">
                             <td>
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <div class="dashboard__avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">${getInitials(user.username)}</div>
+                                    <div class="dashboard__avatar" style="width: 32px; height: 32px; font-size: 0.875rem; overflow: hidden;">${user.profilePicture ? `<img src="${user.profilePicture}" alt="${user.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : getInitials(user.username)}</div>
                                     <span>${user.username}${isSelf ? ' (You)' : ''}</span>
                                 </div>
                             </td>
@@ -387,7 +387,7 @@
                     return `
                         <div class="user-card" onclick="viewUser('${user._id}')">
                             <div class="user-card__header">
-                                <div class="dashboard__avatar" style="width: 36px; height: 36px; font-size: 0.875rem;">${getInitials(user.username)}</div>
+                                <div class="dashboard__avatar" style="width: 36px; height: 36px; font-size: 0.875rem; overflow: hidden;">${user.profilePicture ? `<img src="${user.profilePicture}" alt="${user.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : getInitials(user.username)}</div>
                                 <div class="user-card__info">
                                     <div class="user-card__name">${user.username}${isSelf ? ' (You)' : ''}</div>
                                     <div class="user-card__email">${user.email || '-'}</div>
@@ -514,9 +514,11 @@
                     const canModify = !isSelf && !isSuperadmin;
 
                     document.getElementById('userDetailContent').innerHTML = `
-                        <div class="user-detail__item">
-                            <span class="user-detail__label">Username</span>
-                            <span class="user-detail__value">${user.username}</span>
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #00838f, #00acc1); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 600; margin: 0 auto; overflow: hidden;">
+                                ${user.profilePicture ? `<img src="${user.profilePicture}" alt="${user.username}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : getInitials(user.username)}
+                            </div>
+                            <div style="margin-top: 0.5rem; font-weight: 600; font-size: 1rem;">${user.username}</div>
                         </div>
                         <div class="user-detail__item">
                             <span class="user-detail__label">Email</span>
@@ -640,7 +642,12 @@
 
                 // Update UI
                 document.getElementById('welcomeUser').textContent = `Welcome, ${result.user.username}`;
-                document.getElementById('userAvatar').textContent = getInitials(result.user.username);
+                const avatarEl = document.getElementById('userAvatar');
+                if (result.user.profilePicture) {
+                    avatarEl.innerHTML = `<img src="${result.user.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                } else {
+                    avatarEl.textContent = getInitials(result.user.username);
+                }
 
                 // Load users
                 loadUsers();

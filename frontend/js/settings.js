@@ -86,6 +86,25 @@ const SettingsAPI = {
             body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword })
         });
         return res.json();
+    },
+
+    uploadProfilePicture: async (file) => {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        const res = await fetch(`${SettingsConfig.AUTH_API}/profile-picture`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        return res.json();
+    },
+
+    deleteProfilePicture: async () => {
+        const res = await fetch(`${SettingsConfig.AUTH_API}/profile-picture`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        return res.json();
     }
 };
 
@@ -98,6 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadUserData();
         initTabs();
         initProfileTab();
+        initProfilePicture();
         initCredentialsTab();
         initPasswordEyeToggles();
         initHamburger();
@@ -125,16 +145,25 @@ async function loadUserData() {
     SettingsState.originalUsername = SettingsState.user.username || '';
     SettingsState.originalEmail = SettingsState.user.email || '';
 
-    // Populate header
     const initials = SettingsState.originalUsername.charAt(0).toUpperCase();
+    const profilePicture = SettingsState.user.profilePicture || '';
+
+    // Populate header
     const welcomeEl = document.getElementById('welcomeUser');
     const avatarEl = document.getElementById('userAvatar');
     if (welcomeEl) welcomeEl.textContent = `Welcome, ${SettingsState.originalUsername}`;
-    if (avatarEl) avatarEl.textContent = initials;
 
-    // Populate profile avatar
-    const profileAvatar = document.getElementById('profileAvatar');
-    if (profileAvatar) profileAvatar.textContent = initials;
+    // Navbar avatar — show profile pic or initials
+    if (avatarEl) {
+        if (profilePicture) {
+            avatarEl.innerHTML = `<img src="${profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+            avatarEl.textContent = initials;
+        }
+    }
+
+    // Settings profile avatar — show profile pic or initials
+    updateSettingsAvatar(profilePicture, initials);
 
     // Populate readonly fields with hint
     const usernameInput = document.getElementById('usernameInput');
@@ -144,6 +173,210 @@ async function loadUserData() {
     }
     if (emailInput) {
         emailInput.value = `${SettingsState.originalEmail}  (Click to edit)`;
+    }
+}
+
+/**
+ * Update the settings page avatar display
+ */
+function updateSettingsAvatar(profilePicture, initials) {
+    const profileAvatar = document.getElementById('profileAvatar');
+    const avatarInitials = document.getElementById('avatarInitials');
+    const removeBtn = document.getElementById('removePhotoBtn');
+
+    if (!profileAvatar) return;
+
+    // Remove any existing img
+    const existingImg = profileAvatar.querySelector('img');
+    if (existingImg) existingImg.remove();
+
+    if (profilePicture) {
+        // Show profile picture
+        const img = document.createElement('img');
+        img.src = profilePicture;
+        img.alt = 'Profile';
+        profileAvatar.insertBefore(img, profileAvatar.firstChild);
+        if (avatarInitials) avatarInitials.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'block';
+    } else {
+        // Show initials
+        if (avatarInitials) {
+            avatarInitials.style.display = '';
+            avatarInitials.textContent = initials || 'U';
+        }
+        if (removeBtn) removeBtn.style.display = 'none';
+    }
+}
+
+/**
+ * Compress an image file to fit within maxSize bytes using Canvas API.
+ * Resizes and reduces quality iteratively until under limit.
+ * 
+ * @param {File} file - Original image file
+ * @param {number} maxSize - Maximum file size in bytes (default 2MB)
+ * @returns {Promise<File>} Compressed file
+ */
+async function compressImage(file, maxSize = 2 * 1024 * 1024) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+
+                // Scale down to max 800px on longest side
+                const MAX_DIM = 800;
+                if (width > MAX_DIM || height > MAX_DIM) {
+                    const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+                    width = Math.round(width * ratio);
+                    height = Math.round(height * ratio);
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Try decreasing quality until under maxSize
+                let quality = 0.8;
+                const tryCompress = () => {
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            reject(new Error('Compression failed'));
+                            return;
+                        }
+
+                        if (blob.size <= maxSize || quality <= 0.1) {
+                            const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressed);
+                        } else {
+                            quality -= 0.1;
+                            tryCompress();
+                        }
+                    }, 'image/jpeg', quality);
+                };
+
+                tryCompress();
+            };
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Initialize profile picture upload/delete handlers
+ */
+function initProfilePicture() {
+    const profileAvatar = document.getElementById('profileAvatar');
+    const fileInput = document.getElementById('profilePictureInput');
+    const removeBtn = document.getElementById('removePhotoBtn');
+
+    if (!profileAvatar || !fileInput) return;
+
+    // Click avatar to trigger file input
+    profileAvatar.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Handle file selection
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Client-side validation
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            if (typeof UI !== 'undefined') {
+                UI.showToast('Invalid file type. Allowed: JPEG, PNG, GIF, WebP', 'danger');
+            }
+            fileInput.value = '';
+            return;
+        }
+
+        // Show uploading state
+        const avatarInitials = document.getElementById('avatarInitials');
+        if (avatarInitials) avatarInitials.textContent = '...';
+
+        try {
+            // Auto-compress if over 2MB
+            let uploadFile = file;
+            if (file.size > 2 * 1024 * 1024) {
+                uploadFile = await compressImage(file, 2 * 1024 * 1024);
+            }
+
+            const result = await SettingsAPI.uploadProfilePicture(uploadFile);
+
+            if (result.success) {
+                SettingsState.user.profilePicture = result.profilePicture;
+                const initials = SettingsState.originalUsername.charAt(0).toUpperCase();
+                updateSettingsAvatar(result.profilePicture, initials);
+
+                // Also update navbar avatar
+                const navAvatar = document.getElementById('userAvatar');
+                if (navAvatar) {
+                    navAvatar.innerHTML = `<img src="${result.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                }
+
+                if (typeof UI !== 'undefined') {
+                    UI.showToast('Profile picture updated', 'success');
+                }
+            } else {
+                if (typeof UI !== 'undefined') {
+                    UI.showToast(result.error || 'Failed to upload', 'danger');
+                }
+                const initials = SettingsState.originalUsername.charAt(0).toUpperCase();
+                updateSettingsAvatar(SettingsState.user.profilePicture || '', initials);
+            }
+        } catch (error) {
+            console.error('[Settings] Profile picture upload error:', error);
+            if (typeof UI !== 'undefined') {
+                UI.showToast('Network error. Please try again.', 'danger');
+            }
+        }
+
+        fileInput.value = ''; // Reset input
+    });
+
+    // Remove photo button
+    if (removeBtn) {
+        removeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            try {
+                const result = await SettingsAPI.deleteProfilePicture();
+
+                if (result.success) {
+                    SettingsState.user.profilePicture = '';
+                    const initials = SettingsState.originalUsername.charAt(0).toUpperCase();
+                    updateSettingsAvatar('', initials);
+
+                    // Also update navbar avatar
+                    const navAvatar = document.getElementById('userAvatar');
+                    if (navAvatar) navAvatar.textContent = initials;
+
+                    if (typeof UI !== 'undefined') {
+                        UI.showToast('Profile picture removed', 'success');
+                    }
+                } else {
+                    if (typeof UI !== 'undefined') {
+                        UI.showToast(result.error || 'Failed to remove', 'danger');
+                    }
+                }
+            } catch (error) {
+                console.error('[Settings] Profile picture delete error:', error);
+                if (typeof UI !== 'undefined') {
+                    UI.showToast('Network error. Please try again.', 'danger');
+                }
+            }
+        });
     }
 }
 

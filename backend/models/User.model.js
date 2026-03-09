@@ -81,6 +81,14 @@ const userSchema = new mongoose.Schema({
     },
 
     /**
+     * Profile picture URL from Firebase Storage.
+     */
+    profilePicture: {
+        type: String,
+        default: ''
+    },
+
+    /**
      * Last update timestamp.
      */
     updatedAt: {
