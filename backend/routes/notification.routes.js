@@ -3,12 +3,13 @@
  * 
  * Routes for notification management (get, read, mark all).
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import express from 'express';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../controllers/notification.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { mongoIdParam, handleValidationErrors } from '../middleware/validate.middleware.js';
 
 const router = express.Router();
 
@@ -42,6 +43,6 @@ router.patch('/read-all', protect, markAllAsRead);
  * @desc    Mark a single notification as read
  * @access  Private
  */
-router.patch('/:id/read', protect, markAsRead);
+router.patch('/:id/read', protect, mongoIdParam, handleValidationErrors, markAsRead);
 
 export default router;

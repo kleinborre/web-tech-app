@@ -3,7 +3,7 @@
  * 
  * Routes for user authentication (register, login, logout, account settings).
  * 
- * @version 1.1.0
+ * @version 2.0.0
  */
 
 import express from 'express';
@@ -12,6 +12,18 @@ import jwt from 'jsonwebtoken';
 import passport from '../config/passport.js';
 import { register, login, logout, getMe, checkEmail, updateUsername, updateEmail, updatePassword, verifyPassword, forgotPassword, resetPassword, uploadProfilePicture, deleteProfilePicture } from '../controllers/auth.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { authLimiter, strictAuthLimiter } from '../middleware/rateLimiter.middleware.js';
+import {
+    registerRules,
+    loginRules,
+    checkEmailRules,
+    forgotPasswordRules,
+    resetPasswordRules,
+    updateUsernameRules,
+    updateEmailRules,
+    updatePasswordRules,
+    handleValidationErrors
+} from '../middleware/validate.middleware.js';
 
 const router = express.Router();
 
@@ -38,35 +50,35 @@ const profileUpload = multer({
  * @desc    Register a new user
  * @access  Public
  */
-router.post('/register', register);
+router.post('/register', authLimiter, registerRules, handleValidationErrors, register);
 
 /**
  * @route   POST /api/auth/login
  * @desc    Login user
  * @access  Public
  */
-router.post('/login', login);
+router.post('/login', strictAuthLimiter, loginRules, handleValidationErrors, login);
 
 /**
  * @route   POST /api/auth/check-email
  * @desc    Check if email exists (for forgot password)
  * @access  Public
  */
-router.post('/check-email', checkEmail);
+router.post('/check-email', checkEmailRules, handleValidationErrors, checkEmail);
 
 /**
  * @route   POST /api/auth/forgot-password
  * @desc    Send password reset email
  * @access  Public
  */
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', authLimiter, forgotPasswordRules, handleValidationErrors, forgotPassword);
 
 /**
  * @route   POST /api/auth/reset-password
  * @desc    Reset password using token from email
  * @access  Public
  */
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', authLimiter, resetPasswordRules, handleValidationErrors, resetPassword);
 
 /* ==========================================================================
    PROTECTED ROUTES
@@ -91,21 +103,21 @@ router.get('/me', protect, getMe);
  * @desc    Update username
  * @access  Private
  */
-router.patch('/update-username', protect, updateUsername);
+router.patch('/update-username', protect, updateUsernameRules, handleValidationErrors, updateUsername);
 
 /**
  * @route   PATCH /api/auth/update-email
  * @desc    Update email
  * @access  Private
  */
-router.patch('/update-email', protect, updateEmail);
+router.patch('/update-email', protect, updateEmailRules, handleValidationErrors, updateEmail);
 
 /**
  * @route   PATCH /api/auth/update-password
  * @desc    Update password
  * @access  Private
  */
-router.patch('/update-password', protect, updatePassword);
+router.patch('/update-password', protect, updatePasswordRules, handleValidationErrors, updatePassword);
 
 /**
  * @route   POST /api/auth/verify-password

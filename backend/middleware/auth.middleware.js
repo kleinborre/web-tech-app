@@ -63,6 +63,22 @@ export const protect = async (req, res, next) => {
 
         } catch (error) {
             console.error('[Auth Middleware] Token verification failed:', error.message);
+
+            // Distinguish token error types for clearer client feedback
+            if (error.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Token expired. Please log in again.'
+                });
+            }
+
+            if (error.name === 'JsonWebTokenError') {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Invalid token. Please log in again.'
+                });
+            }
+
             return res.status(401).json({
                 success: false,
                 error: 'Not authorized to access this route'

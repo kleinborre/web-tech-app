@@ -3,12 +3,13 @@
  * 
  * Routes for user conversion history management.
  * 
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 import express from 'express';
 import { getHistory, getHistoryItem, deleteHistory, clearHistory, bulkDeleteHistory } from '../controllers/history.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
+import { mongoIdParam, handleValidationErrors } from '../middleware/validate.middleware.js';
 
 const router = express.Router();
 
@@ -31,13 +32,13 @@ router.post('/bulk-delete', bulkDeleteHistory);
  * @route   GET /api/history/:id
  * @desc    Get single history item
  */
-router.get('/:id', getHistoryItem);
+router.get('/:id', mongoIdParam, handleValidationErrors, getHistoryItem);
 
 /**
  * @route   DELETE /api/history/:id
  * @desc    Delete a conversion record
  */
-router.delete('/:id', deleteHistory);
+router.delete('/:id', mongoIdParam, handleValidationErrors, deleteHistory);
 
 /**
  * @route   DELETE /api/history

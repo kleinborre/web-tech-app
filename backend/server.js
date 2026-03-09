@@ -22,6 +22,7 @@ import authRoutes from './routes/auth.routes.js';
 import historyRoutes from './routes/history.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import { globalLimiter } from './middleware/rateLimiter.middleware.js';
 
 // Database connection
 import connectDB from './config/db.js';
@@ -130,6 +131,9 @@ app.use(express.static(frontendPath, {
  * Handles image-to-text conversion requests.
  */
 app.use('/api/ocr', ocrRoutes);
+
+// Apply global rate limiter to all API routes below
+app.use('/api', globalLimiter);
 
 /**
  * Auth API Routes
