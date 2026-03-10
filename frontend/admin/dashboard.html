@@ -109,7 +109,7 @@
     <div class="dashboard">
         <!-- Dashboard Header -->
         <header class="dashboard__header" style="position: relative;">
-            <a href="../index.html" class="dashboard__logo">
+            <a href="/home" class="dashboard__logo">
                 <i class="bi bi-file-text"></i>
                 ImageToTextOnline
             </a>
@@ -136,10 +136,10 @@
             <div class="dashboard__mobile-menu" id="mobileMenu">
                 <nav class="dashboard__mobile-nav">
                     <div class="dashboard__mobile-links">
-                        <a href="dashboard.html" class="dashboard__mobile-link dashboard__mobile-link--active">
+                        <a href="#" class="dashboard__mobile-link dashboard__mobile-link--active">
                             <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
-                        <a href="../index.html" class="dashboard__mobile-link">
+                        <a href="/home" class="dashboard__mobile-link">
                             <i class="bi bi-file-text me-1"></i> Convert
                         </a>
                         <a href="users.html" class="dashboard__mobile-link" id="mobileUsersLink" style="display: none;">
@@ -169,7 +169,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="../index.html" class="dashboard__nav-link">
+                            <a href="/home" class="dashboard__nav-link">
                                 <i class="bi bi-file-text"></i>
                                 Convert
                             </a>
@@ -205,7 +205,7 @@
                 <!-- ============================================================
                      ADMIN VIEW
                      ============================================================ -->
-                <div data-view="admin">
+                <div data-view="admin" style="display: none;">
                     <!-- Stats Cards -->
                     <div class="stats">
                         <div class="stat-card">
@@ -394,6 +394,16 @@
                 });
             }
 
+            // === Nav link loading overlay ===
+            document.querySelectorAll('.dashboard__nav-link:not(.dashboard__nav-link--active), .dashboard__mobile-link:not(.dashboard__mobile-link--active)').forEach(link => {
+                if (link.id === 'mobileLogoutBtn') return;
+                link.addEventListener('click', () => {
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.show('Loading...');
+                    }
+                });
+            });
+
             // === Mobile Sign Out ===
             const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
             if (mobileLogoutBtn) {
@@ -410,7 +420,15 @@
                                     await AuthService.logout();
                                 }
                                 localStorage.removeItem('user');
-                                window.location.href = '/';
+                                if (typeof UI !== 'undefined' && UI.showToast) {
+                                    UI.showToast('You have been signed out successfully.', 'success');
+                                }
+                                if (typeof LoadingOverlay !== 'undefined') {
+                                    LoadingOverlay.show('Signing out...');
+                                }
+                                setTimeout(() => {
+                                    window.location.replace('/');
+                                }, 800);
                             },
                             null,
                             'Confirm',
@@ -430,103 +448,6 @@
                     if (mobileUsersLink) mobileUsersLink.style.display = '';
                 }
             }, 500);
-
-            // === Sidebar Navigation Confirmations (Desktop only) ===
-            const convertLink = document.querySelector('a[href="../index.html"].dashboard__nav-link');
-            if (convertLink) {
-                convertLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Leave Dashboard',
-                            'Go to home page?',
-                            () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
-                    }
-                });
-            }
-
-            const logoLink = document.querySelector('.dashboard__logo');
-            if (logoLink) {
-                logoLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Leave Dashboard',
-                            'Go to home page?',
-                            () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
-                    }
-                });
-            }
-
-            const usersLink = document.querySelector('a[href="users.html"].dashboard__nav-link');
-            if (usersLink) {
-                usersLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Navigate',
-                            'Go to User Management?',
-                            () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
-                    }
-                });
-            }
-
-            // Settings link — no confirmation needed
-            const settingsLink = document.querySelector('a[href="settings.html"].dashboard__nav-link');
-            // No event listener override — natural navigation
-
-            // === Mobile Navigation Confirmations ===
-            const mobileConvertLink = document.querySelector('.dashboard__mobile-link[href="../index.html"]');
-            if (mobileConvertLink) {
-                mobileConvertLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    hamburger?.classList.remove('dashboard__hamburger--active');
-                    mobileMenu?.classList.remove('dashboard__mobile-menu--open');
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Leave Dashboard',
-                            'Go to home page?',
-                            () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
-                    }
-                });
-            }
-
-            const mobileUsersLink2 = document.querySelector('.dashboard__mobile-link[href="users.html"]');
-            if (mobileUsersLink2) {
-                mobileUsersLink2.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    hamburger?.classList.remove('dashboard__hamburger--active');
-                    mobileMenu?.classList.remove('dashboard__mobile-menu--open');
-                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                        UI.showConfirmDialog(
-                            'Navigate',
-                            'Go to User Management?',
-                            () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
-                            null, 'Confirm', 'Cancel', 'primary'
-                        );
-                    } else {
-                        if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
-                    }
-                });
-            }
-
-            // Mobile settings link — no confirmation needed, natural navigation
         });
     </script>
     <!-- Notification System -->

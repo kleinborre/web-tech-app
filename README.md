@@ -24,11 +24,10 @@
 9. [Database Schema](#-database-schema)
 10. [REST API Endpoints](#-rest-api-endpoints)
 11. [Setup & Installation (Local)](#-setup--installation-local)
-12. [Deploying to Vercel](#-deploying-to-vercel)
-13. [Accessing the Application](#-accessing-the-application)
-14. [Project Documentation Links](#-project-documentation-links)
-15. [Security Implementation](#-security-implementation)
-16. [Development Phases](#-development-phases)
+12. [Accessing the Application](#-accessing-the-application)
+13. [Project Documentation Links](#-project-documentation-links)
+14. [Security Implementation](#-security-implementation)
+15. [Development Phases](#-development-phases)
 
 ---
 
@@ -201,7 +200,8 @@ web-tech-app/
 │       └── ocrProcessor.js                # Tesseract worker pool
 │
 └── frontend/
-    ├── index.html                          # Landing page + OCR converter
+    ├── index.html                          # Guest landing page + OCR converter
+    ├── home.html                           # Authenticated OCR converter (dashboard nav)
     ├── admin/
     │   ├── dashboard.html                  # Admin dashboard
     │   ├── settings.html                   # Account settings
@@ -477,106 +477,14 @@ Server runs at `http://localhost:3000`.
 
 ---
 
-## ☁️ Deploying to Vercel
-
-This guide covers how to make **Firebase Storage**, **Google OAuth**, and **SMTP** work on Vercel.
-
-### Step 1 — Connect Repository
-
-1. Go to [vercel.com](https://vercel.com) → **New Project** → Import your GitHub repo
-2. Set **Root Directory** to `backend`
-3. Set **Framework Preset** to **Other**
-
-### Step 2 — Set Environment Variables
-
-In Vercel dashboard → **Settings** → **Environment Variables**, add all variables from your `.env` file.
-
-> **⚠️ Critical difference:** For Firebase on Vercel, you cannot use a file path. Instead, paste the **entire JSON contents** as an environment variable.
-
-#### Firebase Service Account on Vercel
-
-Since Vercel's serverless functions don't have a persistent filesystem, you **cannot** use `FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./firebase-service-account.json`. Instead:
-
-1. Open `firebase-service-account.json` and **copy the entire JSON content**
-2. In Vercel → Environment Variables, create a new variable:
-   - **Name:** `FIREBASE_SERVICE_ACCOUNT_JSON`
-   - **Value:** Paste the entire JSON content (single line)
-3. Update your `utils/firebase.js` to support both methods:
-
-```js
-// In firebase.js — already handles both local file and Vercel env variable
-let serviceAccount;
-if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    // Vercel: JSON is stored as environment variable
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-} else {
-    // Local: Read from file
-    serviceAccount = JSON.parse(
-        fs.readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH, 'utf8')
-    );
-}
-```
-
-#### Google OAuth on Vercel
-
-1. Add these environment variables on Vercel:
-   - `GOOGLE_CLIENT_ID` = your client ID
-   - `GOOGLE_CLIENT_SECRET` = your client secret
-2. In [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials** → your OAuth client:
-   - Add `https://web-tech-app.vercel.app/api/auth/google/callback` to **Authorized redirect URIs**
-   - Add `https://web-tech-app.vercel.app` to **Authorized JavaScript origins**
-
-#### SMTP on Vercel
-
-1. Add these environment variables on Vercel:
-   - `SMTP_HOST` = `smtp.gmail.com`
-   - `SMTP_PORT` = `587`
-   - `SMTP_SECURE` = `false`
-   - `SMTP_USER` = your Gmail address
-   - `SMTP_PASS` = your Gmail App Password
-   - `BASE_URL` = `https://web-tech-app.vercel.app`
-2. SMTP works out of the box on Vercel — no extra setup needed
-
-#### All Vercel Environment Variables
-
-| Variable | Value |
-|----------|-------|
-| `PORT` | `3000` |
-| `NODE_ENV` | `production` |
-| `MAX_FILE_SIZE` | `10485760` |
-| `MAX_FILES` | `5` |
-| `MONGO_URI` | Your MongoDB Atlas URI |
-| `JWT_SECRET` | Your secret key |
-| `JWT_EXPIRE` | `7d` |
-| `JWT_COOKIE_EXPIRE` | `7` |
-| `SMTP_HOST` | `smtp.gmail.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_SECURE` | `false` |
-| `SMTP_USER` | Your Gmail address |
-| `SMTP_PASS` | Your Gmail App Password |
-| `BASE_URL` | `https://web-tech-app.vercel.app` |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Entire JSON content of `firebase-service-account.json` |
-| `FIREBASE_STORAGE_BUCKET` | `imagetotextonline.firebasestorage.app` |
-| `GOOGLE_CLIENT_ID` | Your Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Your Google OAuth client secret |
-
-### Step 3 — Deploy
-
-```bash
-git push    # Vercel auto-deploys on push
-```
-
-Or click **Deploy** in the Vercel dashboard.
-
----
-
 ## 🌐 Accessing the Application
 
 ### Local Development
 
 | Page | URL |
 |------|-----|
-| Home / OCR Converter | `http://localhost:3000` |
+| Home / OCR Converter (Guest) | `http://localhost:3000` |
+| Home / OCR Converter (Auth) | `http://localhost:3000/home` |
 | Login | `http://localhost:3000/auth/login` |
 | Register | `http://localhost:3000/auth/register` |
 | Google Sign-In | `http://localhost:3000/api/auth/google` |
@@ -591,7 +499,8 @@ Or click **Deploy** in the Vercel dashboard.
 
 | Page | URL |
 |------|-----|
-| Home / OCR Converter | `https://web-tech-app.vercel.app` |
+| Home / OCR Converter (Guest) | `https://web-tech-app.vercel.app` |
+| Home / OCR Converter (Auth) | `https://web-tech-app.vercel.app/home` |
 | Login | `https://web-tech-app.vercel.app/auth/login` |
 | Google Sign-In | `https://web-tech-app.vercel.app/api/auth/google` |
 | Admin Dashboard | `https://web-tech-app.vercel.app/admin/dashboard` |
@@ -650,6 +559,8 @@ Or click **Deploy** in the Vercel dashboard.
 | **Phase 12** | RBAC refinement — `superadminOnly` middleware on role-change route, user-scoped history verification, frontend role-button visibility |
 | **Phase 13** | Security & error handling — Helmet.js headers, centralized `AppError` error handler, refactored all 28 controller functions to `next(error)` |
 | **Phase 14** | Documentation — comprehensive README v2.0 update, Vercel deployment guide (Firebase, OAuth, SMTP), updated API endpoint table (31 endpoints), development phase history |
+| **Phase 15** | Auth UX & security — anti-cache headers (no-store, no-cache, must-revalidate), bfcache prevention, login loading animation (replaces success modal), logout toast + loading overlay, unauthorized access warning popup, username-or-email login, rate-limit JSON responses, users page JS syntax fix (stray brackets breaking table load), removed spurious `justLoggedIn` flag from `updateUI()`, added loading-overlay to users page, increased rate limits to SPA-friendly levels (global 300/15min, auth 20/15min, login 10/15min), nav link loading animations on all dashboard pages |
+| **Phase 16** | Page separation & back-button protection — separate guest OCR (`index.html`) and authenticated OCR (`home.html`) pages, dashboard-style nav on auth pages, post-login back-button sign-out confirmation, post-logout history prevention via `replace()`, active nav item disabled (`pointer-events: none`) |
 
 ---
 

@@ -480,7 +480,7 @@
     <div class="dashboard">
         <!-- Dashboard Header -->
         <header class="dashboard__header" style="position: relative;">
-            <a href="../index.html" class="dashboard__logo">
+            <a href="/home" class="dashboard__logo">
                 <i class="bi bi-file-text"></i>
                 ImageToTextOnline
             </a>
@@ -510,13 +510,13 @@
                         <a href="dashboard.html" class="dashboard__mobile-link">
                             <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
-                        <a href="../index.html" class="dashboard__mobile-link">
+                        <a href="/home" class="dashboard__mobile-link">
                             <i class="bi bi-file-text me-1"></i> Convert
                         </a>
                         <a href="users.html" class="dashboard__mobile-link" id="mobileUsersLink" style="display: none;">
                             <i class="bi bi-people me-1"></i> Users
                         </a>
-                        <a href="settings.html" class="dashboard__mobile-link dashboard__mobile-link--active">
+                        <a href="#" class="dashboard__mobile-link dashboard__mobile-link--active">
                             <i class="bi bi-gear me-1"></i> Settings
                         </a>
                         <a href="#" class="dashboard__mobile-link" id="mobileLogoutBtn">
@@ -540,7 +540,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="../index.html" class="dashboard__nav-link">
+                            <a href="/home" class="dashboard__nav-link">
                                 <i class="bi bi-file-text"></i>
                                 Convert
                             </a>
@@ -552,7 +552,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="settings.html" class="dashboard__nav-link dashboard__nav-link--active">
+                            <a href="#" class="dashboard__nav-link dashboard__nav-link--active">
                                 <i class="bi bi-gear"></i>
                                 Settings
                             </a>
@@ -592,7 +592,8 @@
                             <span>Change</span>
                         </div>
                     </div>
-                    <input type="file" id="profilePictureInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+                    <input type="file" id="profilePictureInput" accept="image/jpeg,image/png,image/gif,image/webp"
+                        style="display: none;">
                     <a class="settings-avatar__remove" id="removePhotoBtn" style="display: none;">Remove Photo</a>
 
                     <!-- Username Card -->
@@ -741,6 +742,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             NotificationManager.init('notif-container-settings');
+
+            // === Nav link loading overlay ===
+            document.querySelectorAll('.dashboard__nav-link:not(.dashboard__nav-link--active), .dashboard__mobile-link:not(.dashboard__mobile-link--active)').forEach(link => {
+                if (link.id === 'mobileLogoutBtn') return;
+                link.addEventListener('click', () => {
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.show('Loading...');
+                    }
+                });
+            });
         });
     </script>
 </body>

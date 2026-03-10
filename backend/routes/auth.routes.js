@@ -189,8 +189,8 @@ router.get('/google/callback',
 
                 console.log(`[Auth] Google OAuth login: ${user.username} (${user.email})`);
 
-                // Always redirect to dashboard after OAuth
-                res.redirect('/admin/dashboard');
+                // Redirect to dashboard after OAuth (ViewManager handles role-based content)
+                res.redirect('/admin/dashboard?login=success');
 
             } catch (error) {
                 console.error('[Auth] Google callback error:', error.message);

@@ -552,15 +552,15 @@ const FormHandlers = {
 
                 if (result.success) {
                     localStorage.setItem('user', JSON.stringify(result.user));
-                    if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
+                    sessionStorage.setItem('justLoggedIn', 'true');
 
-                    UI.showSuccessModal(
-                        'Login Successful!',
-                        `Welcome back, <strong>${result.user.username}</strong>!`,
-                        AUTH_CONFIG.REDIRECT_AFTER_LOGIN,
-                        'Go to Dashboard',
-                        true
-                    );
+                    // Show loading animation and redirect (consistent with Google OAuth flow)
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.show('Welcome back, ' + result.user.username + '!');
+                    }
+                    setTimeout(() => {
+                        window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGIN);
+                    }, 800);
                 } else {
                     if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
                     UI.showToast(result.error || 'Login failed', 'danger');
@@ -738,14 +738,17 @@ const FormHandlers = {
                     async () => {
                         try {
                             await AuthService.logout();
-                            localStorage.removeItem('user');
-                            window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
                         } catch (error) {
                             console.error('Logout error:', error);
-                            // Still redirect even if API fails
-                            localStorage.removeItem('user');
-                            window.location.href = AUTH_CONFIG.REDIRECT_AFTER_LOGOUT;
                         }
+                        localStorage.removeItem('user');
+                        UI.showToast('You have been signed out successfully.', 'success');
+                        if (typeof LoadingOverlay !== 'undefined') {
+                            LoadingOverlay.show('Signing out...');
+                        }
+                        setTimeout(() => {
+                            window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGOUT);
+                        }, 800);
                     },
                     null,
                     'Confirm',
@@ -790,26 +793,47 @@ const AuthState = {
 
     /**
      * Update UI based on auth state.
+     * Server-first: always verify with server before showing auth state.
+     * Falls back to localStorage only on network failure.
      */
     updateUI: async () => {
-        let user = AuthState.getUser();
+        try {
+            const response = await fetch(`${AUTH_CONFIG.API_BASE}/me`, {
+                credentials: 'include'
+            });
 
-        // If no user in localStorage, check server-side cookie auth (handles Google OAuth)
-        if (!user) {
-            try {
-                const result = await AuthService.getMe();
+            if (response.ok) {
+                const result = await response.json();
                 if (result.success && result.user) {
-                    user = result.user;
-                    localStorage.setItem('user', JSON.stringify(user));
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    AuthState._applyUI(result.user);
+                    return;
                 }
-            } catch (e) {
-                // Not logged in — that's fine
             }
-        }
 
+            if (response.status === 401) {
+                // Server definitively says: not authenticated
+                localStorage.removeItem('user');
+                AuthState._applyUI(null);
+                return;
+            }
+
+            // Other errors (429 rate limit, 500, etc.) — fall back to localStorage
+            AuthState._applyUI(AuthState.getUser());
+
+        } catch (e) {
+            // Network failure — fall back to localStorage
+            AuthState._applyUI(AuthState.getUser());
+        }
+    },
+
+    /**
+     * Apply auth state to DOM elements.
+     * @param {Object|null} user - User object or null
+     */
+    _applyUI: (user) => {
         // Update user display name
-        const userNameElements = document.querySelectorAll('.user-name, [data-user="name"]');
-        userNameElements.forEach(el => {
+        document.querySelectorAll('.user-name, [data-user="name"]').forEach(el => {
             el.textContent = user?.username || 'Guest';
         });
 
@@ -823,7 +847,7 @@ const AuthState = {
         });
 
         document.querySelectorAll('[data-auth="admin"]').forEach(el => {
-            el.style.display = AuthState.isAdmin() ? '' : 'none';
+            el.style.display = (user && (user.role === 'admin' || user.role === 'superadmin')) ? '' : 'none';
         });
     }
 };
@@ -838,9 +862,32 @@ document.addEventListener('DOMContentLoaded', () => {
     FormHandlers.initRegisterForm();
     FormHandlers.initLogout();
 
-    // Update UI based on auth state
+    // Update UI based on auth state (server-first)
     AuthState.updateUI();
 });
+
+/**
+ * Bfcache restoration handler.
+ * When browser restores page from back-forward cache, IMMEDIATELY
+ * reset auth UI to prevent stale logged-in content from showing.
+ */
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        // IMMEDIATELY apply localStorage state (synchronous)
+        // If user logged out on another page, localStorage is cleared
+        AuthState._applyUI(AuthState.getUser());
+        // Then verify with server
+        AuthState.updateUI();
+    }
+});
+
+/**
+ * Prevent bfcache entirely.
+ * The unload event tells all browsers not to store this page in bfcache.
+ * Combined with Cache-Control: no-store headers from the server.
+ */
+window.addEventListener('unload', () => { });
+
 
 // Export for external use
 window.Auth = {

@@ -1188,7 +1188,15 @@ function showSignOutConfirm() {
                     await AuthService.logout();
                 }
                 localStorage.removeItem('user');
-                window.location.href = '/';
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast('You have been signed out successfully.', 'success');
+                }
+                if (typeof LoadingOverlay !== 'undefined') {
+                    LoadingOverlay.show('Signing out...');
+                }
+                setTimeout(() => {
+                    window.location.replace('/');
+                }, 800);
             },
             null,
             'Confirm',

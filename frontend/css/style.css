@@ -1336,6 +1336,8 @@ img {
 .dashboard__mobile-link--active {
     color: var(--color-primary);
     font-weight: var(--font-weight-semibold);
+    pointer-events: none;
+    cursor: default;
 }
 
 /* Responsive: Hide desktop user section, show hamburger on mobile/tablet (<1200px) */
@@ -1377,6 +1379,8 @@ img {
 .dashboard__nav-link--active {
     background-color: var(--color-primary-alpha);
     color: var(--color-primary);
+    pointer-events: none;
+    cursor: default;
 }
 
 .dashboard__content {
@@ -1510,37 +1514,59 @@ img {
  * History Table Column Widths (Date | File Name | Text Snippet | Actions)
  */
 .history-table-wrapper .data-table th:nth-child(1),
-.history-table-wrapper .data-table td:nth-child(1) { width: 18%; }
+.history-table-wrapper .data-table td:nth-child(1) {
+    width: 18%;
+}
 
 .history-table-wrapper .data-table th:nth-child(2),
-.history-table-wrapper .data-table td:nth-child(2) { width: 25%; }
+.history-table-wrapper .data-table td:nth-child(2) {
+    width: 25%;
+}
 
 .history-table-wrapper .data-table th:nth-child(3),
-.history-table-wrapper .data-table td:nth-child(3) { width: 40%; }
+.history-table-wrapper .data-table td:nth-child(3) {
+    width: 40%;
+}
 
 .history-table-wrapper .data-table th:nth-child(4),
-.history-table-wrapper .data-table td:nth-child(4) { width: 17%; white-space: normal; }
+.history-table-wrapper .data-table td:nth-child(4) {
+    width: 17%;
+    white-space: normal;
+}
 
 /**
  * Admin Users Table Column Widths (User | Email | Role | Joined | Status | Actions)
  */
 .admin-users-table-wrapper .data-table th:nth-child(1),
-.admin-users-table-wrapper .data-table td:nth-child(1) { width: 18%; }
+.admin-users-table-wrapper .data-table td:nth-child(1) {
+    width: 18%;
+}
 
 .admin-users-table-wrapper .data-table th:nth-child(2),
-.admin-users-table-wrapper .data-table td:nth-child(2) { width: 24%; }
+.admin-users-table-wrapper .data-table td:nth-child(2) {
+    width: 24%;
+}
 
 .admin-users-table-wrapper .data-table th:nth-child(3),
-.admin-users-table-wrapper .data-table td:nth-child(3) { width: 12%; }
+.admin-users-table-wrapper .data-table td:nth-child(3) {
+    width: 12%;
+}
 
 .admin-users-table-wrapper .data-table th:nth-child(4),
-.admin-users-table-wrapper .data-table td:nth-child(4) { width: 14%; }
+.admin-users-table-wrapper .data-table td:nth-child(4) {
+    width: 14%;
+}
 
 .admin-users-table-wrapper .data-table th:nth-child(5),
-.admin-users-table-wrapper .data-table td:nth-child(5) { width: 12%; }
+.admin-users-table-wrapper .data-table td:nth-child(5) {
+    width: 12%;
+}
 
 .admin-users-table-wrapper .data-table th:nth-child(6),
-.admin-users-table-wrapper .data-table td:nth-child(6) { width: 20%; white-space: normal; }
+.admin-users-table-wrapper .data-table td:nth-child(6) {
+    width: 20%;
+    white-space: normal;
+}
 
 /**
  * Chart Placeholder

@@ -69,11 +69,18 @@ export const registerRules = [
 
 /**
  * POST /api/auth/login
+ * Accepts either username or email for login.
  */
 export const loginRules = [
+    body().custom((value, { req }) => {
+        if (!req.body.email && !req.body.username) {
+            throw new Error('Email or username is required');
+        }
+        return true;
+    }),
     body('email')
+        .optional()
         .trim()
-        .notEmpty().withMessage('Email is required')
         .isEmail().withMessage('Please provide a valid email address'),
     body('password')
         .notEmpty().withMessage('Password is required')

@@ -123,15 +123,31 @@ if (NODE_ENV === 'development') {
    ========================================================================== */
 
 /**
+ * Anti-cache headers for HTML pages.
+ * Prevents bfcache and browser caching of auth-sensitive pages.
+ * Industry standard: no-store + no-cache + must-revalidate + max-age=0.
+ */
+const setNoCacheHeaders = (res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+};
+
+/**
  * Serve Frontend Static Files
- * The frontend folder is served at the root URL.
  * Cache static assets (CSS, JS, images) for faster subsequent loads.
+ * HTML files get anti-cache headers to prevent bfcache.
  */
 const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath, {
     maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
     etag: true,
-    lastModified: true
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+            setNoCacheHeaders(res);
+        }
+    }
 }));
 
 /* ==========================================================================
@@ -192,18 +208,22 @@ app.get('/api/health', (req, res) => {
  * Serves auth-related HTML pages using clean URLs.
  */
 app.get('/auth/login', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'auth', 'login.html'));
 });
 
 app.get('/auth/register', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'auth', 'register.html'));
 });
 
 app.get('/auth/forgot-password', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'auth', 'forgot-password.html'));
 });
 
 app.get('/auth/update-password', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'auth', 'update-password.html'));
 });
 
@@ -212,15 +232,27 @@ app.get('/auth/update-password', (req, res) => {
  * Serves admin panel HTML pages using clean URLs.
  */
 app.get('/admin/dashboard', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'admin', 'dashboard.html'));
 });
 
 app.get('/admin/users', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'admin', 'users.html'));
 });
 
 app.get('/admin/settings', (req, res) => {
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'admin', 'settings.html'));
+});
+
+/**
+ * Authenticated Home Page
+ * OCR page with dashboard-style navigation for logged-in users.
+ */
+app.get('/home', (req, res) => {
+    setNoCacheHeaders(res);
+    res.sendFile(path.join(frontendPath, 'home.html'));
 });
 
 /* ==========================================================================
@@ -237,6 +269,7 @@ app.get('/{*splat}', (req, res, next) => {
     if (req.url.startsWith('/api')) {
         return next();
     }
+    setNoCacheHeaders(res);
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 

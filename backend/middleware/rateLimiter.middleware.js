@@ -2,14 +2,28 @@
  * ImageToTextOnline - Rate Limiter Middleware
  * 
  * Configures express-rate-limit for API protection.
- * - globalLimiter:      100 req / 15 min per IP (all API routes)
- * - authLimiter:        10 req / 15 min (register, forgot/reset password)
- * - strictAuthLimiter:  5 req / 15 min  (login — brute-force protection)
+ * - globalLimiter:      300 req / 15 min per IP (all API routes)
+ * - authLimiter:        20 req / 15 min (register, forgot/reset password)
+ * - strictAuthLimiter:  10 req / 15 min  (login — brute-force protection)
  *
- * @version 1.0.0
+ * All limiters return JSON error responses so the frontend can display
+ * inline error toasts instead of navigating to raw JSON pages.
+ *
+ * @version 1.2.0
  */
 
 import rateLimit from 'express-rate-limit';
+
+/**
+ * Custom handler that always returns JSON.
+ * The frontend handles 429 status via fetch and shows a toast.
+ */
+const createRateLimitHandler = (errorMessage) => (req, res) => {
+    res.status(429).json({
+        success: false,
+        error: errorMessage
+    });
+};
 
 /* ==========================================================================
    GLOBAL API LIMITER
@@ -17,17 +31,18 @@ import rateLimit from 'express-rate-limit';
 
 /**
  * Apply to all /api routes in server.js.
- * 100 requests per 15-minute window per IP.
+ * 300 requests per 15-minute window per IP.
+ * 
+ * Industry standard: generous enough for normal SPA usage
+ * (each page load fires ~3-5 API calls: /me, /stats, /notifications, etc.)
+ * while still protecting against abuse.
  */
 export const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,  // 15 minutes
-    max: 100,
+    max: 300,
     standardHeaders: true,      // Return rate limit info in RateLimit-* headers
     legacyHeaders: false,       // Disable X-RateLimit-* headers
-    message: {
-        success: false,
-        error: 'Too many requests. Please try again after 15 minutes.'
-    }
+    handler: createRateLimitHandler('Too many requests. Please try again after 15 minutes.')
 });
 
 /* ==========================================================================
@@ -36,17 +51,14 @@ export const globalLimiter = rateLimit({
 
 /**
  * Apply to register, forgot-password, reset-password.
- * 10 requests per 15-minute window per IP.
+ * 20 requests per 15-minute window per IP.
  */
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
-    message: {
-        success: false,
-        error: 'Too many attempts. Please try again after 15 minutes.'
-    }
+    handler: createRateLimitHandler('Too many attempts. Please try again after 15 minutes.')
 });
 
 /* ==========================================================================
@@ -55,15 +67,12 @@ export const authLimiter = rateLimit({
 
 /**
  * Apply to login endpoint only.
- * 5 requests per 15-minute window per IP — brute-force protection.
+ * 10 requests per 15-minute window per IP — brute-force protection.
  */
 export const strictAuthLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: {
-        success: false,
-        error: 'Too many login attempts. Please try again after 15 minutes.'
-    }
+    handler: createRateLimitHandler('Too many login attempts. Please try again after 15 minutes.')
 });

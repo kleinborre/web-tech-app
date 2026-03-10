@@ -34,15 +34,20 @@
         <div class="container">
             <div class="header__container">
                 <!-- Logo -->
-                <a href="./index.html" class="header__logo">
+                <a href="/home" class="header__logo">
                     <i class="bi bi-file-text"></i>
                     ImageToTextOnline
                 </a>
 
-                <!-- Desktop Navigation - Logged Out (visible ≥992px) -->
-                <nav class="header__nav header__nav--desktop" data-auth="logged-out">
-                    <a href="./auth/login.html" class="btn btn--outline">Sign In</a>
-                    <a href="./auth/register.html" class="btn btn--primary">Register</a>
+                <!-- Desktop Navigation - Logged In (visible ≥992px) -->
+                <nav class="header__nav header__nav--desktop">
+                    <a href="/admin/dashboard" class="btn btn--outline">
+                        <i class="bi bi-grid me-1"></i> Dashboard
+                    </a>
+                    <div id="notif-container-main" style="display: inline-flex; align-items: center;"></div>
+                    <button class="btn btn--secondary" id="headerLogoutBtn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                    </button>
                 </nav>
 
                 <!-- Hamburger Toggle (visible <992px) -->
@@ -56,15 +61,16 @@
             <!-- Mobile Dropdown Menu (anchored below header) -->
             <div class="header__mobile-menu" id="mobileMenu">
                 <nav class="header__mobile-nav">
-                    <!-- Mobile Nav - Logged Out -->
-                    <div class="header__mobile-links" data-auth="logged-out">
-                        <a href="./auth/login.html" class="header__mobile-link">
-                            <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+                    <!-- Mobile Nav - Logged In -->
+                    <div class="header__mobile-links">
+                        <a href="/admin/dashboard" class="header__mobile-link">
+                            <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
-                        <a href="./auth/register.html" class="header__mobile-link">
-                            <i class="bi bi-person-plus me-2"></i> Register
+                        <a href="#" class="header__mobile-link" id="mobileLogoutBtn">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out
                         </a>
-                    </div></nav>
+                    </div>
+                </nav>
             </div>
         </div>
     </header>
@@ -436,8 +442,80 @@
     <!-- Loading Overlay -->
     <script src="js/loading-overlay.js"></script>
 
+    <!-- Auth JavaScript -->
+    <script src="js/auth.js"></script>
+
     <!-- Custom JavaScript -->
     <script src="js/main.js"></script>
+
+    <!-- Auth Check + Logout Handlers -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ── Auth Check — redirect to login if not authenticated ──
+            try {
+                const res = await fetch('/api/auth/me', { credentials: 'include' });
+                if (!res.ok) throw new Error('Not authenticated');
+            } catch (err) {
+                if (typeof LoadingOverlay !== 'undefined') {
+                    LoadingOverlay.show('Redirecting to login...');
+                }
+                setTimeout(() => {
+                    window.location.replace('/auth/login');
+                }, 800);
+                return;
+            }
+
+            // ── Logout Handlers (desktop + mobile) ──
+            const logoutBtns = [
+                document.getElementById('headerLogoutBtn'),
+                document.getElementById('mobileLogoutBtn')
+            ].filter(Boolean);
+
+            logoutBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                        UI.showConfirmDialog(
+                            'Sign Out',
+                            'Are you sure you want to sign out?',
+                            async () => {
+                                try {
+                                    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                                } catch (er) { /* continue */ }
+                                localStorage.removeItem('user');
+                                sessionStorage.clear();
+                                if (typeof UI !== 'undefined' && UI.showToast) {
+                                    UI.showToast('You have been signed out successfully.', 'success');
+                                }
+                                if (typeof LoadingOverlay !== 'undefined') {
+                                    LoadingOverlay.show('Signing out...');
+                                }
+                                setTimeout(() => {
+                                    window.location.replace('/');
+                                }, 800);
+                            },
+                            null,
+                            'Confirm',
+                            'Cancel'
+                        );
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Notification System -->
+    <script src="./js/notifications.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Init notifications after short delay for auth to settle
+            setTimeout(() => {
+                if (typeof NotificationManager !== 'undefined') {
+                    NotificationManager.init('notif-container-main');
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 
 </html>

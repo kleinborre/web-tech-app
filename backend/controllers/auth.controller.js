@@ -45,7 +45,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         expires: new Date(Date.now() + cookieExpireDays * 24 * 60 * 60 * 1000),
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'lax'
     };
 
     // Remove password from output
@@ -258,9 +258,22 @@ export const login = async (req, res, next) => {
  */
 export const logout = async (req, res, next) => {
     try {
+        // Cookie attributes MUST match the ones used when setting,
+        // otherwise the browser won't clear it and the JWT persists.
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/'
+        };
+
+        // Clear the cookie properly
+        res.clearCookie('token', cookieOptions);
+
+        // Also set expired value as belt-and-suspenders
         res.cookie('token', 'none', {
-            expires: new Date(Date.now() + 10 * 1000), // 10 seconds
-            httpOnly: true
+            ...cookieOptions,
+            expires: new Date(0)
         });
 
         console.log(`[Auth] User logged out: ${req.user?.username || 'unknown'}`);

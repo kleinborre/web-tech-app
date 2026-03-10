@@ -809,7 +809,15 @@ async function handleLogout() {
         console.error('Logout error:', error);
     }
     localStorage.removeItem('user');
-    window.location.href = DASHBOARD_CONFIG.LOGIN_PAGE;
+    if (typeof UI !== 'undefined' && UI.showToast) {
+        UI.showToast('You have been signed out successfully.', 'success');
+    }
+    if (typeof LoadingOverlay !== 'undefined') {
+        LoadingOverlay.show('Signing out...');
+    }
+    setTimeout(() => {
+        window.location.replace(DASHBOARD_CONFIG.LOGIN_PAGE);
+    }, 800);
 }
 
 /* ==========================================================================
@@ -822,7 +830,16 @@ async function initDashboard() {
         const result = await DashboardAPI.getMe();
 
         if (!result.success) {
-            window.location.href = DASHBOARD_CONFIG.LOGIN_PAGE;
+            // Show visual warning for unauthorized access
+            if (typeof UI !== 'undefined' && UI.showToast) {
+                UI.showToast('Session expired. Please sign in again.', 'warning');
+            }
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.show('Redirecting to login...');
+            }
+            setTimeout(() => {
+                window.location.replace(DASHBOARD_CONFIG.LOGIN_PAGE);
+            }, 1000);
             return;
         }
 
@@ -850,9 +867,75 @@ async function initDashboard() {
         // Initialize history search
         HistoryManager.initSearch();
 
+        // Post-login back-button guard
+        // Activates when user JUST logged in via manual login (sessionStorage flag)
+        // or Google OAuth (?login=success URL param)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isJustLoggedIn = sessionStorage.getItem('justLoggedIn') === 'true' || urlParams.get('login') === 'success';
+        if (isJustLoggedIn) {
+            sessionStorage.removeItem('justLoggedIn');
+            // Clean URL param without triggering navigation
+            if (urlParams.has('login')) {
+                const cleanUrl = window.location.pathname;
+                history.replaceState(null, '', cleanUrl);
+            }
+            history.pushState({ postLogin: true }, '', window.location.href);
+
+            const postLoginPopstateHandler = () => {
+                if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
+                    UI.showConfirmDialog(
+                        'Sign Out',
+                        'Are you sure you want to sign out?',
+                        async () => {
+                            // User confirmed sign out
+                            window.removeEventListener('popstate', postLoginPopstateHandler);
+                            try {
+                                await fetch(DASHBOARD_CONFIG.AUTH_API + '/logout', { method: 'POST', credentials: 'include' });
+                            } catch (e) { /* continue */ }
+                            localStorage.removeItem('user');
+                            sessionStorage.clear();
+                            if (typeof UI !== 'undefined' && UI.showToast) {
+                                UI.showToast('You have been signed out successfully.', 'success');
+                            }
+                            if (typeof LoadingOverlay !== 'undefined') {
+                                LoadingOverlay.show('Signing out...');
+                            }
+                            setTimeout(() => {
+                                window.location.replace('/');
+                            }, 800);
+                        },
+                        () => {
+                            // User cancelled - stay on dashboard
+                            history.pushState({ postLogin: true }, '', window.location.href);
+                        },
+                        'Confirm',
+                        'Cancel'
+                    );
+                } else {
+                    // Fallback: stay on page
+                    history.pushState({ postLogin: true }, '', window.location.href);
+                }
+            };
+
+            window.addEventListener('popstate', postLoginPopstateHandler);
+
+            // Remove the guard when user navigates via any dashboard link
+            // (clicking Convert, Settings, Users = normal navigation, no guard needed)
+            document.querySelectorAll('.dashboard__nav-link:not(.dashboard__nav-link--active), .dashboard__mobile-link:not(.dashboard__mobile-link--active)').forEach(link => {
+                link.addEventListener('click', () => {
+                    window.removeEventListener('popstate', postLoginPopstateHandler);
+                }, { once: true });
+            });
+        }
+
     } catch (error) {
         console.error('Dashboard init error:', error);
-        window.location.href = DASHBOARD_CONFIG.LOGIN_PAGE;
+        if (typeof LoadingOverlay !== 'undefined') {
+            LoadingOverlay.show('Redirecting to login...');
+        }
+        setTimeout(() => {
+            window.location.replace(DASHBOARD_CONFIG.LOGIN_PAGE);
+        }, 800);
     }
 }
 
