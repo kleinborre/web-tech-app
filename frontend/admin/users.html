@@ -102,9 +102,13 @@
             </button>
 
             <div class="dashboard__user">
-                <span id="welcomeUser" style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
-                    Admin</span>
-                <div id="userAvatar" class="dashboard__avatar">A</div>
+                <a href="settings.html" class="dashboard__user-link" title="Account Settings"
+                    style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; transition: opacity 0.2s;">
+                    <span id="welcomeUser"
+                        style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
+                        Admin</span>
+                    <div id="userAvatar" class="dashboard__avatar">A</div>
+                </a>
                 <div id="notif-container-users" style="display: inline-flex; align-items: center;"></div>
                 <a href="#" id="logoutBtn" class="btn btn--outline btn--sm">
                     <i class="bi bi-box-arrow-right"></i>

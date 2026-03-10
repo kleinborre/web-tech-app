@@ -10,6 +10,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -49,6 +50,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 /* ==========================================================================
    MIDDLEWARE CONFIGURATION
    ========================================================================== */
+
+/**
+ * Compression Middleware
+ * Gzip/Brotli compress all responses.
+ * Reduces payload sizes by 60-80% for HTML, CSS, JS, JSON.
+ */
+app.use(compression());
 
 /**
  * CORS Configuration

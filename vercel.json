@@ -22,7 +22,7 @@
             "src": "/(.*\\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp))",
             "dest": "backend/server.js",
             "headers": {
-                "Cache-Control": "public, max-age=3600, s-maxage=86400"
+                "Cache-Control": "public, max-age=31536000, immutable"
             }
         },
         {

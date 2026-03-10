@@ -592,7 +592,7 @@ const Results = (() => {
         // Make entire item clickable to show modal
         item.addEventListener('click', () => {
             if (result.success && result.text) {
-                showDetailModal(result.filename, result.text);
+                showDetailModal(result.filename, result.text, result, item, index);
             }
         });
 
@@ -678,7 +678,7 @@ const Results = (() => {
      * @param {string} filename - The filename.
      * @param {string} text - The full extracted text.
      */
-    const showDetailModal = (filename, text) => {
+    const showDetailModal = (filename, text, result, item, index) => {
         // Remove existing modal
         const existingModal = document.getElementById('resultDetailModal');
         if (existingModal) existingModal.remove();
@@ -687,23 +687,26 @@ const Results = (() => {
             <div class="modal fade" id="resultDetailModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
-                            <h5 class="modal-title">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1); align-items: flex-start;">
+                            <h5 class="modal-title" style="font-size: 1rem; word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: calc(100% - 40px);">
                                 <i class="bi bi-file-text me-2"></i>${filename}
                             </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9; flex-shrink: 0;"></button>
                         </div>
                         <div class="modal-body">
-                            <div style="background: #f8f9fa; border-radius: 8px; padding: 1.25rem; max-height: 400px; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 1rem; line-height: 1.8; border: 1px solid #e9ecef; width: 100%;">
+                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; line-height: 1.6; border: 1px solid #e9ecef;">
 ${text || 'No text extracted'}
                             </div>
                         </div>
-                        <div class="modal-footer justify-content-center" style="gap: 1rem;">
-                            <button type="button" class="btn" id="modalCopyBtn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem;">
-                                <i class="bi bi-clipboard me-2"></i>Copy to Clipboard
+                        <div class="modal-footer" style="justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;">
+                            <button type="button" class="btn btn-sm" id="modalCopyBtn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                                <i class="bi bi-clipboard me-1"></i>Copy
                             </button>
-                            <button type="button" class="btn btn-secondary" id="modalDownloadBtn" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
-                                <i class="bi bi-download me-2"></i>Download as TXT
+                            <button type="button" class="btn btn-sm btn-secondary" id="modalDownloadBtn" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+                                <i class="bi bi-download me-1"></i>Download
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" id="modalDeleteBtn" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
+                                <i class="bi bi-trash me-1"></i>Delete
                             </button>
                         </div>
                     </div>
@@ -713,21 +716,31 @@ ${text || 'No text extracted'}
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-        const modal = new bootstrap.Modal(document.getElementById('resultDetailModal'));
+        const modalEl = document.getElementById('resultDetailModal');
+        const modal = new bootstrap.Modal(modalEl);
         modal.show();
 
         // Bind modal button events
         document.getElementById('modalCopyBtn').addEventListener('click', () => {
             copyText(text, filename);
+            modal.hide();
         });
 
         document.getElementById('modalDownloadBtn').addEventListener('click', () => {
             downloadText(text, filename);
+            modal.hide();
+        });
+
+        document.getElementById('modalDeleteBtn').addEventListener('click', () => {
+            modal.hide();
+            if (result && item !== undefined && index !== undefined) {
+                showDeleteConfirmation(result, item, index);
+            }
         });
 
         // Clean up on modal close
-        document.getElementById('resultDetailModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('resultDetailModal')?.remove();
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            modalEl?.remove();
         });
     };
 
