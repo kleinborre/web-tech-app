@@ -2272,3 +2272,23 @@ body {
     gap: 0.35rem;
     padding: 1rem 0 0.5rem;
 }
+
+/* ==========================================================================
+   WELCOME / USERNAME HOVER TRANSITION
+   ========================================================================== */
+
+/**
+ * Smooth color transition on the welcome/username text when hovering
+ * the user-link (welcome/avatar area) on dashboard pages.
+ */
+.dashboard__user-link #welcomeUser {
+    transition: color 0.25s ease;
+}
+
+.dashboard__user-link:hover #welcomeUser {
+    color: #0097b2 !important;
+}
+
+.dashboard__user-link:hover {
+    opacity: 0.9;
+}

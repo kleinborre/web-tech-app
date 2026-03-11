@@ -940,7 +940,71 @@ async function initDashboard() {
 }
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', initDashboard);
+document.addEventListener('DOMContentLoaded', () => {
+    initDashboard();
+    initNavOverlays();
+});
+
+/**
+ * Attach loading overlay transitions to all sidebar and mobile nav links.
+ * Skips active links (current page) and logout buttons.
+ */
+function initNavOverlays() {
+    const allNavLinks = document.querySelectorAll(
+        '.dashboard__nav-link:not(.dashboard__nav-link--active), ' +
+        '.dashboard__mobile-link:not(.dashboard__mobile-link--active)'
+    );
+
+    allNavLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // Skip logout, active, and anchor-only links
+        if (!href || href === '#' || link.id === 'mobileLogoutBtn') return;
+
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Close mobile menu if open
+            const hamburger = document.getElementById('hamburgerToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (hamburger) hamburger.classList.remove('dashboard__hamburger--active');
+            if (mobileMenu) mobileMenu.classList.remove('dashboard__mobile-menu--open');
+
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo(href);
+            } else {
+                window.location.href = href;
+            }
+        });
+    });
+
+    // Header logo → /home with loading overlay
+    const logo = document.querySelector('.dashboard__logo');
+    if (logo) {
+        logo.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo('/home');
+            } else {
+                window.location.href = '/home';
+            }
+        });
+    }
+
+    // Welcome/avatar user-link → /settings with loading overlay
+    const userLink = document.querySelector('.dashboard__user-link');
+    if (userLink) {
+        userLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            const href = userLink.getAttribute('href');
+            if (href && href !== '#') {
+                if (typeof LoadingOverlay !== 'undefined') {
+                    LoadingOverlay.navigateTo(href);
+                } else {
+                    window.location.href = href;
+                }
+            }
+        });
+    }
+}
 
 // Expose for inline handlers
 window.HistoryManager = HistoryManager;

@@ -24,6 +24,17 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* Welcome/username hover color transition */
+        .header__user-link:hover #homeWelcomeUser {
+            color: #0097b2 !important;
+        }
+
+        #homeWelcomeUser {
+            transition: color 0.25s ease;
+        }
+    </style>
 </head>
 
 <body>
@@ -41,10 +52,19 @@
 
                 <!-- Desktop Navigation - Logged In (visible ≥992px) -->
                 <nav class="header__nav header__nav--desktop">
-                    <a href="/admin/dashboard" class="btn btn--outline">
-                        <i class="bi bi-grid me-1"></i> Dashboard
+                    <a href="/settings" id="homeUserLink" class="header__user-link" title="Account Settings"
+                        style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; transition: opacity 0.2s; cursor: pointer;">
+                        <span id="homeWelcomeUser"
+                            style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
+                            User</span>
+                        <div id="homeUserAvatar" class="dashboard__avatar"
+                            style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #0097b2, #00b4d8); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600;">
+                            U</div>
                     </a>
                     <div id="notif-container-main" style="display: inline-flex; align-items: center;"></div>
+                    <a href="/dashboard" id="homeDashboardBtn" class="btn btn--outline">
+                        <i class="bi bi-grid me-1"></i> Dashboard
+                    </a>
                     <button class="btn btn--secondary" id="headerLogoutBtn">
                         <i class="bi bi-box-arrow-right me-1"></i> Sign Out
                     </button>
@@ -63,7 +83,7 @@
                 <nav class="header__mobile-nav">
                     <!-- Mobile Nav - Logged In -->
                     <div class="header__mobile-links">
-                        <a href="/admin/dashboard" class="header__mobile-link">
+                        <a href="/dashboard" class="header__mobile-link">
                             <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
                         <a href="#" class="header__mobile-link" id="mobileLogoutBtn">
@@ -457,6 +477,22 @@
             try {
                 const res = await fetch('/api/auth/me', { credentials: 'include' });
                 if (!res.ok) throw new Error('Not authenticated');
+                const data = await res.json();
+
+                // Populate welcome text and avatar on desktop header
+                if (data.user) {
+                    const welcomeEl = document.getElementById('homeWelcomeUser');
+                    if (welcomeEl) welcomeEl.textContent = `Welcome, ${data.user.username}`;
+                    const avatarEl = document.getElementById('homeUserAvatar');
+                    if (avatarEl) {
+                        if (data.user.profilePicture) {
+                            avatarEl.innerHTML = `<img src="${data.user.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        } else {
+                            const initials = data.user.username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                            avatarEl.textContent = initials || 'U';
+                        }
+                    }
+                }
             } catch (err) {
                 if (typeof LoadingOverlay !== 'undefined') {
                     LoadingOverlay.show('Redirecting to login...');
@@ -516,6 +552,63 @@
                     NotificationManager.init('notif-container-main');
                 }
             }, 1000);
+        });
+    </script>
+
+    <!-- Loading overlay transitions for header links -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Logo click → /home with loading overlay
+            const logo = document.querySelector('.header__logo');
+            if (logo) {
+                logo.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Already on home, do nothing
+                });
+            }
+
+            // Welcome/avatar → /settings with loading overlay
+            const userLink = document.getElementById('homeUserLink');
+            if (userLink) {
+                userLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/settings');
+                    } else {
+                        window.location.href = '/settings';
+                    }
+                });
+            }
+
+            // Dashboard button → /dashboard with loading overlay
+            const dashBtn = document.getElementById('homeDashboardBtn');
+            if (dashBtn) {
+                dashBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/dashboard');
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                });
+            }
+
+            // Mobile Dashboard link with loading overlay
+            const mobileDashLink = document.querySelector('.header__mobile-link[href="/dashboard"]');
+            if (mobileDashLink) {
+                mobileDashLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hamburger = document.getElementById('hamburgerToggle');
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (hamburger) hamburger.classList.remove('header__hamburger--active');
+                    if (mobileMenu) mobileMenu.classList.remove('header__mobile-menu--open');
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/dashboard');
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                });
+            }
         });
     </script>
 </body>

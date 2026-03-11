@@ -102,7 +102,7 @@
             </button>
 
             <div class="dashboard__user">
-                <a href="/admin/settings" class="dashboard__user-link" title="Account Settings"
+                <a href="/settings" class="dashboard__user-link" title="Account Settings"
                     style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; transition: opacity 0.2s;">
                     <span id="welcomeUser"
                         style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
@@ -120,7 +120,7 @@
             <div class="dashboard__mobile-menu" id="mobileMenu">
                 <nav class="dashboard__mobile-nav">
                     <div class="dashboard__mobile-links">
-                        <a href="/admin/dashboard" class="dashboard__mobile-link">
+                        <a href="/dashboard" class="dashboard__mobile-link">
                             <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
                         <a href="/home" class="dashboard__mobile-link">
@@ -129,7 +129,7 @@
                         <a href="#" class="dashboard__mobile-link dashboard__mobile-link--active">
                             <i class="bi bi-people me-1"></i> Users
                         </a>
-                        <a href="/admin/settings" class="dashboard__mobile-link">
+                        <a href="/settings" class="dashboard__mobile-link">
                             <i class="bi bi-gear me-1"></i> Settings
                         </a>
                         <a href="#" class="dashboard__mobile-link" id="mobileLogoutBtn">
@@ -147,7 +147,7 @@
                 <nav>
                     <ul class="dashboard__nav">
                         <li class="dashboard__nav-item">
-                            <a href="/admin/dashboard" class="dashboard__nav-link">
+                            <a href="/dashboard" class="dashboard__nav-link">
                                 <i class="bi bi-grid"></i>
                                 Dashboard
                             </a>
@@ -165,7 +165,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="/admin/settings" class="dashboard__nav-link">
+                            <a href="/settings" class="dashboard__nav-link">
                                 <i class="bi bi-gear"></i>
                                 Settings
                             </a>
@@ -780,6 +780,27 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             NotificationManager.init('notif-container-users');
+
+            // Add loading overlay transitions to all nav links
+            document.querySelectorAll(
+                '.dashboard__nav-link:not(.dashboard__nav-link--active), ' +
+                '.dashboard__mobile-link:not(.dashboard__mobile-link--active)'
+            ).forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href || href === '#' || link.id === 'mobileLogoutBtn') return;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hamburger = document.getElementById('hamburgerToggle');
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (hamburger) hamburger.classList.remove('dashboard__hamburger--active');
+                    if (mobileMenu) mobileMenu.classList.remove('dashboard__mobile-menu--open');
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo(href);
+                    } else {
+                        window.location.href = href;
+                    }
+                });
+            });
         });
     </script>
 </body>

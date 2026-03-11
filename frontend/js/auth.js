@@ -12,7 +12,7 @@
 
 const AUTH_CONFIG = {
     API_BASE: '/api/auth',
-    REDIRECT_AFTER_LOGIN: '/admin/dashboard',
+    REDIRECT_AFTER_LOGIN: '/dashboard',
     REDIRECT_AFTER_LOGOUT: '/',
     LOGIN_PAGE: '/auth/login',
     MIN_PASSWORD_LENGTH: 8,

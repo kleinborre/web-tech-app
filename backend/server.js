@@ -245,8 +245,25 @@ app.get('/auth/update-password', (req, res) => {
 });
 
 /**
- * Admin Pages
- * Serves admin panel HTML pages using clean URLs.
+ * Dashboard & Settings Pages
+ * Serves shared dashboard pages using clean URLs.
+ * Both /dashboard and /admin/dashboard serve the same files.
+ * Role-based UI is handled client-side via JavaScript.
+ */
+app.get('/dashboard', (req, res) => {
+    setNoCacheHeaders(res);
+    res.sendFile(path.join(frontendPath, 'admin', 'dashboard.html'));
+});
+
+app.get('/settings', (req, res) => {
+    setNoCacheHeaders(res);
+    res.sendFile(path.join(frontendPath, 'admin', 'settings.html'));
+});
+
+/**
+ * Admin-Only Pages
+ * /admin/users is exclusively for admin/superadmin users.
+ * /admin/dashboard and /admin/settings kept as backward-compat aliases.
  */
 app.get('/admin/dashboard', (req, res) => {
     setNoCacheHeaders(res);

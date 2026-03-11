@@ -1068,14 +1068,27 @@ function initSidebarNav() {
     }
 
     // Direct navigation with loading overlay for Dashboard link
-    const dashboardLink = document.querySelector('.dashboard__nav-link[href="/admin/dashboard"]');
+    const dashboardLink = document.querySelector('.dashboard__nav-link[href="/dashboard"]');
     if (dashboardLink) {
         dashboardLink.addEventListener('click', (e) => {
             e.preventDefault();
             if (typeof LoadingOverlay !== 'undefined') {
-                LoadingOverlay.navigateTo('/admin/dashboard');
+                LoadingOverlay.navigateTo('/dashboard');
             } else {
-                window.location.href = '/admin/dashboard';
+                window.location.href = '/dashboard';
+            }
+        });
+    }
+
+    // Header logo → /home with loading overlay
+    const logo = document.querySelector('.dashboard__logo');
+    if (logo) {
+        logo.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo('/home');
+            } else {
+                window.location.href = '/home';
             }
         });
     }

@@ -205,14 +205,14 @@ const NotificationManager = (() => {
 
     /**
      * Detect what page we're currently on.
-     * Handles both clean URLs and .html file URLs.
+     * Handles clean URLs (/dashboard, /admin/dashboard) and .html file URLs.
      */
     const getCurrentPage = () => {
         const path = window.location.pathname.toLowerCase();
-        // Clean URL: /admin/dashboard  OR  file: /admin/dashboard.html
-        if (path.includes('/admin/dashboard') || path.endsWith('/dashboard.html')) return 'dashboard';
+        // Clean URL: /dashboard OR /admin/dashboard OR file: /admin/dashboard.html
+        if (path === '/dashboard' || path.includes('/admin/dashboard') || path.endsWith('/dashboard.html')) return 'dashboard';
         if (path.includes('/admin/users') || path.endsWith('/users.html')) return 'users';
-        if (path.includes('/admin/settings') || path.endsWith('/settings.html')) return 'settings';
+        if (path === '/settings' || path.includes('/admin/settings') || path.endsWith('/settings.html')) return 'settings';
         // index.html or root
         return 'home';
     };
@@ -227,15 +227,15 @@ const NotificationManager = (() => {
 
         switch (type) {
             case 'conversion':
-                // Conversion history is on the admin dashboard
+                // Conversion history is on the dashboard
                 if (currentPage === 'dashboard') return null;
-                return '/admin/dashboard';
+                return '/dashboard';
 
             case 'profile_update':
             case 'password_reset':
                 // Profile updates are on the settings page
                 if (currentPage === 'settings') return null;
-                return '/admin/settings';
+                return '/settings';
 
             case 'new_user':
                 // New user registrations — admin users page
