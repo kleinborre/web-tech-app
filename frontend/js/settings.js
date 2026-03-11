@@ -1041,44 +1041,41 @@ function closeResultPopup(returnTab) {
    ========================================================================== */
 
 function initSidebarNav() {
-    // Add confirmation for the Convert (index.html) sidebar link
-    const convertLink = document.querySelector('.dashboard__nav-link[href="../index.html"]');
+    // Direct navigation with loading overlay for Convert link
+    const convertLink = document.querySelector('.dashboard__nav-link[href="/home"]');
     if (convertLink) {
         convertLink.addEventListener('click', (e) => {
             e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Go to Convert',
-                    'Go to Convert page?',
-                    () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
-                    null,
-                    'Confirm',
-                    'Cancel',
-                    'primary'
-                );
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo('/home');
             } else {
-                if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
+                window.location.href = '/home';
             }
         });
     }
 
-    // Add confirmation for the Users sidebar link (admin only)
-    const usersLink = document.querySelector('.dashboard__nav-link[href="users.html"]');
+    // Direct navigation with loading overlay for Users link (admin only)
+    const usersLink = document.querySelector('.dashboard__nav-link[href="/admin/users"]');
     if (usersLink) {
         usersLink.addEventListener('click', (e) => {
             e.preventDefault();
-            if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                UI.showConfirmDialog(
-                    'Navigate',
-                    'Go to User Management?',
-                    () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
-                    null,
-                    'Confirm',
-                    'Cancel',
-                    'primary'
-                );
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo('/admin/users');
             } else {
-                if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
+                window.location.href = '/admin/users';
+            }
+        });
+    }
+
+    // Direct navigation with loading overlay for Dashboard link
+    const dashboardLink = document.querySelector('.dashboard__nav-link[href="/admin/dashboard"]');
+    if (dashboardLink) {
+        dashboardLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (typeof LoadingOverlay !== 'undefined') {
+                LoadingOverlay.navigateTo('/admin/dashboard');
+            } else {
+                window.location.href = '/admin/dashboard';
             }
         });
     }
@@ -1098,46 +1095,26 @@ function initHamburger() {
             mobileMenu.classList.toggle('dashboard__mobile-menu--open');
         });
 
-        // Close menu when clicking a link (except sign out and convert)
+        // Close menu when clicking a link (except sign out) and navigate with loading overlay
         mobileMenu.querySelectorAll('.dashboard__mobile-link').forEach(link => {
             if (link.id !== 'mobileLogoutBtn') {
-                // Add confirmation for Convert link in mobile menu
-                if (link.getAttribute('href') === '../index.html') {
+                const href = link.getAttribute('href');
+                // Skip active links (current page)
+                if (link.classList.contains('dashboard__mobile-link--active')) {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
                         hamburger.classList.remove('dashboard__hamburger--active');
                         mobileMenu.classList.remove('dashboard__mobile-menu--open');
-                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                            UI.showConfirmDialog(
-                                'Go to Convert',
-                                'Go to Convert page?',
-                                () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; } },
-                                null,
-                                'Confirm',
-                                'Cancel',
-                                'primary'
-                            );
-                        } else {
-                            if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('../index.html'); } else { window.location.href = '../index.html'; }
-                        }
                     });
-                } else if (link.getAttribute('href') === 'users.html') {
+                } else if (href && href !== '#') {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
                         hamburger.classList.remove('dashboard__hamburger--active');
                         mobileMenu.classList.remove('dashboard__mobile-menu--open');
-                        if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
-                            UI.showConfirmDialog(
-                                'Navigate',
-                                'Go to User Management?',
-                                () => { if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; } },
-                                null,
-                                'Confirm',
-                                'Cancel',
-                                'primary'
-                            );
+                        if (typeof LoadingOverlay !== 'undefined') {
+                            LoadingOverlay.navigateTo(href);
                         } else {
-                            if (typeof LoadingOverlay !== 'undefined') { LoadingOverlay.navigateTo('users.html'); } else { window.location.href = 'users.html'; }
+                            window.location.href = href;
                         }
                     });
                 } else {

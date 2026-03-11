@@ -102,7 +102,7 @@
             </button>
 
             <div class="dashboard__user">
-                <a href="settings.html" class="dashboard__user-link" title="Account Settings"
+                <a href="/admin/settings" class="dashboard__user-link" title="Account Settings"
                     style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; transition: opacity 0.2s;">
                     <span id="welcomeUser"
                         style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
@@ -120,7 +120,7 @@
             <div class="dashboard__mobile-menu" id="mobileMenu">
                 <nav class="dashboard__mobile-nav">
                     <div class="dashboard__mobile-links">
-                        <a href="dashboard.html" class="dashboard__mobile-link">
+                        <a href="/admin/dashboard" class="dashboard__mobile-link">
                             <i class="bi bi-grid me-1"></i> Dashboard
                         </a>
                         <a href="/home" class="dashboard__mobile-link">
@@ -129,7 +129,7 @@
                         <a href="#" class="dashboard__mobile-link dashboard__mobile-link--active">
                             <i class="bi bi-people me-1"></i> Users
                         </a>
-                        <a href="settings.html" class="dashboard__mobile-link">
+                        <a href="/admin/settings" class="dashboard__mobile-link">
                             <i class="bi bi-gear me-1"></i> Settings
                         </a>
                         <a href="#" class="dashboard__mobile-link" id="mobileLogoutBtn">
@@ -147,7 +147,7 @@
                 <nav>
                     <ul class="dashboard__nav">
                         <li class="dashboard__nav-item">
-                            <a href="dashboard.html" class="dashboard__nav-link">
+                            <a href="/admin/dashboard" class="dashboard__nav-link">
                                 <i class="bi bi-grid"></i>
                                 Dashboard
                             </a>
@@ -165,7 +165,7 @@
                             </a>
                         </li>
                         <li class="dashboard__nav-item">
-                            <a href="settings.html" class="dashboard__nav-link">
+                            <a href="/admin/settings" class="dashboard__nav-link">
                                 <i class="bi bi-gear"></i>
                                 Settings
                             </a>
@@ -260,7 +260,7 @@
             ADMIN_API: '/api/admin',
             AUTH_API: '/api/auth',
             ITEMS_PER_PAGE: 20,
-            LOGIN_PAGE: '/auth/login.html'
+            LOGIN_PAGE: '/auth/login'
         };
 
         const UsersPageState = {

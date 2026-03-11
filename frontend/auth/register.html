@@ -33,7 +33,7 @@
             <div class="auth__card">
                 <!-- Header -->
                 <div class="auth__header">
-                    <a href="../index.html" class="auth__logo">
+                    <a href="/" class="auth__logo">
                         <i class="bi bi-file-text"></i>
                         ImageToTextOnline
                     </a>
@@ -56,7 +56,8 @@
                         <label for="username" class="form-label">Username</label>
                         <input type="text" id="username" name="username" class="form-control"
                             placeholder="Choose a username" required minlength="3" maxlength="20">
-                        <span class="form-hint">3-20 characters. Letters, numbers, and either a dot or underscore (not both).</span>
+                        <span class="form-hint">3-20 characters. Letters, numbers, and either a dot or underscore (not
+                            both).</span>
                     </div>
 
                     <!-- Password Field -->
@@ -98,8 +99,8 @@
                             <input type="checkbox" id="terms" name="terms" class="form-check-input" required>
                             <label for="terms" class="form-check-label"
                                 style="font-size: var(--font-size-sm); color: var(--color-gray-600);">
-                                I agree to the <a href="#" class="auth__link">Terms of Service</a> and <a href="#"
-                                    class="auth__link">Privacy Policy</a>
+                                I agree to the <a href="#" class="auth__link" id="tosLink">Terms of Service</a> and <a
+                                    href="#" class="auth__link" id="privacyLink">Privacy Policy</a>
                             </label>
                         </div>
                     </div>
@@ -114,7 +115,8 @@
                 <div class="auth__divider">or sign up with</div>
 
                 <!-- Social Login -->
-                <button type="button" class="btn btn--google btn--block" id="googleRegisterBtn" onclick="if(typeof LoadingOverlay!=='undefined')LoadingOverlay.show('Connecting to Google...');window.location.href='/api/auth/google'">
+                <button type="button" class="btn btn--google btn--block" id="googleRegisterBtn"
+                    onclick="if(typeof LoadingOverlay!=='undefined')LoadingOverlay.show('Connecting to Google...');window.location.href='/api/auth/google'">
                     <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
                         <path
                             d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"
@@ -135,11 +137,213 @@
                 <!-- Footer -->
                 <div class="auth__footer">
                     Already have an account?
-                    <a href="login.html" class="auth__link">Sign in</a>
+                    <a href="/auth/login" class="auth__link">Sign in</a>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- ========================================================================
+         TERMS OF SERVICE MODAL
+         ======================================================================== -->
+    <div class="modal fade" id="tosModal" tabindex="-1" aria-labelledby="tosModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content" style="border: none; border-radius: var(--radius-lg, 12px); overflow: hidden;">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #00838f, #00acc1); border-bottom: none;">
+                    <h5 class="modal-title" id="tosModalLabel"
+                        style="font-family: 'Poppins', sans-serif; font-weight: 600;">
+                        <i class="bi bi-file-earmark-text me-2"></i>Terms of Service
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        style="filter: invert(1); opacity: 0.9;"></button>
+                </div>
+                <div class="modal-body"
+                    style="font-family: 'Poppins', sans-serif; font-size: 0.875rem; color: #4a4a4a; padding: 1.5rem; max-height: 60vh; line-height: 1.7;">
+                    <p style="color: var(--color-gray-500, #6b7280); font-size: 0.8rem; margin-bottom: 1.25rem;">
+                        <strong>Effective Date:</strong> January 2026 &nbsp;|&nbsp; <strong>Last Updated:</strong> March
+                        2026
+                    </p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">1. Acceptance of Terms</h6>
+                    <p>By creating an account or using ImageToTextOnline, you agree to be bound by these Terms of
+                        Service. If you do not agree, please do not use the service. We reserve the right to update
+                        these terms at any time; continued use constitutes acceptance of the revised terms.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">2. Description of Service</h6>
+                    <p>ImageToTextOnline is a web-based Optical Character Recognition (OCR) application that extracts
+                        text from uploaded images and PDF files. The service supports JPG, PNG, GIF, JFIF, HEIC, and PDF
+                        formats. Registered users gain access to conversion history, account settings, and additional
+                        features.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">3. User Accounts</h6>
+                    <p>You may register via email/password or Google OAuth 2.0. You are responsible for maintaining the
+                        confidentiality of your account credentials and for all activities that occur under your
+                        account. You must provide accurate, current information during registration. Accounts found to
+                        be in violation of these terms may be suspended or terminated at our discretion.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">4. Acceptable Use</h6>
+                    <p>You agree not to:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li>Upload content that is unlawful, harmful, threatening, abusive, or otherwise objectionable
+                        </li>
+                        <li>Attempt to gain unauthorized access to any part of the service or its related systems</li>
+                        <li>Use the service to process copyrighted material without proper authorization</li>
+                        <li>Engage in any activity that could disable, overburden, or impair the service</li>
+                        <li>Use automated scripts or bots to access the service beyond normal usage patterns</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">5. Intellectual Property</h6>
+                    <p>The ImageToTextOnline application, including its design, code, and branding, is the property of
+                        its developers. You retain ownership of any content you upload. We do not claim rights over the
+                        text extracted from your images.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">6. Rate Limiting</h6>
+                    <p>To ensure fair usage, API requests are subject to rate limits. Exceeding these limits may result
+                        in temporary restrictions on your access to the service. Rate limit details are communicated via
+                        standard HTTP headers.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">7. Service Availability</h6>
+                    <p>We strive to maintain high availability but do not guarantee uninterrupted access. The service
+                        may be temporarily unavailable due to maintenance, updates, or circumstances beyond our control.
+                        This is an academic project and is provided on an "as is" basis.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">8. Limitation of Liability</h6>
+                    <p>ImageToTextOnline is provided "as is" without warranties of any kind, either express or implied.
+                        We shall not be liable for any indirect, incidental, special, or consequential damages arising
+                        out of or in connection with the use of the service. OCR accuracy may vary depending on image
+                        quality and content.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">9. Termination</h6>
+                    <p>We may terminate or suspend your account at any time, without prior notice, for conduct that we
+                        determine violates these terms or is harmful to other users, the service, or third parties. Upon
+                        termination, your right to use the service will immediately cease.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">10. Contact</h6>
+                    <p>For questions regarding these Terms of Service, please reach out through the contact information
+                        provided on the application or via our GitHub repository.</p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 0.75rem 1.5rem;">
+                    <button type="button" class="btn" data-bs-dismiss="modal"
+                        style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-family: 'Poppins', sans-serif; font-size: 0.875rem; padding: 0.5rem 1.5rem; border-radius: 8px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================
+         PRIVACY POLICY MODAL
+         ======================================================================== -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+            <div class="modal-content" style="border: none; border-radius: var(--radius-lg, 12px); overflow: hidden;">
+                <div class="modal-header text-white"
+                    style="background: linear-gradient(135deg, #00838f, #00acc1); border-bottom: none;">
+                    <h5 class="modal-title" id="privacyModalLabel"
+                        style="font-family: 'Poppins', sans-serif; font-weight: 600;">
+                        <i class="bi bi-shield-lock me-2"></i>Privacy Policy
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        style="filter: invert(1); opacity: 0.9;"></button>
+                </div>
+                <div class="modal-body"
+                    style="font-family: 'Poppins', sans-serif; font-size: 0.875rem; color: #4a4a4a; padding: 1.5rem; max-height: 60vh; line-height: 1.7;">
+                    <p style="color: var(--color-gray-500, #6b7280); font-size: 0.8rem; margin-bottom: 1.25rem;">
+                        <strong>Effective Date:</strong> January 2026 &nbsp;|&nbsp; <strong>Last Updated:</strong> March
+                        2026
+                    </p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">1. Information We Collect</h6>
+                    <p>When you create an account, we collect:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li><strong>Account Information:</strong> Email address, username, and encrypted password
+                            (bcrypt-hashed)</li>
+                        <li><strong>Profile Data:</strong> Profile picture (stored via Firebase Storage) and display
+                            preferences</li>
+                        <li><strong>Google OAuth Data:</strong> If you sign in with Google, we receive your name, email,
+                            and profile photo from Google</li>
+                        <li><strong>Conversion History:</strong> Records of OCR conversions including filenames and
+                            extracted text (for registered users)</li>
+                        <li><strong>Usage Data:</strong> IP addresses for rate limiting and security purposes</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">2. How We Use Your Information
+                    </h6>
+                    <p>Your information is used to:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li>Provide and maintain your account and the OCR conversion service</li>
+                        <li>Store your conversion history for convenient access</li>
+                        <li>Authenticate your identity and secure your account</li>
+                        <li>Send password reset emails when requested (via SMTP/Gmail)</li>
+                        <li>Enforce rate limits and prevent abuse</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">3. Data Storage & Security</h6>
+                    <p>Your data is stored securely using industry-standard practices:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li>Passwords are hashed using <strong>bcrypt</strong> and are never stored in plain text</li>
+                        <li>Authentication uses <strong>JWT tokens</strong> stored in HTTPOnly cookies</li>
+                        <li>Database hosted on <strong>MongoDB Atlas</strong> with encrypted connections</li>
+                        <li>Profile pictures stored on <strong>Firebase Storage</strong> with automatic old-image
+                            cleanup</li>
+                        <li>Server secured with <strong>Helmet.js</strong> HTTP security headers</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">4. Image Processing</h6>
+                    <p>Images uploaded for OCR conversion are processed in real-time using Tesseract.js.
+                        <strong>Uploaded images are not stored permanently on our servers.</strong> For registered
+                        users, the extracted text and filename are saved to your conversion history for your
+                        convenience. You may delete any history entry at any time.
+                    </p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">5. Third-Party Services</h6>
+                    <p>We integrate with the following third-party services:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li><strong>Google OAuth 2.0:</strong> For optional single sign-on authentication (<a
+                                href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer"
+                                style="color: #00838f;">Google Privacy Policy</a>)</li>
+                        <li><strong>Firebase Storage:</strong> For profile picture hosting (<a
+                                href="https://firebase.google.com/support/privacy" target="_blank"
+                                rel="noopener noreferrer" style="color: #00838f;">Firebase Privacy Policy</a>)</li>
+                        <li><strong>MongoDB Atlas:</strong> For database hosting</li>
+                        <li><strong>Vercel:</strong> For application hosting and deployment</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">6. Cookies & Session Data</h6>
+                    <p>We use HTTPOnly cookies to store authentication tokens (JWT). These cookies are essential for
+                        maintaining your login session and cannot be accessed by client-side scripts. We also use <code
+                            style="background: #f0f0f0; padding: 0.1rem 0.3rem; border-radius: 3px; font-size: 0.8rem;">sessionStorage</code>
+                        for temporary UI state management, which is cleared when you close your browser.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">7. Data Retention & Deletion</h6>
+                    <p>Your account data is retained as long as your account is active. You may:</p>
+                    <ul style="padding-left: 1.25rem;">
+                        <li>Delete individual conversion history entries at any time</li>
+                        <li>Remove your profile picture from account settings</li>
+                        <li>Request account deletion by contacting us</li>
+                    </ul>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">8. Children's Privacy</h6>
+                    <p>This service is not directed at individuals under the age of 13. We do not knowingly collect
+                        personal information from children. If we become aware that a child under 13 has provided us
+                        with personal information, we will take steps to delete such information.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">9. Changes to This Policy</h6>
+                    <p>We may update this Privacy Policy from time to time. Any changes will be reflected by updating
+                        the "Last Updated" date above. We encourage you to review this policy periodically for any
+                        changes.</p>
+
+                    <h6 style="color: #00838f; font-weight: 600; margin-top: 1.25rem;">10. Contact</h6>
+                    <p>If you have questions or concerns about this Privacy Policy, please reach out through our GitHub
+                        repository or the contact information available within the application.</p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #e9ecef; padding: 0.75rem 1.5rem;">
+                    <button type="button" class="btn" data-bs-dismiss="modal"
+                        style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-family: 'Poppins', sans-serif; font-size: 0.875rem; padding: 0.5rem 1.5rem; border-radius: 8px;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -152,6 +356,28 @@
 
     <!-- Custom JavaScript -->
     <script src="../js/main.js"></script>
+
+    <!-- ToS & Privacy Modal Triggers -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tosLink = document.getElementById('tosLink');
+            const privacyLink = document.getElementById('privacyLink');
+
+            if (tosLink) {
+                tosLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    new bootstrap.Modal(document.getElementById('tosModal')).show();
+                });
+            }
+
+            if (privacyLink) {
+                privacyLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    new bootstrap.Modal(document.getElementById('privacyModal')).show();
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

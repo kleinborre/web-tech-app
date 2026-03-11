@@ -34,15 +34,15 @@
         <div class="container">
             <div class="header__container">
                 <!-- Logo -->
-                <a href="./index.html" class="header__logo">
+                <a href="/" class="header__logo">
                     <i class="bi bi-file-text"></i>
                     ImageToTextOnline
                 </a>
 
                 <!-- Desktop Navigation - Logged Out (visible ≥992px) -->
                 <nav class="header__nav header__nav--desktop" data-auth="logged-out">
-                    <a href="./auth/login.html" class="btn btn--outline">Sign In</a>
-                    <a href="./auth/register.html" class="btn btn--primary">Register</a>
+                    <a href="/auth/login" class="btn btn--outline">Sign In</a>
+                    <a href="/auth/register" class="btn btn--primary">Register</a>
                 </nav>
 
                 <!-- Hamburger Toggle (visible <992px) -->
@@ -58,10 +58,10 @@
                 <nav class="header__mobile-nav">
                     <!-- Mobile Nav - Logged Out -->
                     <div class="header__mobile-links" data-auth="logged-out">
-                        <a href="./auth/login.html" class="header__mobile-link">
+                        <a href="/auth/login" class="header__mobile-link">
                             <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
                         </a>
-                        <a href="./auth/register.html" class="header__mobile-link">
+                        <a href="/auth/register" class="header__mobile-link">
                             <i class="bi bi-person-plus me-2"></i> Register
                         </a>
                     </div>
@@ -441,6 +441,16 @@
 
     <!-- Custom JavaScript -->
     <script src="js/main.js"></script>
+
+    <!-- Prevent back button navigation on guest landing page -->
+    <script>
+        (function () {
+            history.replaceState(null, '', window.location.href);
+            window.addEventListener('popstate', function () {
+                history.pushState(null, '', window.location.href);
+            });
+        })();
+    </script>
 </body>
 
 </html>

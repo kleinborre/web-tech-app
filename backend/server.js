@@ -11,6 +11,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -68,7 +69,9 @@ app.use(cors({
         : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
+    credentials: true,
+    maxAge: 86400
 }));
 
 /**
@@ -116,15 +119,21 @@ app.use(async (req, res, next) => {
 });
 
 /**
- * Request Logging Middleware
- * Logs incoming requests in development mode.
+ * Morgan HTTP Request Logger
+ * Structured request logging for monitoring and debugging.
+ * - Development: concise colored output
+ * - Production: Apache combined log format
  */
-if (NODE_ENV === 'development') {
-    app.use((req, res, next) => {
-        console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-        next();
-    });
-}
+app.use(morgan(NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+/**
+ * API Security Headers Middleware
+ * Adds X-Content-Type-Options: nosniff to prevent MIME sniffing attacks.
+ */
+app.use('/api', (req, res, next) => {
+    res.set('X-Content-Type-Options', 'nosniff');
+    next();
+});
 
 /* ==========================================================================
    STATIC FILE SERVING
