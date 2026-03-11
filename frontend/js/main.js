@@ -111,6 +111,12 @@ const Notification = (() => {
 
         document.body.appendChild(notification);
 
+        // Play sound based on notification type
+        if (typeof SoundManager !== 'undefined') {
+            if (type === 'success') SoundManager.play('success');
+            else if (type === 'error' || type === 'warning') SoundManager.play('error');
+        }
+
         // Close button handler
         notification.querySelector('.notification__close').addEventListener('click', () => {
             notification.remove();

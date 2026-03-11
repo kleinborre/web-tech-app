@@ -246,6 +246,12 @@ const UI = {
 
         toastContainer.appendChild(toast);
 
+        // Play sound based on toast type
+        if (typeof SoundManager !== 'undefined') {
+            if (type === 'success') SoundManager.play('success');
+            else if (type === 'danger' || type === 'warning') SoundManager.play('error');
+        }
+
         // Auto-remove after 5 seconds
         setTimeout(() => {
             toast.remove();

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Page not found - ImageToTextOnline">
+    <title>Page Not Found - ImageToTextOnline</title>
+
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <style>
+        /* Welcome/username hover color transition */
+        .header__user-link:hover #homeWelcomeUser {
+            color: #0097b2 !important;
+            text-decoration: underline;
+        }
+
+        #homeWelcomeUser {
+            transition: color 0.25s ease;
+        }
+
+        .error-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0, 151, 178, 0.08), rgba(0, 180, 216, 0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+        }
+
+        .error-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(0, 151, 178, 0.2);
+        }
+
+        .error-icon i {
+            font-size: 3.5rem;
+            color: #0097b2;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ========================================================================
+         HEADER (same as home.html authenticated header)
+         ======================================================================== -->
+    <header class="header">
+        <div class="container">
+            <div class="header__container">
+                <!-- Logo -->
+                <a href="/home" class="header__logo">
+                    <i class="bi bi-file-text"></i>
+                    ImageToTextOnline
+                </a>
+
+                <!-- Desktop Navigation - Logged In (visible ≥992px) -->
+                <nav class="header__nav header__nav--desktop">
+                    <a href="/settings" id="homeUserLink" class="header__user-link" title="Account Settings"
+                        style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; transition: opacity 0.2s; cursor: pointer;">
+                        <span id="homeWelcomeUser"
+                            style="color: var(--color-gray-600); font-size: var(--font-size-sm);">Welcome,
+                            User</span>
+                        <div id="homeUserAvatar" class="dashboard__avatar"
+                            style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #0097b2, #00b4d8); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600;">
+                            U</div>
+                    </a>
+                    <div id="notif-container-main" style="display: inline-flex; align-items: center;"></div>
+                    <a href="/dashboard" id="homeDashboardBtn" class="btn btn--outline">
+                        <i class="bi bi-grid me-1"></i> Dashboard
+                    </a>
+                    <button class="btn btn--secondary" id="headerLogoutBtn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                    </button>
+                </nav>
+
+                <!-- Hamburger Toggle (visible <992px) -->
+                <button class="header__hamburger" id="hamburgerToggle" aria-label="Toggle menu">
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                </button>
+            </div>
+
+            <!-- Mobile Dropdown Menu (anchored below header) -->
+            <div class="header__mobile-menu" id="mobileMenu">
+                <nav class="header__mobile-nav">
+                    <!-- Mobile Nav - Logged In -->
+                    <div class="header__mobile-links">
+                        <a href="/dashboard" class="header__mobile-link">
+                            <i class="bi bi-grid me-1"></i> Dashboard
+                        </a>
+                        <a href="#" class="header__mobile-link" id="mobileLogoutBtn">
+                            <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- ========================================================================
+         404 ERROR SECTION
+         ======================================================================== -->
+    <section style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+        <div class="container" style="text-align: center; max-width: 600px;">
+            <!-- Custom Error Icon -->
+            <div class="error-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+
+            <!-- Error Text -->
+            <h1
+                style="font-family: 'Poppins', sans-serif; font-size: 1.75rem; font-weight: 700; color: #0097b2; margin-bottom: 0.5rem;">
+                Oops! You've wandered off the map.
+            </h1>
+            <p
+                style="font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: var(--color-gray-500); margin-bottom: 2rem; line-height: 1.6;">
+                The page you're looking for doesn't exist or may have been moved. Let's get you back on track.
+            </p>
+
+            <!-- Back to Home Button -->
+            <a href="/home" id="goHomeBtn" class="btn btn--primary" style="padding: 0.65rem 2rem; font-size: 0.95rem;">
+                Go to Homepage
+            </a>
+        </div>
+    </section>
+
+
+    <!-- ========================================================================
+         FOOTER (same as home.html authenticated footer)
+         ======================================================================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__container">
+                <!-- Brand -->
+                <div class="footer__brand">
+                    <h4 class="footer__logo">ImageToTextOnline</h4>
+                    <p class="footer__tagline">Web Technology Application Course Project</p>
+                    <p style="color: var(--color-gray-400); font-size: var(--font-size-sm); margin-top: 0.5rem;">
+                        <a href="https://www.mmdc.mcl.edu.ph/" target="_blank" rel="noopener noreferrer"
+                            style="color: var(--color-gray-400); text-decoration: none; transition: color 0.2s;">Mapua
+                            Malayan Digital College</a><br>
+                        Under the mentorship of Mr. Mario Pison Jr.
+                    </p>
+                </div>
+
+                <!-- Social Links -->
+                <div class="footer__social">
+                    <a href="https://www.linkedin.com/in/kleinborre/" class="footer__social-link" aria-label="LinkedIn"
+                        target="_blank">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/kleinborre" class="footer__social-link" aria-label="GitHub"
+                        target="_blank">
+                        <i class="bi bi-github"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer__bottom">
+                <p class="footer__copyright">&copy; 2026 @kleinborre. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sound Manager -->
+    <script src="/js/sound-manager.js"></script>
+
+    <!-- Loading Overlay -->
+    <script src="/js/loading-overlay.js"></script>
+
+    <!-- Auth & session management -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Fetch user info for header
+            try {
+                const res = await fetch('/api/auth/me', { credentials: 'include' });
+                if (!res.ok) throw new Error('Not authenticated');
+                const data = await res.json();
+
+                if (data.user) {
+                    const welcomeEl = document.getElementById('homeWelcomeUser');
+                    if (welcomeEl) welcomeEl.textContent = `Welcome, ${data.user.username}`;
+                    const avatarEl = document.getElementById('homeUserAvatar');
+                    if (avatarEl) {
+                        if (data.user.profilePicture) {
+                            avatarEl.innerHTML = `<img src="${data.user.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                        } else {
+                            const initials = data.user.username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                            avatarEl.textContent = initials || 'U';
+                        }
+                    }
+                }
+            } catch (err) {
+                // If auth fails, redirect to guest 404
+                window.location.replace('/');
+                return;
+            }
+
+            // Logout handlers
+            const logoutHandler = async () => {
+                try {
+                    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+                } catch (e) { /* continue */ }
+                localStorage.removeItem('user');
+                sessionStorage.clear();
+                if (typeof LoadingOverlay !== 'undefined') {
+                    LoadingOverlay.show('Signing out...');
+                }
+                setTimeout(() => { window.location.replace('/'); }, 800);
+            };
+
+            const headerLogoutBtn = document.getElementById('headerLogoutBtn');
+            if (headerLogoutBtn) headerLogoutBtn.addEventListener('click', logoutHandler);
+
+            const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+            if (mobileLogoutBtn) {
+                mobileLogoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutHandler();
+                });
+            }
+
+            // Loading overlay transitions
+            const userLink = document.getElementById('homeUserLink');
+            if (userLink) {
+                userLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/settings');
+                    } else {
+                        window.location.href = '/settings';
+                    }
+                });
+            }
+
+            const dashBtn = document.getElementById('homeDashboardBtn');
+            if (dashBtn) {
+                dashBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/dashboard');
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                });
+            }
+
+            const goHomeBtn = document.getElementById('goHomeBtn');
+            if (goHomeBtn) {
+                goHomeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/home');
+                    } else {
+                        window.location.href = '/home';
+                    }
+                });
+            }
+
+            const mobileDashLink = document.querySelector('.header__mobile-link[href="/dashboard"]');
+            if (mobileDashLink) {
+                mobileDashLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const hamburger = document.getElementById('hamburgerToggle');
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (hamburger) hamburger.classList.remove('header__hamburger--active');
+                    if (mobileMenu) mobileMenu.classList.remove('header__mobile-menu--open');
+                    if (typeof LoadingOverlay !== 'undefined') {
+                        LoadingOverlay.navigateTo('/dashboard');
+                    } else {
+                        window.location.href = '/dashboard';
+                    }
+                });
+            }
+
+            // Hamburger toggle
+            const hamburger = document.getElementById('hamburgerToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (hamburger && mobileMenu) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('header__hamburger--active');
+                    mobileMenu.classList.toggle('header__mobile-menu--open');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

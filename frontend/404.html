@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Page not found - ImageToTextOnline">
+    <title>Page Not Found - ImageToTextOnline</title>
+
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+
+    <style>
+        .error-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0, 151, 178, 0.08), rgba(0, 180, 216, 0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+        }
+
+        .error-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(0, 151, 178, 0.2);
+        }
+
+        .error-icon i {
+            font-size: 3.5rem;
+            color: #0097b2;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ========================================================================
+         HEADER (same as index.html guest header)
+         ======================================================================== -->
+    <header class="header">
+        <div class="container">
+            <div class="header__container">
+                <!-- Logo -->
+                <a href="/" class="header__logo">
+                    <i class="bi bi-file-text"></i>
+                    ImageToTextOnline
+                </a>
+
+                <!-- Desktop Navigation - Logged Out (visible ≥992px) -->
+                <nav class="header__nav header__nav--desktop" data-auth="logged-out">
+                    <a href="/auth/login" class="btn btn--outline">Sign In</a>
+                    <a href="/auth/register" class="btn btn--primary">Register</a>
+                </nav>
+
+                <!-- Hamburger Toggle (visible <992px) -->
+                <button class="header__hamburger" id="hamburgerToggle" aria-label="Toggle menu">
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                    <span class="header__hamburger-line"></span>
+                </button>
+            </div>
+
+            <!-- Mobile Dropdown Menu (anchored below header) -->
+            <div class="header__mobile-menu" id="mobileMenu">
+                <nav class="header__mobile-nav">
+                    <!-- Mobile Nav - Logged Out -->
+                    <div class="header__mobile-links" data-auth="logged-out">
+                        <a href="/auth/login" class="header__mobile-link">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Sign In
+                        </a>
+                        <a href="/auth/register" class="header__mobile-link">
+                            <i class="bi bi-person-plus me-2"></i> Register
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- ========================================================================
+         404 ERROR SECTION
+         ======================================================================== -->
+    <section style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+        <div class="container" style="text-align: center; max-width: 600px;">
+            <!-- Custom Error Icon -->
+            <div class="error-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+
+            <!-- Error Text -->
+            <h1
+                style="font-family: 'Poppins', sans-serif; font-size: 1.75rem; font-weight: 700; color: #0097b2; margin-bottom: 0.5rem;">
+                Oops! You've wandered off the map.
+            </h1>
+            <p
+                style="font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: var(--color-gray-500); margin-bottom: 2rem; line-height: 1.6;">
+                The page you're looking for doesn't exist or may have been moved. Let's get you back on track.
+            </p>
+
+            <!-- Back to Home Button -->
+            <a href="/" class="btn btn--primary" style="padding: 0.65rem 2rem; font-size: 0.95rem;">
+                Go to Homepage
+            </a>
+        </div>
+    </section>
+
+
+    <!-- ========================================================================
+         FOOTER (same as index.html guest footer)
+         ======================================================================== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer__container">
+                <!-- Brand -->
+                <div class="footer__brand">
+                    <h4 class="footer__logo">ImageToTextOnline</h4>
+                    <p class="footer__tagline">Web Technology Application Course Project</p>
+                    <p style="color: var(--color-gray-400); font-size: var(--font-size-sm); margin-top: 0.5rem;">
+                        <a href="https://www.mmdc.mcl.edu.ph/" target="_blank" rel="noopener noreferrer"
+                            style="color: var(--color-gray-400); text-decoration: none; transition: color 0.2s;">Mapua
+                            Malayan Digital College</a><br>
+                        Under the mentorship of Mr. Mario Pison Jr.
+                    </p>
+                </div>
+
+                <!-- Social Links -->
+                <div class="footer__social">
+                    <a href="https://www.linkedin.com/in/kleinborre/" class="footer__social-link" aria-label="LinkedIn"
+                        target="_blank">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="https://github.com/kleinborre" class="footer__social-link" aria-label="GitHub"
+                        target="_blank">
+                        <i class="bi bi-github"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer__bottom">
+                <p class="footer__copyright">&copy; 2026 @kleinborre. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sound Manager -->
+    <script src="/js/sound-manager.js"></script>
+
+    <!-- Loading Overlay -->
+    <script src="/js/loading-overlay.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+
+</html>

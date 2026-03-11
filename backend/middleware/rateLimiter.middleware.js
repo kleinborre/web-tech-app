@@ -42,7 +42,11 @@ export const globalLimiter = rateLimit({
     max: 300,
     standardHeaders: true,      // Return rate limit info in RateLimit-* headers
     legacyHeaders: false,       // Disable X-RateLimit-* headers
-    handler: createRateLimitHandler('Too many requests. Please try again after 15 minutes.')
+    handler: createRateLimitHandler('Too many requests. Please try again after 15 minutes.'),
+    skip: (req) => {
+        // Bypass rate limiting for authenticated users (JWT cookie present)
+        return !!(req.cookies && req.cookies.token);
+    }
 });
 
 /* ==========================================================================

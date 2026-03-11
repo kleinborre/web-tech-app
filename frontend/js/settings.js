@@ -1018,6 +1018,11 @@ function showResultPopup(type, title, text, returnTab = null) {
 
     overlay.classList.add('settings-popup-overlay--visible');
 
+    // Play success/error sound
+    if (typeof SoundManager !== 'undefined') {
+        SoundManager.play(type === 'success' ? 'success' : 'error');
+    }
+
     const autoCloseTimer = setTimeout(() => closeResultPopup(returnTab), SettingsConfig.POPUP_AUTO_CLOSE_MS);
 
     returnBtn.onclick = () => {

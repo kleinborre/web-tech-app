@@ -2287,6 +2287,7 @@ body {
 
 .dashboard__user-link:hover #welcomeUser {
     color: #0097b2 !important;
+    text-decoration: underline;
 }
 
 .dashboard__user-link:hover {

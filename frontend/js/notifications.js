@@ -150,8 +150,13 @@ const NotificationManager = (() => {
         if (!badge) return;
 
         if (shouldShowBadge(latestUnreadAt)) {
+            const wasPreviouslyHidden = badge.style.display === 'none' || badge.style.display === '';
             badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
             badge.style.display = 'flex';
+            // Play notification sound when badge first appears
+            if (wasPreviouslyHidden && typeof SoundManager !== 'undefined') {
+                SoundManager.play('notification');
+            }
         } else {
             badge.style.display = 'none';
         }

@@ -97,6 +97,8 @@ const LoadingOverlay = (() => {
             // Force reflow then show
             void el.offsetHeight;
             el.classList.add('loading-overlay--visible');
+            // Play navigation sound
+            if (typeof SoundManager !== 'undefined') SoundManager.play('navigate');
         },
 
         hide() {

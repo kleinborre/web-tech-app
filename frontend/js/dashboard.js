@@ -102,6 +102,11 @@ const DashboardUI = {
             </div>
         `;
         container.appendChild(toast);
+        // Play sound based on toast type
+        if (typeof SoundManager !== 'undefined') {
+            if (type === 'success') SoundManager.play('success');
+            else if (type === 'danger' || type === 'warning') SoundManager.play('error');
+        }
         setTimeout(() => toast.remove(), 5000);
     },
 

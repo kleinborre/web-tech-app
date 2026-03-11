@@ -294,17 +294,25 @@ app.get('/home', (req, res) => {
    ========================================================================== */
 
 /**
- * Serve index.html for unmatched routes.
- * This enables client-side routing.
+ * Global catch-all for undefined routes.
+ * Serves dedicated 404 error pages based on authentication state.
+ * - Authenticated users (JWT cookie present) → 404-auth.html
+ * - Guest visitors → 404.html
  * Note: Express 5 requires named wildcards.
  */
 app.get('/{*splat}', (req, res, next) => {
-    // Only serve HTML for non-API routes
+    // Skip API routes — let them fall through to the API 404 handler
     if (req.url.startsWith('/api')) {
         return next();
     }
     setNoCacheHeaders(res);
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    // Check for auth token to determine which 404 page to serve
+    const hasToken = req.cookies && req.cookies.token;
+    if (hasToken) {
+        res.status(404).sendFile(path.join(frontendPath, '404-auth.html'));
+    } else {
+        res.status(404).sendFile(path.join(frontendPath, '404.html'));
+    }
 });
 
 /* ==========================================================================
