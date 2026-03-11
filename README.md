@@ -86,15 +86,25 @@ Seeded by `seeder.js`:
 - ✅ **OCR Conversion** — Tesseract.js engine, batch upload (up to 5), confidence scores
 - ✅ **Multi-Format** — JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, PDF
 - ✅ **Copy / Download** — One-click clipboard copy or `.txt` export
+- ✅ **Separate OCR Pages** — Guest landing page (`index.html`) and authenticated converter (`home.html`)
 
 ### User
-- ✅ **Email + Password Auth** — Registration, login, logout with JWT cookies
+- ✅ **Email + Password Auth** — Registration, login (email or username), logout with JWT cookies
 - ✅ **Google OAuth 2.0** — One-click sign-in/sign-up via Google
 - ✅ **Forgot Password** — SMTP email with tokenized reset link (1-hour expiry)
 - ✅ **Profile Management** — Update username, email, password from settings
 - ✅ **Profile Picture** — Upload/delete via Firebase Storage
 - ✅ **Conversion History** — Paginated, searchable, bulk select + delete
-- ✅ **Notifications** — Bell icon with unread badge, mark as read
+- ✅ **Notifications** — Bell icon with unread badge, notification sound, mark as read
+- ✅ **Terms of Service & Privacy Policy** — Scrollable modals on registration page
+
+### UX & Navigation
+- ✅ **Clean URLs** — No `.html` extensions (e.g., `/auth/login`, `/dashboard`, `/settings`)
+- ✅ **Loading Overlays** — Smooth page transition animations on all navigation links, logo, and user-link clicks
+- ✅ **Sound Effects** — Web Audio API sounds for success, error, notification, and page transitions (SoundManager)
+- ✅ **404 Error Pages** — Dedicated catch-all pages for guest and authenticated users with themed design
+- ✅ **Back-Button Protection** — Guest page prevents back navigation; login back → homepage; post-logout history prevention
+- ✅ **Welcome Header** — Username/avatar in desktop header on home page, hoverable with teal underline transition
 
 ### Admin
 - ✅ **Dashboard** — Real-time stats, 7-day conversion chart
@@ -103,9 +113,13 @@ Seeded by `seeder.js`:
 
 ### Security
 - ✅ **Helmet.js** — HTTP security headers
-- ✅ **Rate Limiting** — Global (100/15min), auth (10/15min), login (5/15min)
+- ✅ **Rate Limiting** — Global (300/15min, bypassed for authenticated users), auth (20/15min), login (10/15min)
+- ✅ **CORS Hardening** — Exposed rate-limit headers, 24hr preflight cache, `X-Content-Type-Options: nosniff`
 - ✅ **Input Validation** — express-validator on all endpoints
 - ✅ **Centralized Error Handler** — AppError class with Mongoose/JWT/Multer error mapping
+- ✅ **Anti-Cache Headers** — `no-store`, `no-cache`, `must-revalidate` on sensitive pages
+- ✅ **Gzip Compression** — `compression` middleware for response optimization
+- ✅ **Morgan Logging** — HTTP request logging (`dev` in development, `combined` in production)
 
 ---
 
@@ -126,12 +140,14 @@ Seeded by `seeder.js`:
 | nodemailer | SMTP email (password reset) |
 | helmet | HTTP security headers |
 | express-validator | Input validation |
-| express-rate-limit | Rate limiting |
+| express-rate-limit | Rate limiting (with auth bypass) |
 | multer | File upload handling |
 | heic-convert | HEIC → JPEG conversion |
 | unpdf | PDF text extraction |
 | cookie-parser | Cookie parsing |
 | cors | Cross-origin policy |
+| morgan | HTTP request logging |
+| compression | Gzip response compression |
 | dotenv | Environment configuration |
 
 ### Frontend
@@ -202,25 +218,28 @@ web-tech-app/
 └── frontend/
     ├── index.html                          # Guest landing page + OCR converter
     ├── home.html                           # Authenticated OCR converter (dashboard nav)
+    ├── 404.html                            # Guest 404 error page
+    ├── 404-auth.html                       # Authenticated 404 error page
     ├── admin/
     │   ├── dashboard.html                  # Admin dashboard
     │   ├── settings.html                   # Account settings
-    │   └── users.html                     # User management
+    │   └── users.html                     # User management (admin-only)
     ├── auth/
     │   ├── forgot-password.html            # Forgot password form
-    │   ├── login.html                      # Login (with Google OAuth)
-    │   ├── register.html                   # Registration
+    │   ├── login.html                      # Login (email/username + Google OAuth)
+    │   ├── register.html                   # Registration (with TOS & Privacy modals)
     │   └── update-password.html            # Reset password (email link)
     ├── css/
     │   └── style.css                       # Main stylesheet
     ├── js/
-    │   ├── auth.js                         # Auth logic
+    │   ├── auth.js                         # Auth logic + sound integration
     │   ├── bulk-selection.js               # Checkbox bulk selection
-    │   ├── dashboard.js                    # Dashboard logic
-    │   ├── loading-overlay.js              # Page transition animations
-    │   ├── main.js                         # Core OCR + UI logic
-    │   ├── notifications.js                # Notification manager
-    │   └── settings.js                    # Settings page logic
+    │   ├── dashboard.js                    # Dashboard logic + sound integration
+    │   ├── loading-overlay.js              # Page transition animations + sound
+    │   ├── main.js                         # Core OCR + UI logic + sound integration
+    │   ├── notifications.js                # Notification manager + sound
+    │   ├── settings.js                     # Settings page logic + sound integration
+    │   └── sound-manager.js               # Web Audio API sound effects (4 sounds)
     └── assets/                             # Static assets
 ```
 
@@ -312,7 +331,7 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 | # | Feature | Endpoint | Method | Description |
 |---|---------|----------|--------|-------------|
 | 8 | Initiate Login | `/auth/google` | GET | Redirects to Google consent screen |
-| 9 | Callback | `/auth/google/callback` | GET | Sets JWT cookie → redirects to dashboard |
+| 9 | Callback | `/auth/google/callback` | GET | Sets JWT cookie → redirects to `/dashboard` |
 
 ### Profile Management (Auth Required)
 
@@ -490,9 +509,9 @@ Server runs at `http://localhost:3000`.
 | Google Sign-In | `http://localhost:3000/api/auth/google` |
 | Forgot Password | `http://localhost:3000/auth/forgot-password` |
 | Reset Password (from email) | `http://localhost:3000/auth/update-password?token=...&email=...` |
-| Admin Dashboard | `http://localhost:3000/admin/dashboard` |
-| User Management | `http://localhost:3000/admin/users` |
-| Account Settings | `http://localhost:3000/admin/settings` |
+| Dashboard | `http://localhost:3000/dashboard` |
+| Account Settings | `http://localhost:3000/settings` |
+| User Management (admin-only) | `http://localhost:3000/admin/users` |
 | API Health Check | `http://localhost:3000/api/health` |
 
 ### Vercel Production
@@ -503,7 +522,9 @@ Server runs at `http://localhost:3000`.
 | Home / OCR Converter (Auth) | `https://web-tech-app.vercel.app/home` |
 | Login | `https://web-tech-app.vercel.app/auth/login` |
 | Google Sign-In | `https://web-tech-app.vercel.app/api/auth/google` |
-| Admin Dashboard | `https://web-tech-app.vercel.app/admin/dashboard` |
+| Dashboard | `https://web-tech-app.vercel.app/dashboard` |
+| Account Settings | `https://web-tech-app.vercel.app/settings` |
+| User Management (admin-only) | `https://web-tech-app.vercel.app/admin/users` |
 | API Health Check | `https://web-tech-app.vercel.app/api/health` |
 
 ---
@@ -530,13 +551,20 @@ Server runs at `http://localhost:3000`.
 | **JWT Authentication** | HTTPOnly cookies (not localStorage), 7-day expiry |
 | **Google OAuth 2.0** | Passport.js, `sameSite: 'lax'` for redirect compatibility |
 | **Helmet.js** | X-Frame-Options, HSTS, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy, X-Powered-By removal |
-| **Rate Limiting** | Global: 100/15min, Auth: 10/15min, Login: 5/15min per IP |
+| **Rate Limiting** | Global: 300/15min (bypassed for authenticated users), Auth: 20/15min, Login: 10/15min per IP |
+| **CORS Hardening** | Exposed rate-limit headers, 24hr preflight cache, `X-Content-Type-Options: nosniff` on API responses |
+| **Anti-Cache Headers** | `no-store`, `no-cache`, `must-revalidate`, `Pragma: no-cache` on sensitive page routes |
+| **bfcache Prevention** | Browser back/forward cache disabled to prevent stale session state |
 | **Input Validation** | express-validator on all endpoints with field-level errors |
 | **Centralized Error Handler** | AppError class mapping Mongoose, JWT, Multer, and JSON parse errors to proper HTTP status codes |
 | **RBAC** | Four-tier middleware: guest → user → admin → superadmin |
 | **File Validation** | MIME whitelist + size caps (10MB OCR, 2MB profile picture) |
 | **Password Reset Tokens** | Bcrypt-hashed, single-use, 1-hour expiry |
-| **CORS** | Configurable (permissive in dev, restrictive in production) |
+| **CORS** | Hardened configuration — exposed rate-limit headers, 24hr preflight cache, restrictive in production |
+| **Gzip Compression** | `compression` middleware for optimized response sizes |
+| **Morgan Logging** | HTTP request logging — `dev` format in development, `combined` in production |
+| **404 Catch-All** | Auth-aware global catch-all serves dedicated 404 pages with HTTP 404 status |
+| **Clean URLs** | No `.html` extensions exposed — server-side route aliasing via Express |
 | **Environment Secrets** | `.env` + `firebase-service-account.json` excluded via `.gitignore` |
 
 ---
@@ -564,6 +592,7 @@ Server runs at `http://localhost:3000`.
 | **Phase 17** | Clean URLs & API security — removed `.html` extensions from all internal navigation links (auth, admin, settings), Morgan HTTP request logging (`dev`/`combined`), hardened CORS (exposed rate-limit headers, 24hr preflight cache), `X-Content-Type-Options: nosniff` on API responses, removed stale confirmation dialogs from settings sidebar/mobile nav (replaced with LoadingOverlay), guest page back-button prevention, login page back → homepage redirect |
 | **Phase 18** | URL structure & loading animations — separated user/admin URL paths (`/dashboard`, `/settings` for all users; `/admin/users` for admin-only), route aliasing via server.js (no page duplication), updated Google OAuth redirect, loading overlay transitions on all nav links/logo/user-link/dashboard buttons across dashboard.js, settings.js, users.html, and home.html, welcome/username/avatar added to home page desktop header (→ settings), theme-color hover transition on welcome text (home + dashboard pages) |
 | **Phase 19** | Global catch-all error pages & UX polish — dedicated `404.html` (guest) and `404-auth.html` (authenticated) with themed hover icon, creative error copy, and redirect button; server.js catch-all detects auth via JWT cookie, returns proper HTTP 404; SoundManager utility (Web Audio API) with 4 synthesized sounds integrated across all pages; settings popup success icon color matched to theme teal; Welcome/username hover: underline + teal color transition; settings welcome/avatar hoverable non-navigating container; rate limiting bypassed for authenticated users via globalLimiter `skip` function |
+| **Phase 20** | Comprehensive README update — updated all documentation sections (Features, Tech Stack, Directory Structure, Security Implementation, Accessing the Application, API Endpoints) to reflect Phases 15–19 changes: new files (`404.html`, `404-auth.html`, `sound-manager.js`), clean URL paths (`/dashboard`, `/settings`), updated rate limit values, added new features (sound effects, loading overlays, TOS/Privacy modals, separate OCR pages, back-button protection, anti-cache headers, gzip, Morgan logging, CORS hardening) |
 
 ---
 
