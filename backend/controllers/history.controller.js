@@ -8,6 +8,7 @@
 
 import ConversionLog from '../models/ConversionLog.model.js';
 import Notification from '../models/Notification.model.js';
+import { deleteFromFirebase, getFilePathFromUrl } from '../utils/firebase.js';
 
 /**
  * @desc    Get user's conversion history (paginated)
@@ -17,11 +18,23 @@ import Notification from '../models/Notification.model.js';
 export const getHistory = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        const total = await ConversionLog.countDocuments({ userId: req.user._id });
-        const history = await ConversionLog.find({ userId: req.user._id })
+        // Build query with optional date range filter
+        const query = { userId: req.user._id };
+        if (req.query.dateFrom || req.query.dateTo) {
+            query.conversionDate = {};
+            if (req.query.dateFrom) query.conversionDate.$gte = new Date(req.query.dateFrom);
+            if (req.query.dateTo) {
+                const endDate = new Date(req.query.dateTo);
+                endDate.setHours(23, 59, 59, 999);
+                query.conversionDate.$lte = endDate;
+            }
+        }
+
+        const total = await ConversionLog.countDocuments(query);
+        const history = await ConversionLog.find(query)
             .sort({ conversionDate: -1 })
             .skip(skip)
             .limit(limit)
@@ -84,6 +97,16 @@ export const deleteHistory = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Record not found' });
         }
 
+        // Delete associated image from Firebase
+        if (item.imageUrl) {
+            try {
+                const filePath = getFilePathFromUrl(item.imageUrl);
+                if (filePath) await deleteFromFirebase(filePath);
+            } catch (imgErr) {
+                console.error('[History] Firebase image delete error:', imgErr.message);
+            }
+        }
+
         // Remove this ID from notification referenceIds and clean up empty ones
         try {
             const deletedId = item._id;
@@ -135,7 +158,19 @@ export const deleteHistory = async (req, res, next) => {
  */
 export const clearHistory = async (req, res, next) => {
     try {
+        // Fetch items to get imageUrls before deleting
+        const items = await ConversionLog.find({ userId: req.user._id }).select('imageUrl').lean();
+        const imageUrls = items.map(i => i.imageUrl).filter(Boolean);
+
         const result = await ConversionLog.deleteMany({ userId: req.user._id });
+
+        // Delete images from Firebase
+        for (const url of imageUrls) {
+            try {
+                const filePath = getFilePathFromUrl(url);
+                if (filePath) await deleteFromFirebase(filePath);
+            } catch (e) { /* ignore */ }
+        }
 
         // Also clean up all conversion notifications
         try {
@@ -168,10 +203,25 @@ export const bulkDeleteHistory = async (req, res, next) => {
             return res.status(400).json({ success: false, error: 'No IDs provided' });
         }
 
+        // Fetch items to get imageUrls before deleting
+        const items = await ConversionLog.find({
+            _id: { $in: ids },
+            userId: req.user._id
+        }).select('imageUrl').lean();
+        const imageUrls = items.map(i => i.imageUrl).filter(Boolean);
+
         const result = await ConversionLog.deleteMany({
             _id: { $in: ids },
             userId: req.user._id
         });
+
+        // Delete images from Firebase
+        for (const url of imageUrls) {
+            try {
+                const filePath = getFilePathFromUrl(url);
+                if (filePath) await deleteFromFirebase(filePath);
+            } catch (e) { /* ignore */ }
+        }
 
         // Clean up notifications by referenceIds
         try {
@@ -201,6 +251,78 @@ export const bulkDeleteHistory = async (req, res, next) => {
 
     } catch (error) {
         console.error('[History] Bulk delete error:', error.message);
+        next(error);
+    }
+};
+
+/**
+ * @desc    Translate a history item's extracted text and save translation
+ * @route   PATCH /api/history/:id/translate
+ * @access  Private
+ */
+export const translateHistoryItem = async (req, res, next) => {
+    try {
+        const { sourceLang, targetLang } = req.body;
+
+        if (!sourceLang || !targetLang) {
+            return res.status(400).json({ success: false, error: 'sourceLang and targetLang are required' });
+        }
+
+        if (sourceLang !== 'autodetect' && sourceLang === targetLang) {
+            return res.status(400).json({ success: false, error: 'Source and target languages must be different' });
+        }
+
+        // Find the history item
+        const item = await ConversionLog.findOne({
+            _id: req.params.id,
+            userId: req.user._id
+        });
+
+        if (!item) {
+            return res.status(404).json({ success: false, error: 'Record not found' });
+        }
+
+        if (!item.extractedText) {
+            return res.status(400).json({ success: false, error: 'No text to translate' });
+        }
+
+        // Call MyMemory Translation API — map 'autodetect' to 'auto' for MyMemory
+        const apiSourceLang = sourceLang === 'autodetect' ? 'auto' : sourceLang;
+        const langPair = `${apiSourceLang}|${targetLang}`;
+        const textToTranslate = item.extractedText.substring(0, 5000);
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=${encodeURIComponent(langPair)}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            return res.status(502).json({ success: false, error: 'Translation service is temporarily unavailable' });
+        }
+
+        const data = await response.json();
+
+        if (!data.responseData || !data.responseData.translatedText) {
+            return res.status(502).json({ success: false, error: 'Translation service returned no result' });
+        }
+
+        // Save translation to this ConversionLog entry
+        item.translatedText = data.responseData.translatedText;
+        item.sourceLang = sourceLang;
+        item.targetLang = targetLang;
+        await item.save();
+
+        console.log(`[History] Translated item ${req.params.id} (${sourceLang} → ${targetLang}) for user ${req.user.username}`);
+
+        res.json({
+            success: true,
+            data: {
+                translatedText: item.translatedText,
+                sourceLang: item.sourceLang,
+                targetLang: item.targetLang
+            }
+        });
+
+    } catch (error) {
+        console.error('[History] Translate error:', error.message);
         next(error);
     }
 };

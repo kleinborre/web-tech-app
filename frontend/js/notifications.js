@@ -21,9 +21,9 @@ const NotificationManager = (() => {
     const INITIAL_DISPLAY = 5;
 
     // ── Configuration ──
-    const POLL_INTERVAL_MS = 5000;
+    const POLL_INTERVAL_MS = 3000;
     const API_BASE = '/api/notifications';
-    const LS_KEY = 'notif_seen_at'; // localStorage key for persistent dismissal
+    const LS_KEY = 'notif_badge_dismissed_count'; // localStorage key for badge dismissal
 
     // ── API Helpers ──
     const fetchApi = async (url, options = {}) => {
@@ -39,54 +39,16 @@ const NotificationManager = (() => {
         }
     };
 
-    // ── Persistent badge logic ──
-
-    /**
-     * Get the timestamp when user last opened the notification panel.
-     * Stored in localStorage so it persists across page loads.
-     */
-    const getLastSeenAt = () => {
-        const val = localStorage.getItem(LS_KEY);
-        return val ? new Date(val).getTime() : 0;
-    };
-
-    /**
-     * Save the current time as the "last seen" timestamp.
-     * Called when the notification panel is opened.
-     */
-    const setLastSeenNow = () => {
-        localStorage.setItem(LS_KEY, new Date().toISOString());
-    };
-
-    /**
-     * Determine if the badge should be shown.
-     * Badge shows ONLY if there are unread notifications that are
-     * NEWER than the last time the user opened the panel.
-     */
-    const shouldShowBadge = (latestUnreadAt) => {
-        if (unreadCount <= 0 || isOpen) return false;
-        if (!latestUnreadAt) return false;
-
-        const lastSeen = getLastSeenAt();
-        const latestTime = new Date(latestUnreadAt).getTime();
-
-        // Show badge only if the newest unread is newer than when user last saw
-        return latestTime > lastSeen;
-    };
-
     // ── Core Methods ──
 
-    /**
-     * Fetch unread count + latest timestamp, update badge.
-     */
     const fetchUnreadCount = async () => {
         const data = await fetchApi(`${API_BASE}/unread-count`);
         if (data.success) {
             const prevCount = unreadCount;
             unreadCount = data.count;
 
-            // Update badge based on persistent timestamp comparison
-            updateBadge(data.latestUnreadAt);
+            // Update badge with cross-page persistence
+            updateBadge(prevCount);
 
             // Auto-refresh panel if open and count changed
             if (isOpen && unreadCount !== prevCount) {
@@ -119,6 +81,10 @@ const NotificationManager = (() => {
                 n._id === id ? { ...n, read: true } : n
             );
             unreadCount = Math.max(0, unreadCount - 1);
+            // Reduce dismissed count to stay in sync
+            const dismissed = parseInt(localStorage.getItem(LS_KEY) || '0', 10);
+            if (dismissed > 0) localStorage.setItem(LS_KEY, String(Math.max(0, dismissed - 1)));
+            updateBadge();
             renderPanel();
         }
     };
@@ -134,27 +100,39 @@ const NotificationManager = (() => {
         if (data.success) {
             notifications = notifications.map(n => ({ ...n, read: true }));
             unreadCount = 0;
-            updateBadge(null);
+            localStorage.setItem(LS_KEY, '0'); // Reset dismissed count
+            updateBadge();
             renderPanel();
         }
     };
 
-    // ── UI Methods ──
-
     /**
      * Update the badge count on the bell icon.
-     * Uses persistent localStorage comparison — NOT in-memory flags.
+     * Uses localStorage 'badgeDismissedCount' to persist badge dismissal across page loads.
+     * Badge HIDES when panel is opened (dismissed) and only REAPPEARS when new unreads arrive.
+     * Opening panel does NOT mark items as read — they stay unread until clicked.
      */
-    const updateBadge = (latestUnreadAt) => {
+    const updateBadge = (prevCount = 0) => {
         const badge = document.getElementById('notif-badge');
         if (!badge) return;
 
-        if (shouldShowBadge(latestUnreadAt)) {
+        // If panel is open, hide badge
+        if (isOpen) {
+            badge.style.display = 'none';
+            return;
+        }
+
+        // Get the dismissed count from localStorage (persists across pages)
+        const dismissedCount = parseInt(localStorage.getItem(LS_KEY) || '0', 10);
+
+        // Show badge only if current unread count exceeds what was dismissed
+        if (unreadCount > 0 && unreadCount > dismissedCount) {
             const wasPreviouslyHidden = badge.style.display === 'none' || badge.style.display === '';
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            const newCount = unreadCount - dismissedCount;
+            badge.textContent = newCount > 99 ? '99+' : newCount;
             badge.style.display = 'flex';
-            // Play notification sound when badge first appears
-            if (wasPreviouslyHidden && typeof SoundManager !== 'undefined') {
+            // Play notification sound when badge first appears with new notifications
+            if (wasPreviouslyHidden && prevCount < unreadCount && typeof SoundManager !== 'undefined') {
                 SoundManager.play('notification');
             }
         } else {
@@ -390,11 +368,8 @@ const NotificationManager = (() => {
         panel.style.display = isOpen ? 'block' : 'none';
 
         if (isOpen) {
-            // ===== PERSISTENT DISMISSAL =====
-            // Save "last seen" timestamp to localStorage.
-            // This persists across page loads and navigation.
-            // Badge will only reappear for notifications created AFTER this timestamp.
-            setLastSeenNow();
+            // Dismiss badge: store current unread count so badge won't show for these
+            localStorage.setItem(LS_KEY, String(unreadCount));
 
             // Immediately hide badge
             const badge = document.getElementById('notif-badge');

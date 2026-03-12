@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { getHistory, getHistoryItem, deleteHistory, clearHistory, bulkDeleteHistory } from '../controllers/history.controller.js';
+import { getHistory, getHistoryItem, deleteHistory, clearHistory, bulkDeleteHistory, translateHistoryItem } from '../controllers/history.controller.js';
 import { protect } from '../middleware/auth.middleware.js';
 import { mongoIdParam, handleValidationErrors } from '../middleware/validate.middleware.js';
 
@@ -27,6 +27,12 @@ router.get('/', getHistory);
  * @desc    Bulk delete selected records
  */
 router.post('/bulk-delete', bulkDeleteHistory);
+
+/**
+ * @route   PATCH /api/history/:id/translate
+ * @desc    Translate a history item's extracted text and save
+ */
+router.patch('/:id/translate', mongoIdParam, handleValidationErrors, translateHistoryItem);
 
 /**
  * @route   GET /api/history/:id

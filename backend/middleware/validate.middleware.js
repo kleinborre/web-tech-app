@@ -174,3 +174,55 @@ export const mongoIdParam = [
     param('id')
         .isMongoId().withMessage('Invalid ID format')
 ];
+
+/* ==========================================================================
+   TRANSLATION VALIDATION RULES
+   ========================================================================== */
+
+/**
+ * POST /api/translate
+ */
+export const translateRules = [
+    body('text')
+        .trim()
+        .notEmpty().withMessage('Text to translate is required')
+        .isLength({ max: 5000 }).withMessage('Text cannot exceed 5000 characters'),
+    body('sourceLang')
+        .trim()
+        .notEmpty().withMessage('Source language is required')
+        .isLength({ min: 2, max: 10 }).withMessage('Invalid language code'),
+    body('targetLang')
+        .trim()
+        .notEmpty().withMessage('Target language is required')
+        .isLength({ min: 2, max: 10 }).withMessage('Invalid language code')
+];
+
+/**
+ * POST /api/translations (save)
+ */
+export const saveTranslationRules = [
+    body('originalText')
+        .trim()
+        .notEmpty().withMessage('Original text is required')
+        .isLength({ max: 5000 }).withMessage('Original text cannot exceed 5000 characters'),
+    body('translatedText')
+        .trim()
+        .notEmpty().withMessage('Translated text is required')
+        .isLength({ max: 10000 }).withMessage('Translated text cannot exceed 10000 characters'),
+    body('sourceLang')
+        .trim()
+        .notEmpty().withMessage('Source language is required'),
+    body('targetLang')
+        .trim()
+        .notEmpty().withMessage('Target language is required')
+];
+
+/**
+ * PATCH /api/translations/:id
+ */
+export const updateTranslationRules = [
+    body('translatedText')
+        .trim()
+        .notEmpty().withMessage('Translated text is required')
+        .isLength({ max: 10000 }).withMessage('Translated text cannot exceed 10000 characters')
+];

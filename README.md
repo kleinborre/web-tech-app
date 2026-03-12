@@ -68,6 +68,7 @@ Seeded by `seeder.js`:
 | Permission | Guest | User | Admin | Superadmin |
 |-----------|:-----:|:----:|:-----:|:----------:|
 | OCR Conversion + Copy/Download | ✅ | ✅ | ✅ | ✅ |
+| Translate OCR Results (auto-tracked) | ✅ | ✅ | ✅ | ✅ |
 | Register / Login (Email or Google) | ✅ | ✅ | ✅ | ✅ |
 | Save Conversion History | ❌ | ✅ | ✅ | ✅ |
 | View / Delete Own History | ❌ | ✅ | ✅ | ✅ |
@@ -87,6 +88,7 @@ Seeded by `seeder.js`:
 - ✅ **Multi-Format** — JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, PDF
 - ✅ **Copy / Download** — One-click clipboard copy or `.txt` export
 - ✅ **Separate OCR Pages** — Guest landing page (`index.html`) and authenticated converter (`home.html`)
+- ✅ **Translation API** — MyMemory Translation API integration (20 languages + CJK auto-detect), translate OCR results from any page, auto-saves every translation for all users (guest + authenticated) for real-time KPI tracking, full CRUD on saved translations
 
 ### User
 - ✅ **Email + Password Auth** — Registration, login (email or username), logout with JWT cookies
@@ -94,7 +96,7 @@ Seeded by `seeder.js`:
 - ✅ **Forgot Password** — SMTP email with tokenized reset link (1-hour expiry)
 - ✅ **Profile Management** — Update username, email, password from settings
 - ✅ **Profile Picture** — Upload/delete via Firebase Storage
-- ✅ **Conversion History** — Paginated, searchable, bulk select + delete
+- ✅ **Conversion History** — Unified 6-column table (Date, File, Snippet, Translation, Type, Actions), paginated (10/page), searchable by date/file/type/language, bulk select + delete, image thumbnails, translate/re-translate from Actions column, Firebase image storage for all conversions (guest + auth)
 - ✅ **Notifications** — Bell icon with unread badge, notification sound, mark as read
 - ✅ **Terms of Service & Privacy Policy** — Scrollable modals on registration page
 
@@ -107,9 +109,12 @@ Seeded by `seeder.js`:
 - ✅ **Welcome Header** — Username/avatar in desktop header on home page, hoverable with teal underline transition
 
 ### Admin
-- ✅ **Dashboard** — Real-time stats, 7-day conversion chart
-- ✅ **User Management** — View, search, activate/deactivate users
+- ✅ **KPI Analytics Dashboard** — 12 real-time stat cards (3 rows: Users, Conversions, Detailed Metrics including guest conversions, avg confidence, avg processing time, storage used, saved images), 4 Chart.js animated visualizations (conversions trend line, user distribution doughnut, file type horizontal bar, popular languages bar), global date filter bar + independent per-chart filters (DB-driven dropdowns for file types and languages, trend day buttons, distribution dropdown), hover lift animations on chart boxes only
+- ✅ **User Management** — Dedicated admin page (`/admin/users`): view, search, activate/deactivate users with table + mobile card views, unified Bootstrap pagination
 - ✅ **Role Management** — Superadmin-exclusive role promotion/demotion
+
+### Responsiveness
+- ✅ **Responsive Design** — Fully responsive from 4K desktop to Apple Watch (≤280px), with dedicated breakpoints at ≤360px (small screens) and ≤280px (smartwatch), all buttons/icons/text/visuals/charts/modals/forms scale proportionally, `min-width: 160px` floor
 
 ### Security
 - ✅ **Helmet.js** — HTTP security headers
@@ -133,7 +138,9 @@ Seeded by `seeder.js`:
 | Express.js (v5) | Web framework |
 | MongoDB Atlas + Mongoose | Database + ODM |
 | Tesseract.js | OCR engine |
-| Firebase Admin SDK | Profile picture storage |
+| Firebase Admin SDK | Profile picture + conversion image storage |
+| MyMemory Translation API | Third-party text translation (20 languages, free tier) |
+| sharp | Image compression (JPEG, 60% quality, max 800px) |
 | Passport.js + Google OAuth 2.0 | Social authentication |
 | bcrypt | Password hashing |
 | jsonwebtoken | JWT token management |
@@ -156,6 +163,8 @@ Seeded by `seeder.js`:
 |-----------|---------|
 | HTML5 / CSS3 / JavaScript (ES6+) | Structure, styling, logic |
 | Bootstrap 5.3.2 + Icons | UI framework + icon library |
+| Chart.js 4.4 + chartjs-adapter-date-fns | KPI data visualizations (line, doughnut, bar charts) with date axis |
+| date-fns | Date utility library (Chart.js time axis adapter) |
 | Google Fonts (Poppins) | Typography |
 
 ---
@@ -182,11 +191,12 @@ web-tech-app/
 │   │   └── passport.js                     # Google OAuth strategy
 │   │
 │   ├── controllers/
-│   │   ├── admin.controller.js             # Stats, user management
+│   │   ├── admin.controller.js             # Stats (KPI, charts, filters), user management
 │   │   ├── auth.controller.js              # Auth, profile, password reset
 │   │   ├── history.controller.js           # History CRUD + bulk ops
 │   │   ├── notification.controller.js      # Notifications
-│   │   └── ocr.controller.js              # OCR processing
+│   │   ├── ocr.controller.js              # OCR processing + Firebase image upload
+│   │   └── translation.controller.js      # MyMemory API translation + CRUD
 │   │
 │   ├── middleware/
 │   │   ├── admin.middleware.js             # adminOnly, superadminOnly
@@ -198,9 +208,10 @@ web-tech-app/
 │   │   └── validateFile.middleware.js      # File type/size checks
 │   │
 │   ├── models/
-│   │   ├── ConversionLog.model.js          # OCR history records
+│   │   ├── ConversionLog.model.js          # OCR history records (14 fields incl. image, confidence, mimeType)
 │   │   ├── Notification.model.js           # User notifications
 │   │   ├── PasswordResetToken.model.js     # Password reset tokens
+│   │   ├── Translation.model.js            # Saved translations (userId optional for guest tracking)
 │   │   └── User.model.js                  # User accounts
 │   │
 │   ├── routes/
@@ -208,7 +219,8 @@ web-tech-app/
 │   │   ├── auth.routes.js                 # /api/auth/* (incl. OAuth)
 │   │   ├── history.routes.js              # /api/history/*
 │   │   ├── notification.routes.js         # /api/notifications/*
-│   │   └── ocr.routes.js                 # /api/ocr/*
+│   │   ├── ocr.routes.js                 # /api/ocr/*
+│   │   └── translation.routes.js         # /api/translate + /api/translations/*
 │   │
 │   └── utils/
 │       ├── email.js                        # SMTP email sending
@@ -234,9 +246,9 @@ web-tech-app/
     ├── js/
     │   ├── auth.js                         # Auth logic + sound integration
     │   ├── bulk-selection.js               # Checkbox bulk selection
-    │   ├── dashboard.js                    # Dashboard logic + sound integration
+    │   ├── dashboard.js                    # Dashboard logic + translation history + sound integration
     │   ├── loading-overlay.js              # Page transition animations + sound
-    │   ├── main.js                         # Core OCR + UI logic + sound integration
+    │   ├── main.js                         # Core OCR + translation UI + sound integration
     │   ├── notifications.js                # Notification manager + sound
     │   ├── settings.js                     # Settings page logic + sound integration
     │   └── sound-manager.js               # Web Audio API sound effects (4 sounds)
@@ -284,9 +296,19 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `userId` | ObjectId | Reference to User |
+| `userId` | ObjectId | Reference to User (`null` for guest conversions) |
 | `originalFileName` | String | Uploaded file name |
 | `extractedText` | String | OCR output |
+| `translatedText` | String | Translated text (if translated) |
+| `sourceLang` | String | Source language code |
+| `targetLang` | String | Target language code |
+| `confidence` | Number | OCR confidence score |
+| `processingTime` | Number | Processing time (ms) |
+| `mimeType` | String | File MIME type |
+| `fileSize` | Number | File size (bytes) |
+| `success` | Boolean | Whether OCR succeeded |
+| `errorMessage` | String | Error message (if failed) |
+| `imageUrl` | String | Firebase Storage URL |
 | `conversionDate` | Date | Timestamp |
 
 ### Notification (`Notification.model.js`)
@@ -307,6 +329,18 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 | `userId` | ObjectId | User requesting reset |
 | `token` | String | Bcrypt-hashed token |
 | `expiresAt` | Date | 1-hour expiration |
+
+### Translation (`Translation.model.js`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `userId` | ObjectId | Reference to User (`null` for guest translations, optional) |
+| `originalText` | String | OCR-extracted source text |
+| `translatedText` | String | Translated text from MyMemory API |
+| `sourceLang` | String | Source language code (e.g., `en`, `auto`) |
+| `targetLang` | String | Target language code (e.g., `es`, `zh-CN`) |
+| `originalFileName` | String | Source image filename |
+| `createdAt` / `updatedAt` | Date | Timestamps |
 
 ---
 
@@ -354,7 +388,7 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 
 | # | Feature | Endpoint | Method | Parameters |
 |---|---------|----------|--------|-----------|
-| 17 | Get History | `/history` | GET | page, limit |
+| 17 | Get History | `/history` | GET | page, limit, dateFrom, dateTo |
 | 18 | Get Single Item | `/history/:id` | GET | id |
 | 19 | Delete Item | `/history/:id` | DELETE | id |
 | 20 | Bulk Delete | `/history/bulk-delete` | POST | ids (array) |
@@ -373,7 +407,7 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 
 | # | Feature | Endpoint | Method | Parameters |
 |---|---------|----------|--------|-----------|
-| 26 | Dashboard Stats | `/admin/stats` | GET | — |
+| 26 | Dashboard Stats | `/admin/stats` | GET | globalDays, trendDays, fileTypeDays, langDays |
 | 27 | All Users | `/admin/users` | GET | page, limit |
 | 28 | Single User | `/admin/users/:id` | GET | id |
 | 29 | Toggle Status | `/admin/users/:id/status` | PATCH | id |
@@ -384,6 +418,25 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 | # | Feature | Endpoint | Method | Response |
 |---|---------|----------|--------|----------|
 | 31 | Health Check | `/health` | GET | status, timestamp, environment |
+
+### Translation
+
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 32 | Translate Text | `/translate` | POST | text, sourceLang, targetLang |
+| 33 | Supported Languages | `/translate/languages` | GET | — |
+
+### Translation History (Auth Required)
+
+| # | Feature | Endpoint | Method | Parameters |
+|---|---------|----------|--------|-----------|
+| 34 | Save Translation | `/translations` | POST | originalText, translatedText, sourceLang, targetLang, originalFileName |
+| 35 | Get Translations | `/translations` | GET | page, limit |
+| 36 | Get Single | `/translations/:id` | GET | id |
+| 37 | Update Translation | `/translations/:id` | PATCH | translatedText |
+| 38 | Delete Translation | `/translations/:id` | DELETE | id |
+| 39 | Bulk Delete | `/translations/bulk-delete` | POST | ids (array) |
+| 40 | Clear All | `/translations` | DELETE | — |
 
 ---
 
@@ -593,6 +646,7 @@ Server runs at `http://localhost:3000`.
 | **Phase 18** | URL structure & loading animations — separated user/admin URL paths (`/dashboard`, `/settings` for all users; `/admin/users` for admin-only), route aliasing via server.js (no page duplication), updated Google OAuth redirect, loading overlay transitions on all nav links/logo/user-link/dashboard buttons across dashboard.js, settings.js, users.html, and home.html, welcome/username/avatar added to home page desktop header (→ settings), theme-color hover transition on welcome text (home + dashboard pages) |
 | **Phase 19** | Global catch-all error pages & UX polish — dedicated `404.html` (guest) and `404-auth.html` (authenticated) with themed hover icon, creative error copy, and redirect button; server.js catch-all detects auth via JWT cookie, returns proper HTTP 404; SoundManager utility (Web Audio API) with 4 synthesized sounds integrated across all pages; settings popup success icon color matched to theme teal; Welcome/username hover: underline + teal color transition; settings welcome/avatar hoverable non-navigating container; rate limiting bypassed for authenticated users via globalLimiter `skip` function |
 | **Phase 20** | Comprehensive README update — updated all documentation sections (Features, Tech Stack, Directory Structure, Security Implementation, Accessing the Application, API Endpoints) to reflect Phases 15–19 changes: new files (`404.html`, `404-auth.html`, `sound-manager.js`), clean URL paths (`/dashboard`, `/settings`), updated rate limit values, added new features (sound effects, loading overlays, TOS/Privacy modals, separate OCR pages, back-button protection, anti-cache headers, gzip, Morgan logging, CORS hardening) |
+| **Phase 21** | Translation, unified history, image storage, KPI dashboard & UI polish — MyMemory Translation API: `translation.controller.js` (translateText with auto-save for ALL users, CRUD), `Translation.model.js` (userId optional for guest tracking), 9 API endpoints; merged Translation History into Conversion History (6-column layout: Date, File, Snippet, Translation, Type, Actions with translate/copy/download/delete); Firebase image storage: `sharp` compression + upload on OCR for ALL users (guest in `conversions/guest/`), cleanup on delete, thumbnails in table + detail; OCR controller saves all 8 ConversionLog fields + guest conversion tracking (`userId: null`); CJK fix (`autodetect`→`auto`, `zh-CN`/`zh-TW`); unified toast messages; Chart.js 4.4 KPI dashboard: 12 stat cards (3 rows), 4 animated charts with hover lift effect, **global date filter bar** + **independent per-chart filters** (DB-driven file type & language dropdowns, trend day buttons, user distribution dropdown); admin stats API: independent query params (`trendDays`, `fileTypeDays`, `langDays`, `globalDays`), `translatedCount`/languages/`availableLanguages` query Translation model for real-time accuracy; unified Bootstrap pagination across all pages; conversion history: search bar + refresh button (no calendar), 10 items/page default; translation column shows text snippet only (translate moved to Actions); comprehensive responsiveness: ≤360px small-screen breakpoint + ≤280px Apple Watch breakpoint (buttons, icons, text, visuals, charts, navbars, modals, forms, pagination all scale down); `min-width: 160px` floor; removed User Management table from admin dashboard (dedicated `/admin/users` page) |
 
 ---
 

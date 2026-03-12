@@ -1406,6 +1406,16 @@ img {
     box-sizing: border-box;
 }
 
+/* Hover lift ONLY on chart visualization boxes */
+.charts-grid .dashboard__card {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.charts-grid .dashboard__card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
 .dashboard__card-header {
     display: flex;
     align-items: center;
@@ -1510,28 +1520,48 @@ img {
     gap: var(--spacing-xs);
 }
 
+/* Desktop: expand rows to fill more space */
+@media (min-width: 992px) {
+    .data-table th,
+    .data-table td {
+        padding: 1.25rem 1.5rem;
+    }
+}
+
 /**
- * History Table Column Widths (Date | File Name | Text Snippet | Actions)
+ * History Table Column Widths (Date | File Name | Text Snippet | Translation | Type | Actions)
  */
 .history-table-wrapper .data-table th:nth-child(1),
 .history-table-wrapper .data-table td:nth-child(1) {
-    width: 18%;
+    width: 10%;
 }
 
 .history-table-wrapper .data-table th:nth-child(2),
 .history-table-wrapper .data-table td:nth-child(2) {
-    width: 25%;
+    width: 16%;
 }
 
 .history-table-wrapper .data-table th:nth-child(3),
 .history-table-wrapper .data-table td:nth-child(3) {
-    width: 40%;
+    width: 24%;
 }
 
 .history-table-wrapper .data-table th:nth-child(4),
 .history-table-wrapper .data-table td:nth-child(4) {
-    width: 17%;
+    width: 22%;
     white-space: normal;
+}
+
+.history-table-wrapper .data-table th:nth-child(5),
+.history-table-wrapper .data-table td:nth-child(5) {
+    width: 10%;
+    text-align: center;
+}
+
+.history-table-wrapper .data-table th:nth-child(6),
+.history-table-wrapper .data-table td:nth-child(6) {
+    width: 12%;
+    white-space: nowrap;
 }
 
 /**
@@ -2223,42 +2253,72 @@ body {
 }
 
 /* ==========================================================================
-   PAGINATION THEME OVERRIDES (Bootstrap → App Colors)
+   PAGINATION — UNIFIED THEME
    ========================================================================== */
 
 /**
- * Override Bootstrap pagination to use the app's primary teal color.
- * Applies to history pagination on the user dashboard
- * and any other Bootstrap-rendered pagination.
+ * Industry-standard pagination with theme colors, hover animations,
+ * and responsive sizing. Used by history table, admin users, and
+ * any other paginated views across the app.
  */
+.pagination {
+    justify-content: center;
+    gap: 0.25rem;
+}
+
 .pagination .page-link {
     color: var(--color-primary, #0097b2);
-    border-color: var(--color-gray-200);
+    border: 1.5px solid var(--color-gray-200);
+    border-radius: 8px;
     font-family: 'Poppins', sans-serif;
-    font-size: var(--font-size-sm);
-    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 0.85rem;
+    min-width: 38px;
+    text-align: center;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pagination .page-link:hover {
     color: var(--color-white);
-    background-color: var(--color-primary-light, #33b5cc);
-    border-color: var(--color-primary-light, #33b5cc);
+    background: linear-gradient(135deg, var(--color-primary, #0097b2), var(--color-primary-light, #33b5cc));
+    border-color: var(--color-primary, #0097b2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 151, 178, 0.3);
+    text-decoration: none;
 }
 
 .pagination .page-link:focus {
     box-shadow: 0 0 0 0.2rem rgba(0, 151, 178, 0.25);
+    outline: none;
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--color-primary, #0097b2);
+    background: linear-gradient(135deg, var(--color-primary, #0097b2), #00838f);
     border-color: var(--color-primary, #0097b2);
     color: var(--color-white);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 151, 178, 0.35);
+    transform: translateY(-1px);
 }
 
 .pagination .page-item.disabled .page-link {
     color: var(--color-gray-400);
     background-color: var(--color-gray-50);
     border-color: var(--color-gray-200);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive sizing */
+@media (max-width: 576px) {
+    .pagination .page-link {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        min-width: 32px;
+        border-radius: 6px;
+    }
 }
 
 /**
@@ -2292,4 +2352,168 @@ body {
 
 .dashboard__user-link:hover {
     opacity: 0.9;
+}
+
+/* ==========================================================================
+   SMALL SCREEN (≤360px)
+   ========================================================================== */
+@media (max-width: 360px) {
+    /* Global text scaling */
+    body { font-size: 13px; }
+    h1, .h1 { font-size: 1.35rem; }
+    h2, .h2 { font-size: 1.15rem; }
+    h3, .h3 { font-size: 1rem; }
+
+    /* Buttons */
+    .btn { padding: 0.35rem 0.65rem; font-size: 0.78rem; }
+    .btn--sm { padding: 0.25rem 0.5rem; font-size: 0.72rem; }
+    .btn i.bi { font-size: 0.8rem; }
+
+    /* Feature cards */
+    .feature-card { padding: 1rem; }
+    .feature-card__icon { font-size: 1.5rem; width: 48px; height: 48px; }
+
+    /* Data table action buttons */
+    .data-table__actions .btn { padding: 0.25rem 0.45rem; }
+    .data-table__actions .btn i.bi { font-size: 0.85rem; }
+
+    /* Charts */
+    .chart-container { min-height: 160px; }
+    .chart-container canvas { max-height: 200px; }
+
+    /* Upload zone */
+    .upload-zone { padding: 1rem; }
+    .upload-zone i.bi { font-size: 1.8rem; }
+
+    /* Navbar */
+    .navbar-brand { font-size: 0.9rem; }
+    .navbar-brand img { height: 28px; }
+
+    /* Modals */
+    .modal-dialog { margin: 0.5rem; }
+    .modal-title { font-size: 0.95rem; }
+
+    /* Pagination */
+    .pagination .page-link { padding: 0.25rem 0.5rem; font-size: 0.72rem; min-width: 26px; }
+}
+
+/* ==========================================================================
+   ULTRA-SMALL SCREEN (Smartwatch, ≤280px)
+   ========================================================================== */
+@media (max-width: 280px) {
+    /* Font scaling + minimum width (Apple Watch = ~162px) */
+    body { font-size: 11px; min-width: 160px; }
+    h1, .h1 { font-size: 1.1rem; }
+    h2, .h2 { font-size: 0.95rem; }
+    h3, .h3 { font-size: 0.85rem; }
+    p, span, label, td, th { font-size: 0.7rem; }
+
+    /* All icons */
+    i.bi { font-size: 0.7rem; }
+
+    /* Stat cards */
+    .stats { grid-template-columns: 1fr !important; gap: 0.4rem; }
+    .stat-cards-grid { grid-template-columns: 1fr !important; gap: 0.4rem; }
+    .stat-card { padding: 0.5rem; }
+    .stat-card__value { font-size: 1rem; }
+    .stat-card__label { font-size: 0.6rem; }
+    .stat-card__icon { width: 28px; height: 28px; font-size: 0.7rem; }
+    .stat-card__icon i.bi { font-size: 0.65rem; }
+
+    /* Charts */
+    .charts-grid { grid-template-columns: 1fr !important; gap: 0.5rem; }
+    .chart-container { min-height: 100px; }
+    .chart-container canvas { max-height: 140px; }
+
+    /* Dashboard cards */
+    .dashboard__card { padding: 0.5rem; }
+    .dashboard__card-title { font-size: 0.8rem; }
+
+    /* History header + controls */
+    .history-header { flex-direction: column; gap: 0.4rem; }
+    .history-search { flex-direction: column; width: 100%; }
+    .history-search .form-control { min-width: 0; width: 100%; font-size: 0.7rem; padding: 0.25rem 0.4rem; }
+    .history-search .btn { padding: 0.2rem 0.4rem; font-size: 0.65rem; }
+    .history-search .btn i.bi { font-size: 0.6rem; }
+
+    /* History cards */
+    .history-card { padding: 0.5rem; }
+    .history-card__header { font-size: 0.7rem; }
+
+    /* All buttons */
+    .btn { padding: 0.25rem 0.5rem; font-size: 0.65rem; }
+    .btn--sm { padding: 0.2rem 0.35rem; font-size: 0.6rem; }
+    .btn i.bi { font-size: 0.6rem; }
+
+    /* Data table action buttons */
+    .data-table__actions { gap: 0.15rem !important; }
+    .data-table__actions .btn { padding: 0.2rem 0.35rem !important; }
+    .data-table__actions .btn i.bi { font-size: 0.55rem; }
+
+    /* Feature cards */
+    .feature-card { padding: 0.6rem; }
+    .feature-card__icon { font-size: 1.1rem; width: 32px; height: 32px; }
+    .feature-card__title { font-size: 0.75rem; }
+
+    /* Pagination */
+    .pagination .page-link { padding: 0.15rem 0.35rem; font-size: 0.6rem; min-width: 20px; }
+
+    /* Forms */
+    .form-control, .form-select { font-size: 0.7rem; padding: 0.25rem 0.4rem; }
+
+    /* Sidebar */
+    .dashboard__sidebar { width: 160px; }
+    .dashboard__nav-link { font-size: 0.7rem; padding: 0.35rem 0.5rem; }
+    .dashboard__nav-link i.bi { font-size: 0.65rem; }
+
+    /* Header */
+    .dashboard__header { padding: 0.35rem 0.5rem; }
+    .dashboard__header .btn { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+    .dashboard__header .btn i.bi { font-size: 0.55rem; }
+
+    /* Navbar */
+    .navbar-brand { font-size: 0.75rem; }
+    .navbar-brand img { height: 22px; }
+    .navbar-toggler { padding: 0.2rem 0.35rem; font-size: 0.7rem; }
+
+    /* Auth forms */
+    .auth__card { padding: 0.6rem; margin: 0.4rem; }
+    .auth__title { font-size: 0.95rem; }
+    .auth__card .btn { font-size: 0.65rem; }
+    .auth__card i.bi { font-size: 0.65rem; }
+
+    /* Landing hero */
+    .hero__title { font-size: 1.1rem; }
+    .hero__subtitle { font-size: 0.65rem; }
+
+    /* Upload zone */
+    .upload-zone { padding: 0.6rem; }
+    .upload-zone i.bi { font-size: 1.2rem; }
+    .upload-zone p { font-size: 0.6rem; }
+
+    /* Conversion result cards */
+    .result-card { padding: 0.5rem; }
+    .result-card .btn { padding: 0.2rem 0.35rem; font-size: 0.6rem; }
+    .result-card i.bi { font-size: 0.6rem; }
+
+    /* Modals */
+    .modal-dialog { margin: 0.25rem; }
+    .modal-body { padding: 0.4rem; font-size: 0.7rem; }
+    .modal-header { padding: 0.35rem 0.5rem; }
+    .modal-footer { padding: 0.25rem 0.4rem; }
+    .modal-title { font-size: 0.8rem; }
+    .modal-footer .btn { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+
+    /* Chart filter controls */
+    .chart-filter { gap: 0.15rem; }
+    .chart-filter .btn { padding: 0.15rem 0.3rem; font-size: 0.55rem; }
+    .form-select-sm { font-size: 0.6rem !important; padding: 0.15rem 0.3rem; }
+
+    /* Global filter bar */
+    .global-filter-bar .btn { font-size: 0.55rem; padding: 0.15rem 0.3rem; }
+    .global-filter-bar .form-select { font-size: 0.6rem; padding: 0.15rem 0.3rem; }
+
+    /* Toast / alerts */
+    .toast { font-size: 0.65rem; }
+    .alert { font-size: 0.65rem; padding: 0.35rem 0.5rem; }
 }

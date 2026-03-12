@@ -25,6 +25,7 @@ import authRoutes from './routes/auth.routes.js';
 import historyRoutes from './routes/history.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import translationRoutes from './routes/translation.routes.js';
 import { globalLimiter } from './middleware/rateLimiter.middleware.js';
 import errorHandler from './middleware/error.middleware.js';
 
@@ -203,6 +204,12 @@ app.use('/api/admin', adminRoutes);
  * Handles user notification management.
  */
 app.use('/api/notifications', notificationRoutes);
+
+/**
+ * Translation API Routes
+ * Handles text translation (MyMemory API) and saved translations CRUD.
+ */
+app.use('/api', translationRoutes);
 
 /**
  * Health Check Endpoint

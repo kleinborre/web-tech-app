@@ -346,7 +346,9 @@ function initProfilePicture() {
                     navAvatar.innerHTML = `<img src="${result.profilePicture}" alt="Profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
                 }
 
-                showResultPopup('success', 'Photo Updated', 'Your profile picture has been updated successfully.');
+                if (typeof UI !== 'undefined') {
+                    UI.showToast('Profile picture updated', 'success');
+                }
             } else {
                 if (typeof UI !== 'undefined') {
                     UI.showToast(result.error || 'Failed to upload', 'danger');

@@ -92,6 +92,40 @@ const conversionLogSchema = new mongoose.Schema({
     },
 
     /**
+     * Translated text from MyMemory API (if user translated this item).
+     */
+    translatedText: {
+        type: String,
+        default: ''
+    },
+
+    /**
+     * Source language code for translation (e.g., 'en', 'autodetect').
+     */
+    sourceLang: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+
+    /**
+     * Target language code for translation (e.g., 'es', 'fr').
+     */
+    targetLang: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+
+    /**
+     * Firebase Storage URL of the compressed original image.
+     */
+    imageUrl: {
+        type: String,
+        default: ''
+    },
+
+    /**
      * Date and time of the conversion.
      */
     conversionDate: {

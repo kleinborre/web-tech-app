@@ -14,7 +14,7 @@ const DASHBOARD_CONFIG = {
     HISTORY_API: '/api/history',
     ADMIN_API: '/api/admin',
     AUTH_API: '/api/auth',
-    ITEMS_PER_PAGE: 20,
+    ITEMS_PER_PAGE: 10,
     LOGIN_PAGE: '/auth/login'
 };
 
@@ -49,8 +49,11 @@ const DashboardAPI = {
     },
 
     // History endpoints
-    async getHistory(page = 1) {
-        const response = await fetch(`${DASHBOARD_CONFIG.HISTORY_API}?page=${page}&limit=${DASHBOARD_CONFIG.ITEMS_PER_PAGE}`, { credentials: 'include' });
+    async getHistory(page = 1, dateFrom = '', dateTo = '') {
+        let url = `${DASHBOARD_CONFIG.HISTORY_API}?page=${page}&limit=${DASHBOARD_CONFIG.ITEMS_PER_PAGE}`;
+        if (dateFrom) url += `&dateFrom=${dateFrom}`;
+        if (dateTo) url += `&dateTo=${dateTo}`;
+        const response = await fetch(url, { credentials: 'include' });
         return response.json();
     },
 
@@ -60,8 +63,15 @@ const DashboardAPI = {
     },
 
     // Admin endpoints
-    async getStats() {
-        const response = await fetch(`${DASHBOARD_CONFIG.ADMIN_API}/stats`, { credentials: 'include' });
+    async getStats(params = {}) {
+        const qs = new URLSearchParams();
+        if (params.globalDays) qs.set('globalDays', params.globalDays);
+        if (params.trendDays) qs.set('trendDays', params.trendDays);
+        if (params.fileTypeDays) qs.set('fileTypeDays', params.fileTypeDays);
+        if (params.langDays) qs.set('langDays', params.langDays);
+        const qsStr = qs.toString();
+        const url = `${DASHBOARD_CONFIG.ADMIN_API}/stats${qsStr ? '?' + qsStr : ''}`;
+        const response = await fetch(url, { credentials: 'include' });
         return response.json();
     },
 
@@ -81,6 +91,17 @@ const DashboardAPI = {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ role })
+        });
+        return response.json();
+    },
+
+    // Translate a history item
+    async translateHistoryItem(id, sourceLang, targetLang) {
+        const response = await fetch(`${DASHBOARD_CONFIG.HISTORY_API}/${id}/translate`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ sourceLang, targetLang })
         });
         return response.json();
     }
@@ -175,7 +196,14 @@ const HistoryManager = {
                 const filename = (item.originalFileName || '').toLowerCase();
                 const dateStr = DashboardUI.formatDate(item.conversionDate).toLowerCase();
                 const text = (item.extractedText || '').toLowerCase();
-                return filename.includes(query) || dateStr.includes(query) || text.includes(query);
+                const translation = (item.translatedText || '').toLowerCase();
+                const mimeType = (item.mimeType || '').toLowerCase();
+                const targetLang = (item.targetLang || '').toLowerCase();
+                const ext = filename.split('.').pop();
+                return filename.includes(query) || dateStr.includes(query) ||
+                       text.includes(query) || translation.includes(query) ||
+                       mimeType.includes(query) || targetLang.includes(query) ||
+                       ext.includes(query);
             });
         }
 
@@ -185,51 +213,88 @@ const HistoryManager = {
     },
 
     /**
-     * Desktop: table rows
+     * Desktop: table rows with Translation + Type columns
      */
     renderTable(items) {
         const tbody = document.getElementById('historyTableBody');
         if (!tbody) return;
 
+        // Helper: get file type badge from mimeType or filename
+        const getTypeBadge = (mimeType, filename) => {
+            const ext = (filename || '').split('.').pop().toLowerCase();
+            const mimeMap = {
+                'image/jpeg': { label: 'JPEG', color: '#0097b2' },
+                'image/png': { label: 'PNG', color: '#059669' },
+                'image/gif': { label: 'GIF', color: '#d97706' },
+                'image/webp': { label: 'WebP', color: '#7c3aed' },
+                'image/bmp': { label: 'BMP', color: '#6366f1' },
+                'image/heic': { label: 'HEIC', color: '#ec4899' },
+                'application/pdf': { label: 'PDF', color: '#dc2626' }
+            };
+            const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', heic: 'image/heic', pdf: 'application/pdf', jfif: 'image/jpeg' };
+            const key = mimeType || extMap[ext] || '';
+            const info = mimeMap[key] || { label: ext.toUpperCase() || '?', color: '#6b7280' };
+            return `<span class="badge" style="background: ${info.color}; font-size: 0.65rem; padding: 0.2rem 0.45rem;">${info.label}</span>`;
+        };
+
         if (items.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-center py-4 text-muted">
+                    <td colspan="6" class="text-center py-4 text-muted">
                         <i class="bi bi-inbox" style="font-size: 2rem;"></i>
                         <p class="mt-2 mb-0">${DashboardState.historySearchQuery ? 'No results found' : 'No conversion history yet'}</p>
                     </td>
                 </tr>
             `;
         } else {
-            tbody.innerHTML = items.map(item => `
-                <tr data-id="${item._id}" style="cursor: pointer;" onclick="HistoryManager.showDetail('${item._id}', '${item.originalFileName || 'Untitled'}', \`${encodeURIComponent(item.extractedText || '')}\`, '${item.conversionDate}')">
+            tbody.innerHTML = items.map(item => {
+                const encodedText = encodeURIComponent(item.extractedText || '');
+                const encodedTranslation = encodeURIComponent(item.translatedText || '');
+                const hasTranslation = !!(item.translatedText);
+                const translationCell = hasTranslation
+                    ? `<span title="${(item.translatedText || '').replace(/"/g, '&quot;')}" style="font-size: 0.85rem;">${DashboardUI.truncateText(item.translatedText, 40)}</span>`
+                    : '';
+
+                return `
+                <tr data-id="${item._id}" style="cursor: pointer;" onclick="HistoryManager.showDetail('${item._id}')">
                     <td>${DashboardUI.formatDate(item.conversionDate)}</td>
-                    <td>${item.originalFileName || 'Untitled'}</td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        ${DashboardUI.truncateText(item.extractedText, 80)}
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            ${item.imageUrl
+                                ? `<img src="${item.imageUrl}" alt="Preview" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid #e5e7eb;">`
+                                : `<i class="bi bi-file-earmark-text" style="font-size: 1.2rem; color: #9ca3af; flex-shrink: 0;"></i>`}
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.originalFileName || 'Untitled'}</span>
+                        </div>
                     </td>
+                    <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${DashboardUI.truncateText(item.extractedText, 40)}
+                    </td>
+                    <td style="max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${translationCell}</td>
+                    <td>${getTypeBadge(item.mimeType, item.originalFileName)}</td>
                     <td onclick="event.stopPropagation();">
-                        <div class="data-table__actions" style="font-size: 1.25rem;">
-                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem;" title="Copy" onclick="HistoryManager.copy('${item._id}', \`${encodeURIComponent(item.extractedText || '')}\`)">
+                        <div class="data-table__actions" style="font-size: 1.1rem; gap: 0.25rem;">
+                            <button class="btn btn--secondary" style="padding: 0.35rem 0.55rem;" title="${hasTranslation ? 'Re-translate' : 'Translate'}" onclick="HistoryManager.showTranslateModal('${item._id}')">
+                                <i class="bi bi-translate"></i>
+                            </button>
+                            <button class="btn btn--secondary" style="padding: 0.35rem 0.55rem;" title="Copy" onclick="HistoryManager.copyChoice('${item._id}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                                 <i class="bi bi-clipboard"></i>
                             </button>
-                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem;" title="Download" onclick="HistoryManager.download('${item.originalFileName || 'text'}', \`${encodeURIComponent(item.extractedText || '')}\`)">
+                            <button class="btn btn--secondary" style="padding: 0.35rem 0.55rem;" title="Download" onclick="HistoryManager.downloadChoice('${item._id}', '${item.originalFileName || 'text'}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                                 <i class="bi bi-download"></i>
                             </button>
-                            <button class="btn btn--secondary" style="padding: 0.5rem 0.75rem; color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
+                            <button class="btn btn--secondary" style="padding: 0.35rem 0.55rem; color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
-        // Enhance table with bulk selection checkboxes
         if (typeof BulkSelection !== 'undefined') BulkSelection.enhanceTable('historyTable');
     },
 
     /**
-     * Mobile/Tablet: card layout with client-side pagination (3 per page)
+     * Mobile/Tablet: card layout with translation info
      */
     renderCards(items) {
         const container = document.getElementById('historyCardsContainer');
@@ -245,7 +310,6 @@ const HistoryManager = {
             return;
         }
 
-        // Client-side pagination
         const perPage = DashboardState.CARDS_PER_PAGE;
         const totalPages = Math.ceil(items.length / perPage);
         if (DashboardState.cardPage > totalPages) DashboardState.cardPage = totalPages;
@@ -255,21 +319,32 @@ const HistoryManager = {
 
         let html = pageItems.map(item => {
             const encodedText = encodeURIComponent(item.extractedText || '');
+            const encodedTranslation = encodeURIComponent(item.translatedText || '');
             const filename = item.originalFileName || 'Untitled';
+            const hasTranslation = !!(item.translatedText);
+            const translationLine = hasTranslation
+                ? `<div style="font-size: 0.8rem; margin-top: 0.25rem; padding: 0.25rem 0.5rem; background: #e8f5e9; border-radius: 4px;">
+                    <strong>Translation</strong> <span class="badge" style="background: linear-gradient(135deg, #00838f, #00acc1); font-size: 0.6rem;">${(item.sourceLang || '').toUpperCase()} \u2192 ${(item.targetLang || '').toUpperCase()}</span><br>
+                    ${DashboardUI.truncateText(item.translatedText, 80)}</div>`
+                : `<div style="margin-top: 0.25rem;"><button class="btn btn-sm" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.7rem; padding: 0.15rem 0.5rem;" onclick="event.stopPropagation(); HistoryManager.showTranslateModal('${item._id}')"><i class="bi bi-translate me-1"></i>Translate</button></div>`;
+
             return `
-                <div class="history-card" data-id="${item._id}" onclick="HistoryManager.showDetail('${item._id}', '${filename}', '${encodedText}', '${item.conversionDate}')">
+                <div class="history-card" data-id="${item._id}" onclick="HistoryManager.showDetail('${item._id}')">
                     <div class="history-card__header">
                         <span class="history-card__filename">
-                            <i class="bi bi-file-earmark-text me-1"></i>${filename}
+                            ${item.imageUrl
+                                ? `<img src="${item.imageUrl}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 0.35rem; border: 1px solid #e5e7eb;">`
+                                : `<i class="bi bi-file-earmark-text me-1"></i>`}${filename}
                         </span>
                         <span class="history-card__date">${DashboardUI.formatDate(item.conversionDate)}</span>
                     </div>
                     <div class="history-card__snippet">${DashboardUI.truncateText(item.extractedText, 120) || 'No text extracted'}</div>
+                    ${translationLine}
                     <div class="history-card__actions" onclick="event.stopPropagation();">
-                        <button class="btn btn--secondary btn--sm" title="Copy" onclick="HistoryManager.copy('${item._id}', '${encodedText}')">
+                        <button class="btn btn--secondary btn--sm" title="Copy" onclick="HistoryManager.copyChoice('${item._id}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                             <i class="bi bi-clipboard"></i>
                         </button>
-                        <button class="btn btn--secondary btn--sm" title="Download" onclick="HistoryManager.download('${filename}', '${encodedText}')">
+                        <button class="btn btn--secondary btn--sm" title="Download" onclick="HistoryManager.downloadChoice('${item._id}', '${filename}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                             <i class="bi bi-download"></i>
                         </button>
                         <button class="btn btn--secondary btn--sm" style="color: var(--color-error);" title="Delete" onclick="HistoryManager.delete('${item._id}')">
@@ -280,19 +355,27 @@ const HistoryManager = {
             `;
         }).join('');
 
-        // Render card pagination if > 1 page
         if (totalPages > 1) {
-            html += `<div class="history-card-pagination">`;
-            html += `<button class="btn btn--secondary btn--sm" ${DashboardState.cardPage === 1 ? 'disabled' : ''} onclick="HistoryManager.goCardPage(${DashboardState.cardPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+            html += '<nav class="mt-3"><ul class="pagination pagination-sm mb-0">';
+            html += `<li class="page-item ${DashboardState.cardPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="HistoryManager.goCardPage(${DashboardState.cardPage - 1}); return false;">Prev</a>
+            </li>`;
             for (let i = 1; i <= totalPages; i++) {
-                html += `<button class="btn btn--sm ${i === DashboardState.cardPage ? 'btn--primary' : 'btn--secondary'}" onclick="HistoryManager.goCardPage(${i})">${i}</button>`;
+                if (i === 1 || i === totalPages || (i >= DashboardState.cardPage - 1 && i <= DashboardState.cardPage + 1)) {
+                    html += `<li class="page-item ${i === DashboardState.cardPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="HistoryManager.goCardPage(${i}); return false;">${i}</a>
+                    </li>`;
+                } else if (i === DashboardState.cardPage - 2 || i === DashboardState.cardPage + 2) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
             }
-            html += `<button class="btn btn--secondary btn--sm" ${DashboardState.cardPage === totalPages ? 'disabled' : ''} onclick="HistoryManager.goCardPage(${DashboardState.cardPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
-            html += `</div>`;
+            html += `<li class="page-item ${DashboardState.cardPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="HistoryManager.goCardPage(${DashboardState.cardPage + 1}); return false;">Next</a>
+            </li>`;
+            html += '</ul></nav>';
         }
 
         container.innerHTML = html;
-        // Enhance cards with bulk selection (long-press)
         if (typeof BulkSelection !== 'undefined') BulkSelection.enhanceCards('.history-card[data-id]');
     },
 
@@ -312,13 +395,9 @@ const HistoryManager = {
         }
 
         let html = '<nav><ul class="pagination pagination-sm mb-0">';
-
-        // Previous
         html += `<li class="page-item ${page === 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="HistoryManager.load(${page - 1}); return false;">Prev</a>
         </li>`;
-
-        // Page numbers
         for (let i = 1; i <= pages; i++) {
             if (i === 1 || i === pages || (i >= page - 1 && i <= page + 1)) {
                 html += `<li class="page-item ${i === page ? 'active' : ''}">
@@ -328,19 +407,13 @@ const HistoryManager = {
                 html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
             }
         }
-
-        // Next
         html += `<li class="page-item ${page === pages ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="HistoryManager.load(${page + 1}); return false;">Next</a>
         </li>`;
-
         html += '</ul></nav>';
         container.innerHTML = html;
     },
 
-    /**
-     * Initialize search input + refresh button
-     */
     initSearch() {
         const searchInput = document.getElementById('historySearchInput');
         const refreshBtn = document.getElementById('historyRefreshBtn');
@@ -363,39 +436,99 @@ const HistoryManager = {
         }
     },
 
+    /**
+     * Copy with choice popup (Original or Translation)
+     */
+    copyChoice(id, encodedText, encodedTranslation, hasTranslation) {
+        if (!hasTranslation) {
+            HistoryManager.copy(id, encodedText);
+            return;
+        }
+        HistoryManager.showChoicePopup('Copy', [
+            { label: '<i class="bi bi-file-text me-1"></i>Original Text', action: () => HistoryManager.copy(id, encodedText) },
+            { label: '<i class="bi bi-translate me-1"></i>Translation', action: () => HistoryManager.copy(id, encodedTranslation) }
+        ]);
+    },
+
     copy(id, encodedText) {
         const text = decodeURIComponent(encodedText);
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Copying...');
         navigator.clipboard.writeText(text).then(() => {
-            DashboardUI.showToast('Copied to clipboard!', 'success');
+            setTimeout(() => {
+                if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
+                DashboardUI.showToast('Text copied to clipboard', 'success');
+            }, 300);
         }).catch(() => {
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
             DashboardUI.showToast('Failed to copy', 'danger');
         });
     },
 
+    /**
+     * Download with choice popup (Original or Translation)
+     */
+    downloadChoice(id, filename, encodedText, encodedTranslation, hasTranslation) {
+        if (!hasTranslation) {
+            HistoryManager.download(filename, encodedText);
+            return;
+        }
+        HistoryManager.showChoicePopup('Download', [
+            { label: '<i class="bi bi-file-text me-1"></i>Original Text', action: () => HistoryManager.download(filename, encodedText) },
+            { label: '<i class="bi bi-translate me-1"></i>Translation', action: () => HistoryManager.download(filename + '_translated', encodedTranslation) }
+        ]);
+    },
+
     download(filename, encodedText) {
         const text = decodeURIComponent(encodedText);
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename.replace(/\.[^/.]+$/, '')}.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
+        if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Downloading...');
+        setTimeout(() => {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename.replace(/\.[^/.]+$/, '')}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
+            DashboardUI.showToast('Text downloaded', 'success');
+        }, 300);
+    },
+
+    /**
+     * Show a choice popup with close button
+     */
+    showChoicePopup(title, choices) {
+        const existing = document.getElementById('choicePopupOverlay');
+        if (existing) existing.remove();
+
+        const html = `
+            <div id="choicePopupOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="if(event.target===this) this.remove();">
+                <div style="background: white; border-radius: 12px; padding: 1.5rem; min-width: 280px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); text-align: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h6 style="margin: 0; font-weight: 600; color: #333;">${title}</h6>
+                        <button onclick="document.getElementById('choicePopupOverlay').remove();" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #666; padding: 0.2rem;">&times;</button>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        ${choices.map((c, i) => `<button id="choiceBtn${i}" class="btn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem;">${c.label}</button>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        choices.forEach((c, i) => {
+            document.getElementById(`choiceBtn${i}`).addEventListener('click', () => {
+                document.getElementById('choicePopupOverlay')?.remove();
+                c.action();
+            });
+        });
     },
 
     async delete(id) {
-        // Use confirmation dialog from auth.js
         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
             UI.showConfirmDialog(
                 'Delete Record',
                 'Are you sure you want to delete this record?',
-                async () => {
-                    await HistoryManager.performDelete(id);
-                },
-                null,
-                'Delete',
-                'Cancel',
-                'primary'
+                async () => { await HistoryManager.performDelete(id); },
+                null, 'Delete', 'Cancel', 'primary'
             );
         } else if (confirm('Are you sure you want to delete this record?')) {
             await HistoryManager.performDelete(id);
@@ -408,7 +541,6 @@ const HistoryManager = {
             if (result.success) {
                 DashboardUI.showToast('Record deleted', 'success');
                 HistoryManager.load(DashboardState.historyPage);
-                // Refresh notifications after deletion
                 if (typeof NotificationManager !== 'undefined' && NotificationManager.refresh) {
                     NotificationManager.refresh();
                 }
@@ -420,10 +552,99 @@ const HistoryManager = {
         }
     },
 
-    showDetail(id, filename, encodedText, date) {
-        const text = decodeURIComponent(encodedText);
+    /**
+     * Show translate language selector modal for a history item
+     */
+    showTranslateModal(id) {
+        const existing = document.getElementById('translateLangModal');
+        if (existing) existing.remove();
+
+        const languages = [
+            { code: 'autodetect', name: 'Auto Detect' },
+            { code: 'en', name: 'English' }, { code: 'es', name: 'Spanish' },
+            { code: 'fr', name: 'French' }, { code: 'de', name: 'German' },
+            { code: 'it', name: 'Italian' }, { code: 'pt', name: 'Portuguese' },
+            { code: 'ru', name: 'Russian' }, { code: 'ja', name: 'Japanese' },
+            { code: 'ko', name: 'Korean' }, { code: 'zh-CN', name: 'Chinese (Simplified)' },
+            { code: 'zh-TW', name: 'Chinese (Traditional)' },
+            { code: 'ar', name: 'Arabic' }, { code: 'hi', name: 'Hindi' },
+            { code: 'nl', name: 'Dutch' }, { code: 'sv', name: 'Swedish' },
+            { code: 'pl', name: 'Polish' }, { code: 'tr', name: 'Turkish' },
+            { code: 'vi', name: 'Vietnamese' }, { code: 'th', name: 'Thai' },
+            { code: 'id', name: 'Indonesian' }, { code: 'tl', name: 'Filipino' }
+        ];
+        const sourceOpts = languages.map(l => `<option value="${l.code}"${l.code === 'autodetect' ? ' selected' : ''}>${l.name}</option>`).join('');
+        const targetOpts = languages.filter(l => l.code !== 'autodetect').map(l => `<option value="${l.code}"${l.code === 'es' ? ' selected' : ''}>${l.name}</option>`).join('');
+
+        const modalHtml = `
+            <div id="translateLangModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="if(event.target===this) this.remove();">
+                <div style="background: white; border-radius: 12px; padding: 1.5rem; min-width: 300px; max-width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h6 style="margin: 0; font-weight: 600;"><i class="bi bi-translate me-2" style="color: #00838f;"></i>Translate</h6>
+                        <button onclick="document.getElementById('translateLangModal').remove();" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #666;">&times;</button>
+                    </div>
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; display: block;">From</label>
+                        <select id="translateSrcLang" class="form-select form-select-sm">${sourceOpts}</select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; display: block;">To</label>
+                        <select id="translateTgtLang" class="form-select form-select-sm">${targetOpts}</select>
+                    </div>
+                    <button id="translateSubmitBtn" class="btn w-100" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; padding: 0.5rem; border-radius: 8px; font-weight: 600;">
+                        <i class="bi bi-translate me-1"></i>Translate Now
+                    </button>
+                </div>
+            </div>`;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.getElementById('translateSubmitBtn').addEventListener('click', async () => {
+            const src = document.getElementById('translateSrcLang').value;
+            const tgt = document.getElementById('translateTgtLang').value;
+            document.getElementById('translateLangModal')?.remove();
+            if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.show('Translating...');
+            try {
+                const result = await DashboardAPI.translateHistoryItem(id, src, tgt);
+                if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
+                if (result.success) {
+                    DashboardUI.showToast('Translation saved!', 'success');
+                    HistoryManager.load(DashboardState.historyPage);
+                } else {
+                    DashboardUI.showToast(result.error || 'Translation failed', 'danger');
+                }
+            } catch (error) {
+                if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
+                DashboardUI.showToast('Translation failed', 'danger');
+            }
+        });
+    },
+
+    showDetail(id) {
+        const item = DashboardState.allHistoryItems.find(i => i._id === id);
+        if (!item) return;
+
         const existingModal = document.getElementById('historyDetailModal');
         if (existingModal) existingModal.remove();
+
+        const filename = item.originalFileName || 'Untitled';
+        const encodedText = encodeURIComponent(item.extractedText || '');
+        const encodedTranslation = encodeURIComponent(item.translatedText || '');
+        const hasTranslation = !!(item.translatedText);
+
+        const translationSection = hasTranslation ? `
+            <div class="mt-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <label class="form-label mb-0" style="font-size: 0.85rem; font-weight: 600;">Translation</label>
+                    <span class="badge" style="background: linear-gradient(135deg, #00838f, #00acc1); font-size: 0.7rem;">
+                        ${(item.sourceLang || '').toUpperCase()} \u2192 ${(item.targetLang || '').toUpperCase()}
+                    </span>
+                </div>
+                <div style="background: #e8f5e9; border-radius: 8px; padding: 0.75rem; max-height: 25vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem; line-height: 1.5; border: 1px solid #c8e6c9;">${item.translatedText}</div>
+            </div>` : '';
+
+        const translateBtn = !hasTranslation ? `
+            <button type="button" class="btn btn-sm" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide(); HistoryManager.showTranslateModal('${id}');">
+                <i class="bi bi-translate me-1"></i>Translate
+            </button>` : '';
 
         const modalHtml = `
             <div class="modal fade" id="historyDetailModal" tabindex="-1">
@@ -436,20 +657,30 @@ const HistoryManager = {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9; flex-shrink: 0;"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <small class="text-muted"><i class="bi bi-calendar me-1"></i>${DashboardUI.formatDate(date)}</small>
+                            <div class="mb-2">
+                                <small class="text-muted"><i class="bi bi-calendar me-1"></i>${DashboardUI.formatDate(item.conversionDate)}</small>
                             </div>
-                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 0.85rem; line-height: 1.6;">
-${text || 'No text extracted'}
+                            ${item.imageUrl ? `
+                            <div class="mb-3 text-center">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Converted Image</label>
+                                <div style="border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; display: inline-block; max-width: 100%;">
+                                    <img src="${item.imageUrl}" alt="Converted image" style="max-width: 100%; max-height: 300px; object-fit: contain; display: block;">
+                                </div>
+                            </div>` : ''}
+                            <div>
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Original Text</label>
+                                <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 30vh; overflow-y: auto; white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 0.85rem; line-height: 1.6;">${item.extractedText || 'No text extracted'}</div>
                             </div>
+                            ${translationSection}
                         </div>
                         <div class="modal-footer" style="justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;">
-                            <button type="button" class="btn btn-sm" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.copy('${id}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                            <button type="button" class="btn btn-sm" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.copyChoice('${id}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                                 <i class="bi bi-clipboard me-1"></i>Copy
                             </button>
-                            <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.download('${filename}', '${encodedText}'); bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide();">
+                            <button type="button" class="btn btn-sm btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="HistoryManager.downloadChoice('${id}', '${filename}', '${encodedText}', '${encodedTranslation}', ${hasTranslation})">
                                 <i class="bi bi-download me-1"></i>Download
                             </button>
+                            ${translateBtn}
                             <button type="button" class="btn btn-sm btn-danger" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="bootstrap.Modal.getInstance(document.getElementById('historyDetailModal')).hide(); HistoryManager.delete('${id}');">
                                 <i class="bi bi-trash me-1"></i>Delete
                             </button>
@@ -460,78 +691,335 @@ ${text || 'No text extracted'}
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        new bootstrap.Modal(document.getElementById('historyDetailModal')).show();
+        const modalEl = document.getElementById('historyDetailModal');
+        new bootstrap.Modal(modalEl).show();
+        modalEl.addEventListener('hidden.bs.modal', () => modalEl?.remove());
     }
 };
+
 
 /* ==========================================================================
    ADMIN MANAGEMENT
    ========================================================================== */
 
 const AdminManager = {
+    _conversionChart: null,
+    _userChart: null,
+    _fileTypeChart: null,
+    _languageChart: null,
+    _lastStats: null,
+    _currentTrendDays: 7,
+    _langMap: { en: 'English', es: 'Spanish', fr: 'French', de: 'German', it: 'Italian', pt: 'Portuguese', ja: 'Japanese', ko: 'Korean', 'zh-CN': 'Chinese (S)', 'zh-TW': 'Chinese (T)', ar: 'Arabic', ru: 'Russian', hi: 'Hindi', nl: 'Dutch', pl: 'Polish', sv: 'Swedish', tr: 'Turkish', vi: 'Vietnamese', th: 'Thai', id: 'Indonesian', auto: 'Auto Detect', fil: 'Filipino', tl: 'Tagalog' },
+
+    /** Initial full load — populates all KPIs, charts, and dropdown options */
     async loadStats() {
         try {
-            const result = await DashboardAPI.getStats();
+            const globalDays = parseInt(document.getElementById('globalDaysFilter')?.value) || 0;
+            const result = await DashboardAPI.getStats({
+                globalDays: globalDays || undefined,
+                trendDays: AdminManager._currentTrendDays
+            });
             if (result.success) {
-                AdminManager.renderStats(result.data);
-                AdminManager.renderChart(result.data.conversions.daily);
+                const d = result.data;
+                AdminManager._lastStats = d;
+                AdminManager.renderStats(d);
+                AdminManager.renderChart(d.conversions.daily, AdminManager._currentTrendDays);
+                AdminManager.renderUserDistribution(d.users);
+                AdminManager.renderFileTypeChart(d.fileTypes || []);
+                AdminManager.renderLanguageChart(d.languages || []);
+                AdminManager.populateFilterDropdowns(d.availableFileTypes || [], d.availableLanguages || []);
+
+                // Update trend chart title
+                const titleEl = document.getElementById('convChartTitle');
+                if (titleEl) titleEl.textContent = `Conversions (Last ${AdminManager._currentTrendDays} Days)`;
+
+                // Update trend filter button states
+                document.querySelectorAll('.chart-range-btn').forEach(btn => {
+                    const btnDays = parseInt(btn.dataset.days);
+                    btn.classList.toggle('btn--primary', btnDays === AdminManager._currentTrendDays);
+                    btn.classList.toggle('btn--secondary', btnDays !== AdminManager._currentTrendDays);
+                });
             }
         } catch (error) {
             console.error('Stats load error:', error);
         }
     },
 
-    renderStats(data) {
-        const { users, conversions } = data;
+    /** Populate file type and language filter dropdowns from real DB data */
+    populateFilterDropdowns(fileTypes, languages) {
+        const ftSelect = document.getElementById('fileTypeFilter');
+        if (ftSelect) {
+            const current = ftSelect.value;
+            ftSelect.innerHTML = '<option value="all">All Types</option>';
+            fileTypes.forEach(mime => {
+                const label = (mime || '').split('/').pop().toUpperCase();
+                ftSelect.innerHTML += `<option value="${mime}">${label}</option>`;
+            });
+            ftSelect.value = current || 'all';
+        }
 
-        document.getElementById('statTotalConversions')?.textContent && (document.getElementById('statTotalConversions').textContent = conversions.total);
-        document.getElementById('statTotalUsers')?.textContent && (document.getElementById('statTotalUsers').textContent = users.total);
-        document.getElementById('statRecentConversions')?.textContent && (document.getElementById('statRecentConversions').textContent = conversions.recent);
-        document.getElementById('statNewUsers')?.textContent && (document.getElementById('statNewUsers').textContent = users.new);
+        const lgSelect = document.getElementById('langFilter');
+        if (lgSelect) {
+            const current = lgSelect.value;
+            lgSelect.innerHTML = '<option value="all">All Languages</option>';
+            languages.forEach(code => {
+                const label = AdminManager._langMap[code] || code;
+                lgSelect.innerHTML += `<option value="${code}">${label}</option>`;
+            });
+            lgSelect.value = current || 'all';
+        }
     },
 
-    renderChart(dailyData) {
+    /** Independent: reload only the trend chart */
+    async loadTrendChart(days) {
+        try {
+            AdminManager._currentTrendDays = parseInt(days) || 7;
+            const globalDays = parseInt(document.getElementById('globalDaysFilter')?.value) || 0;
+            const result = await DashboardAPI.getStats({
+                trendDays: AdminManager._currentTrendDays,
+                globalDays: globalDays || undefined
+            });
+            if (result.success) {
+                AdminManager.renderChart(result.data.conversions.daily, AdminManager._currentTrendDays);
+                const titleEl = document.getElementById('convChartTitle');
+                if (titleEl) titleEl.textContent = `Conversions (Last ${AdminManager._currentTrendDays} Days)`;
+                document.querySelectorAll('.chart-range-btn').forEach(btn => {
+                    const btnDays = parseInt(btn.dataset.days);
+                    btn.classList.toggle('btn--primary', btnDays === AdminManager._currentTrendDays);
+                    btn.classList.toggle('btn--secondary', btnDays !== AdminManager._currentTrendDays);
+                });
+            }
+        } catch (error) {
+            console.error('Trend chart load error:', error);
+        }
+    },
+
+    /** Independent: reload only the file type chart */
+    async loadFileTypeChart() {
+        try {
+            const globalDays = parseInt(document.getElementById('globalDaysFilter')?.value) || 0;
+            const result = await DashboardAPI.getStats({
+                fileTypeDays: globalDays || undefined,
+                globalDays: globalDays || undefined
+            });
+            if (result.success) {
+                let fileTypes = result.data.fileTypes || [];
+                const filterVal = document.getElementById('fileTypeFilter')?.value;
+                if (filterVal && filterVal !== 'all') {
+                    fileTypes = fileTypes.filter(f => f._id === filterVal);
+                }
+                AdminManager.renderFileTypeChart(fileTypes);
+            }
+        } catch (error) {
+            console.error('File type chart load error:', error);
+        }
+    },
+
+    /** Independent: reload only the language chart */
+    async loadLanguageChart() {
+        try {
+            const globalDays = parseInt(document.getElementById('globalDaysFilter')?.value) || 0;
+            const result = await DashboardAPI.getStats({
+                langDays: globalDays || undefined,
+                globalDays: globalDays || undefined
+            });
+            if (result.success) {
+                let languages = result.data.languages || [];
+                const filterVal = document.getElementById('langFilter')?.value;
+                if (filterVal && filterVal !== 'all') {
+                    languages = languages.filter(l => l._id === filterVal);
+                }
+                AdminManager.renderLanguageChart(languages);
+            }
+        } catch (error) {
+            console.error('Language chart load error:', error);
+        }
+    },
+
+    /** Global filter: reload ALL charts with a shared date range */
+    async applyGlobalFilter(days) {
+        try {
+            const globalDays = parseInt(days) || 0;
+            const result = await DashboardAPI.getStats({
+                globalDays: globalDays || undefined,
+                trendDays: AdminManager._currentTrendDays
+            });
+            if (result.success) {
+                const d = result.data;
+                AdminManager._lastStats = d;
+                AdminManager.renderStats(d);
+                AdminManager.renderChart(d.conversions.daily, AdminManager._currentTrendDays);
+                AdminManager.renderUserDistribution(d.users);
+                AdminManager.renderFileTypeChart(d.fileTypes || []);
+                AdminManager.renderLanguageChart(d.languages || []);
+                AdminManager.populateFilterDropdowns(d.availableFileTypes || [], d.availableLanguages || []);
+            }
+        } catch (error) {
+            console.error('Global filter error:', error);
+        }
+    },
+
+    renderStats(data) {
+        const { users, conversions } = data;
+        const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+        const formatBytes = (b) => {
+            if (!b || b === 0) return '0 B';
+            const k = 1024, s = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(b) / Math.log(k));
+            return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
+        };
+
+        // Row 1 — Users
+        el('statTotalUsers', users.total);
+        el('statActiveUsers', users.active);
+        el('statInactiveUsers', users.inactive);
+        el('statNewUsers', users.newWeek);
+
+        // Row 2 — Conversions
+        el('statTotalConversions', conversions.total);
+        el('statRecentConversions', conversions.recent);
+        el('statSuccessRate', conversions.total > 0
+            ? Math.round((conversions.successful / conversions.total) * 100) + '%'
+            : '0%');
+        el('statTranslations', conversions.translated);
+
+        // Row 3 — Detailed Metrics
+        el('statAvgConfidence', (conversions.avgConfidence || 0) + '%');
+        el('statAvgProcessing', (conversions.avgProcessingTime || 0) + 'ms');
+        el('statStorageUsed', formatBytes(conversions.totalFileSize));
+        el('statWithImages', conversions.withImages || 0);
+    },
+
+    /** Chart.js shared tooltip/font config */
+    _tooltipConfig() {
+        return {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: { family: 'Poppins', size: 12 },
+            bodyFont: { family: 'Poppins', size: 13, weight: '600' },
+            padding: 10,
+            cornerRadius: 8
+        };
+    },
+
+    renderChart(dailyData, days = 7) {
         const canvas = document.getElementById('conversionChart');
-        if (!canvas) return;
+        if (!canvas || typeof Chart === 'undefined') return;
 
-        // Fill in missing days
-        const labels = [];
-        const data = [];
-        const today = new Date();
-
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            labels.push(date.toLocaleDateString('en-US', { weekday: 'short' }));
-
-            const dayData = dailyData.find(d => d._id === dateStr);
+        const labels = [], data = [], today = new Date();
+        const numDays = parseInt(days) || 7;
+        for (let i = numDays - 1; i >= 0; i--) {
+            const date = new Date(today); date.setDate(date.getDate() - i);
+            // Short label for 30d+, full for 7d
+            const labelOpts = numDays <= 7
+                ? { weekday: 'short', month: 'short', day: 'numeric' }
+                : { month: 'short', day: 'numeric' };
+            labels.push(date.toLocaleDateString('en-US', labelOpts));
+            const dayData = (dailyData || []).find(d => d._id === date.toISOString().split('T')[0]);
             data.push(dayData ? dayData.count : 0);
         }
 
-        // HTML/CSS bar chart — responsive, full width
-        const maxValue = Math.max(...data, 1);
-        const chartContainer = canvas.parentElement;
+        if (AdminManager._conversionChart) AdminManager._conversionChart.destroy();
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight || 250);
+        gradient.addColorStop(0, 'rgba(0, 131, 143, 0.4)');
+        gradient.addColorStop(1, 'rgba(0, 172, 193, 0.05)');
 
-        chartContainer.innerHTML = `
-            <div style="display: flex; align-items: flex-end; gap: 2px; width: 100%; height: 200px; padding: 0 2px; border-bottom: 2px solid #e0e0e0; min-width: 0;">
-                ${data.map((value, i) => {
-            const heightPercent = Math.max((value / maxValue) * 100, 3);
-            return `
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; min-width: 0;">
-                            <span style="font-size: clamp(0.65rem, 2vw, 0.85rem); font-weight: 600; color: #00838f; margin-bottom: 2px;">${value}</span>
-                            <div style="width: 100%; max-width: 50px; height: ${heightPercent}%; background: linear-gradient(to top, #00838f, #26c6da); border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.4s ease;"></div>
-                        </div>
-                    `;
-        }).join('')}
-            </div>
-            <div style="display: flex; gap: 2px; width: 100%; padding: 6px 2px 0;">
-                ${labels.map(label => `
-                    <div style="flex: 1; text-align: center; font-size: clamp(0.6rem, 2vw, 0.85rem); color: #555; font-weight: 500; min-width: 0; overflow: hidden;">${label}</div>
-                `).join('')}
-            </div>
-        `;
+        AdminManager._conversionChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'Conversions', data, borderColor: '#00838f', backgroundColor: gradient, borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#00838f', pointBorderColor: '#fff', pointBorderWidth: 2, pointRadius: numDays <= 14 ? 5 : 2, pointHoverRadius: numDays <= 14 ? 7 : 4 }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                animation: { duration: 1200, easing: 'easeInOutQuart' },
+                plugins: { legend: { display: false }, tooltip: { ...AdminManager._tooltipConfig(), displayColors: false, callbacks: { label: (c) => `${c.parsed.y} conversion${c.parsed.y !== 1 ? 's' : ''}` } } },
+                scales: { x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: numDays <= 14 ? 11 : 9 }, color: '#6b7280', maxRotation: numDays > 14 ? 45 : 0 } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Poppins', size: 11 }, color: '#6b7280' }, grid: { color: 'rgba(0,0,0,0.06)' } } },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
     },
+
+    renderUserDistribution(usersData) {
+        const canvas = document.getElementById('userDistributionChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (AdminManager._userChart) AdminManager._userChart.destroy();
+
+        // Support filter dropdown
+        const filterEl = document.getElementById('userDistFilter');
+        const filterMode = filterEl ? filterEl.value : 'all';
+
+        let labels, chartData, bgColors;
+        const roles = usersData.roles || { user: 0, admin: 0, superadmin: 0 };
+
+        if (filterMode === 'roles') {
+            labels = ['Users', 'Admins', 'Super Admins'];
+            chartData = [roles.user, roles.admin, roles.superadmin];
+            bgColors = ['#00acc1', '#00838f', '#26c6da'];
+        } else if (filterMode === 'auth') {
+            labels = ['Google OAuth', 'Email/Password'];
+            chartData = [usersData.google || 0, usersData.regular || 0];
+            bgColors = ['#6366f1', '#00acc1'];
+        } else {
+            labels = ['Active Users', 'Admins', 'Super Admins', 'Google OAuth', 'Inactive'];
+            chartData = [Math.max(roles.user - (usersData.inactive || 0), 0), roles.admin, roles.superadmin, usersData.google || 0, usersData.inactive || 0];
+            bgColors = ['#00acc1', '#00838f', '#26c6da', '#6366f1', '#e0e0e0'];
+        }
+
+        AdminManager._userChart = new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data: chartData, backgroundColor: bgColors, borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true, cutout: '55%',
+                animation: { animateRotate: true, animateScale: true, duration: 1000, easing: 'easeOutQuart' },
+                plugins: { legend: { position: 'bottom', labels: { font: { family: 'Poppins', size: 11 }, color: '#374151', padding: 12, usePointStyle: true, pointStyleWidth: 10 } }, tooltip: { ...AdminManager._tooltipConfig(), callbacks: { label: (c) => `${c.label}: ${c.parsed} user${c.parsed !== 1 ? 's' : ''}` } } }
+            }
+        });
+    },
+
+    renderFileTypeChart(fileTypes) {
+        const canvas = document.getElementById('fileTypeChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (AdminManager._fileTypeChart) AdminManager._fileTypeChart.destroy();
+
+        const labels = fileTypes.map(f => { const mime = (f._id || '').split('/').pop(); return mime.toUpperCase(); });
+        const data = fileTypes.map(f => f.count);
+        const colors = ['#00838f', '#00acc1', '#26c6da', '#6366f1', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6'];
+
+        AdminManager._fileTypeChart = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Files', data, backgroundColor: colors.slice(0, data.length), borderRadius: 6, borderSkipped: false }] },
+            options: {
+                indexAxis: 'y', responsive: true, maintainAspectRatio: true,
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: { legend: { display: false }, tooltip: { ...AdminManager._tooltipConfig(), displayColors: false, callbacks: { label: (c) => `${c.parsed.x} file${c.parsed.x !== 1 ? 's' : ''}` } } },
+                scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Poppins', size: 11 }, color: '#6b7280' }, grid: { color: 'rgba(0,0,0,0.06)' } }, y: { ticks: { font: { family: 'Poppins', size: 11 }, color: '#374151' }, grid: { display: false } } }
+            }
+        });
+    },
+
+    renderLanguageChart(languages) {
+        const canvas = document.getElementById('languageChart');
+        if (!canvas || typeof Chart === 'undefined') return;
+        if (AdminManager._languageChart) AdminManager._languageChart.destroy();
+
+        const labels = languages.map(l => AdminManager._langMap[l._id] || l._id);
+        const data = languages.map(l => l.count);
+        const colors = ['#00838f', '#00acc1', '#26c6da', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6'];
+
+        AdminManager._languageChart = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Translations', data, backgroundColor: colors.slice(0, data.length), borderRadius: 6, borderSkipped: false }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                animation: { duration: 800, easing: 'easeOutQuart' },
+                plugins: { legend: { display: false }, tooltip: { ...AdminManager._tooltipConfig(), displayColors: false, callbacks: { label: (c) => `${c.parsed.y} translation${c.parsed.y !== 1 ? 's' : ''}` } } },
+                scales: { x: { ticks: { font: { family: 'Poppins', size: 11 }, color: '#374151' }, grid: { display: false } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Poppins', size: 11 }, color: '#6b7280' }, grid: { color: 'rgba(0,0,0,0.06)' } } }
+            }
+        });
+    },
+
+
 
     async loadUsers(page = 1) {
         try {
@@ -639,13 +1127,23 @@ const AdminManager = {
         // === Pagination controls ===
         const paginationContainer = document.getElementById('adminUsersPagination');
         if (paginationContainer && totalPages > 1) {
-            let phtml = `<div class="history-card-pagination">`;
-            phtml += `<button class="btn btn--secondary btn--sm" ${DashboardState.adminUsersPage === 1 ? 'disabled' : ''} onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage - 1})"><i class="bi bi-chevron-left"></i></button>`;
+            let phtml = '<nav><ul class="pagination pagination-sm mb-0">';
+            phtml += `<li class="page-item ${DashboardState.adminUsersPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage - 1}); return false;">Prev</a>
+            </li>`;
             for (let i = 1; i <= totalPages; i++) {
-                phtml += `<button class="btn btn--sm ${i === DashboardState.adminUsersPage ? 'btn--primary' : 'btn--secondary'}" onclick="AdminManager.goUsersPage(${i})">${i}</button>`;
+                if (i === 1 || i === totalPages || (i >= DashboardState.adminUsersPage - 1 && i <= DashboardState.adminUsersPage + 1)) {
+                    phtml += `<li class="page-item ${i === DashboardState.adminUsersPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="AdminManager.goUsersPage(${i}); return false;">${i}</a>
+                    </li>`;
+                } else if (i === DashboardState.adminUsersPage - 2 || i === DashboardState.adminUsersPage + 2) {
+                    phtml += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
             }
-            phtml += `<button class="btn btn--secondary btn--sm" ${DashboardState.adminUsersPage === totalPages ? 'disabled' : ''} onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage + 1})"><i class="bi bi-chevron-right"></i></button>`;
-            phtml += `</div>`;
+            phtml += `<li class="page-item ${DashboardState.adminUsersPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="AdminManager.goUsersPage(${DashboardState.adminUsersPage + 1}); return false;">Next</a>
+            </li>`;
+            phtml += '</ul></nav>';
             paginationContainer.innerHTML = phtml;
         } else if (paginationContainer) {
             paginationContainer.innerHTML = '';

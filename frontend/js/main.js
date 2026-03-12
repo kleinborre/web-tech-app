@@ -389,7 +389,7 @@ const DropZone = (() => {
             if (response.success) {
                 // Render results
                 Results.render(response.results, validFiles);
-                Notification.show(`Successfully extracted text from ${response.summary.successful} file(s)`, 'success');
+                Notification.show(`Text extracted from ${response.summary.successful} file(s)`, 'success');
             } else {
                 throw new Error(response.error || 'OCR conversion failed');
             }
@@ -575,6 +575,21 @@ const Results = (() => {
             downloadText(result.text, result.filename);
         });
 
+        // Translate button
+        const translateBtn = document.createElement('button');
+        translateBtn.className = 'btn btn--secondary btn--sm';
+        translateBtn.title = 'Translate';
+        translateBtn.style.color = 'var(--color-primary, #0097b2)';
+        translateBtn.innerHTML = '<i class="bi bi-translate"></i>';
+        translateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (result.success && result.text) {
+                TranslationUI.showModal(result.text, result.filename);
+            } else {
+                Notification.show('No text available to translate', 'warning');
+            }
+        });
+
         // Delete button
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'btn btn--secondary btn--sm';
@@ -588,6 +603,7 @@ const Results = (() => {
 
         actions.appendChild(copyBtn);
         actions.appendChild(downloadBtn);
+        actions.appendChild(translateBtn);
         actions.appendChild(deleteBtn);
 
         // Assemble item
@@ -664,7 +680,7 @@ const Results = (() => {
                 }
             }
 
-            Notification.show(`Deleted "${result.filename}"`, 'success');
+            Notification.show('Conversion deleted', 'success');
 
             // Check if results list is empty
             const resultsList = $('.results__list');
@@ -689,6 +705,10 @@ const Results = (() => {
         const existingModal = document.getElementById('resultDetailModal');
         if (existingModal) existingModal.remove();
 
+        // Get image source from the result card thumbnail
+        const thumbnailImg = item.querySelector('.results__item-thumbnail');
+        const imgSrc = thumbnailImg && thumbnailImg.src && !thumbnailImg.src.startsWith('data:') ? thumbnailImg.src : '';
+
         const modalHtml = `
             <div class="modal fade" id="resultDetailModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -700,8 +720,18 @@ const Results = (() => {
                             <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9; flex-shrink: 0;"></button>
                         </div>
                         <div class="modal-body">
-                            <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; line-height: 1.6; border: 1px solid #e9ecef;">
+                            ${imgSrc ? `
+                            <div class="mb-3 text-center">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Converted Image</label>
+                                <div style="border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; display: inline-block; max-width: 100%;">
+                                    <img src="${imgSrc}" alt="Converted image" style="max-width: 100%; max-height: 300px; object-fit: contain; display: block;">
+                                </div>
+                            </div>` : ''}
+                            <div>
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Extracted Text</label>
+                                <div style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 1rem; max-height: 50vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; line-height: 1.6; border: 1px solid #e9ecef;">
 ${text || 'No text extracted'}
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer" style="justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;">
@@ -710,6 +740,9 @@ ${text || 'No text extracted'}
                             </button>
                             <button type="button" class="btn btn-sm btn-secondary" id="modalDownloadBtn" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
                                 <i class="bi bi-download me-1"></i>Download
+                            </button>
+                            <button type="button" class="btn btn-sm" id="modalTranslateBtn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1rem;">
+                                <i class="bi bi-translate me-1"></i>Translate
                             </button>
                             <button type="button" class="btn btn-sm btn-danger" id="modalDeleteBtn" style="font-size: 0.85rem; padding: 0.4rem 1rem;">
                                 <i class="bi bi-trash me-1"></i>Delete
@@ -735,6 +768,13 @@ ${text || 'No text extracted'}
         document.getElementById('modalDownloadBtn').addEventListener('click', () => {
             downloadText(text, filename);
             modal.hide();
+        });
+
+        document.getElementById('modalTranslateBtn').addEventListener('click', () => {
+            modal.hide();
+            if (text) {
+                TranslationUI.showModal(text, filename);
+            }
         });
 
         document.getElementById('modalDeleteBtn').addEventListener('click', () => {
@@ -763,7 +803,7 @@ ${text || 'No text extracted'}
 
         try {
             await navigator.clipboard.writeText(text);
-            Notification.show(`Copied text from ${filename}`, 'success');
+            Notification.show('Text copied to clipboard', 'success');
         } catch (error) {
             // Fallback for older browsers
             const textarea = document.createElement('textarea');
@@ -774,7 +814,7 @@ ${text || 'No text extracted'}
             textarea.select();
             document.execCommand('copy');
             document.body.removeChild(textarea);
-            Notification.show(`Copied text from ${filename}`, 'success');
+            Notification.show('Text copied to clipboard', 'success');
         }
     };
 
@@ -801,7 +841,7 @@ ${text || 'No text extracted'}
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        Notification.show(`Downloaded ${baseName}.txt`, 'success');
+        Notification.show('Text downloaded', 'success');
     };
 
     /**
@@ -850,7 +890,7 @@ ${text || 'No text extracted'}
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
 
-        Notification.show('Downloaded all extracted text', 'success');
+        Notification.show('All text downloaded', 'success');
     };
 
     /**
@@ -1176,6 +1216,252 @@ const MobileMenu = (() => {
     };
 
     return { init, close };
+})();
+
+/* ==========================================================================
+   TRANSLATION UI MODULE
+   ========================================================================== */
+
+/**
+ * Handles the translation modal UI — language selection, API call,
+ * result display, and save-to-database for authenticated users.
+ */
+const TranslationUI = (() => {
+    const API_BASE = window.CONFIG?.API_BASE_URL || '/api';
+
+    const LANGUAGES = [
+        { code: 'autodetect', name: 'Auto Detect', sourceOnly: true },
+        { code: 'en', name: 'English' },
+        { code: 'es', name: 'Spanish' },
+        { code: 'fr', name: 'French' },
+        { code: 'de', name: 'German' },
+        { code: 'it', name: 'Italian' },
+        { code: 'pt', name: 'Portuguese' },
+        { code: 'ru', name: 'Russian' },
+        { code: 'ja', name: 'Japanese' },
+        { code: 'ko', name: 'Korean' },
+        { code: 'zh-CN', name: 'Chinese (Simplified)' },
+        { code: 'zh-TW', name: 'Chinese (Traditional)' },
+        { code: 'ar', name: 'Arabic' },
+        { code: 'hi', name: 'Hindi' },
+        { code: 'nl', name: 'Dutch' },
+        { code: 'sv', name: 'Swedish' },
+        { code: 'pl', name: 'Polish' },
+        { code: 'tr', name: 'Turkish' },
+        { code: 'vi', name: 'Vietnamese' },
+        { code: 'th', name: 'Thai' },
+        { code: 'id', name: 'Indonesian' },
+        { code: 'tl', name: 'Filipino' }
+    ];
+
+    /**
+     * Builds language <option> elements.
+     * @param {string} selectedCode - Default selected language code.
+     * @param {boolean} isSource - If true, includes source-only languages like Auto Detect.
+     */
+    const buildLangOptions = (selectedCode, isSource = false) => {
+        return LANGUAGES
+            .filter(l => isSource || !l.sourceOnly)
+            .map(l =>
+                `<option value="${l.code}"${l.code === selectedCode ? ' selected' : ''}>${l.name}</option>`
+            ).join('');
+    };
+
+    /**
+     * Opens the translation modal.
+     * @param {string} text - The text to translate.
+     * @param {string} filename - Source filename.
+     */
+    const showModal = (text, filename) => {
+        // Remove existing modal
+        const existing = document.getElementById('translationModal');
+        if (existing) existing.remove();
+
+        const modalHtml = `
+            <div class="modal fade" id="translationModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header text-white" style="background: linear-gradient(135deg, #00838f, #00acc1);">
+                            <h5 class="modal-title" style="font-size: 1rem;">
+                                <i class="bi bi-translate me-2"></i>Translate Text
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1); opacity: 0.9;"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Language selectors -->
+                            <div class="row mb-3">
+                                <div class="col-5">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">From</label>
+                                    <select id="translateSourceLang" class="form-select form-select-sm">
+                                        ${buildLangOptions('autodetect', true)}
+                                    </select>
+                                </div>
+                                <div class="col-2 d-flex align-items-end justify-content-center">
+                                    <button type="button" id="swapLangsBtn" class="btn btn-sm btn-outline-secondary" title="Swap languages" style="margin-bottom: 2px;">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </button>
+                                </div>
+                                <div class="col-5">
+                                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">To</label>
+                                    <select id="translateTargetLang" class="form-select form-select-sm">
+                                        ${buildLangOptions('es')}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Original text -->
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Original Text</label>
+                                <div id="translateOriginalText" style="background: var(--color-gray-50, #f8f9fa); border-radius: 8px; padding: 0.75rem; max-height: 20vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem; line-height: 1.5; border: 1px solid #e9ecef;">${text}</div>
+                            </div>
+
+                            <!-- Translation result -->
+                            <div id="translateResultContainer" style="display: none;">
+                                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">Translation</label>
+                                <div id="translateResultText" style="background: #e8f5e9; border-radius: 8px; padding: 0.75rem; max-height: 20vh; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem; line-height: 1.5; border: 1px solid #c8e6c9;"></div>
+                            </div>
+
+                            <!-- Loading state -->
+                            <div id="translateLoading" style="display: none; text-align: center; padding: 1rem;">
+                                <div class="spinner-border text-info" role="status" style="width: 2rem; height: 2rem;"></div>
+                                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;">Translating...</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="justify-content: center; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem;">
+                            <button type="button" class="btn btn-sm" id="translateBtn" style="background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none; font-size: 0.85rem; padding: 0.4rem 1.2rem;">
+                                <i class="bi bi-translate me-1"></i>Translate
+                            </button>
+                            <button type="button" class="btn btn-sm" id="translateCopyBtn" style="display: none; font-size: 0.85rem; padding: 0.4rem 1rem; background: #6b7280; color: white; border: none;">
+                                <i class="bi bi-clipboard me-1"></i>Copy
+                            </button>
+                            <button type="button" class="btn btn-sm" id="translateDownloadBtn" style="display: none; font-size: 0.85rem; padding: 0.4rem 1rem; background: linear-gradient(135deg, #00838f, #00acc1); color: white; border: none;">
+                                <i class="bi bi-download me-1"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        const modalEl = document.getElementById('translationModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // State
+        let lastTranslation = null;
+
+        // Swap languages
+        document.getElementById('swapLangsBtn').addEventListener('click', () => {
+            const srcEl = document.getElementById('translateSourceLang');
+            const tgtEl = document.getElementById('translateTargetLang');
+            const temp = srcEl.value;
+            srcEl.value = tgtEl.value;
+            tgtEl.value = temp;
+        });
+
+        // Translate button
+        document.getElementById('translateBtn').addEventListener('click', async () => {
+            const sourceLang = document.getElementById('translateSourceLang').value;
+            const targetLang = document.getElementById('translateTargetLang').value;
+
+            if (sourceLang === targetLang) {
+                Notification.show('Source and target languages must be different', 'warning');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('translateLoading').style.display = 'block';
+            document.getElementById('translateResultContainer').style.display = 'none';
+            document.getElementById('translateCopyBtn').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/translate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ text, sourceLang, targetLang })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('translateLoading').style.display = 'none';
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Translation failed');
+                }
+
+                lastTranslation = {
+                    originalText: text,
+                    translatedText: data.data.translatedText,
+                    sourceLang,
+                    targetLang,
+                    originalFileName: filename || ''
+                };
+
+                // Show result
+                document.getElementById('translateResultText').textContent = data.data.translatedText;
+                document.getElementById('translateResultContainer').style.display = 'block';
+                document.getElementById('translateCopyBtn').style.display = 'inline-block';
+                document.getElementById('translateDownloadBtn').style.display = 'inline-block';
+
+                // Auto-save translation for authenticated users
+                try {
+                    const meRes = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+                    if (meRes.ok) {
+                        await fetch(`${API_BASE}/translations`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify(lastTranslation)
+                        });
+                    }
+                } catch (saveErr) {
+                    console.warn('Auto-save translation failed:', saveErr);
+                }
+
+                Notification.show('Translation complete', 'success');
+
+            } catch (error) {
+                document.getElementById('translateLoading').style.display = 'none';
+                Notification.show(error.message || 'Translation failed', 'error');
+            }
+        });
+
+        // Copy translation
+        document.getElementById('translateCopyBtn').addEventListener('click', async () => {
+            if (!lastTranslation) return;
+            try {
+                await navigator.clipboard.writeText(lastTranslation.translatedText);
+                Notification.show('Translation copied to clipboard', 'success');
+            } catch (err) {
+                Notification.show('Failed to copy', 'error');
+            }
+        });
+
+        // Download translation
+        document.getElementById('translateDownloadBtn').addEventListener('click', () => {
+            if (!lastTranslation) return;
+            const blob = new Blob([lastTranslation.translatedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `translation_${(lastTranslation.targetLang || 'text')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            Notification.show('Translation downloaded', 'success');
+        });
+
+        // Clean up on modal close
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            modalEl?.remove();
+        });
+    };
+
+    return { showModal };
 })();
 
 /* ==========================================================================
