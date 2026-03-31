@@ -13,6 +13,7 @@ import Notification from '../models/Notification.model.js';
 import PasswordResetToken from '../models/PasswordResetToken.model.js';
 import { sendPasswordResetEmail } from '../utils/email.js';
 import { uploadToFirebase, deleteFromFirebase, getFilePathFromUrl } from '../utils/firebase.js';
+import { validateEmailDomain } from '../utils/emailValidator.js';
 
 /* ==========================================================================
    HELPER FUNCTIONS
@@ -130,11 +131,11 @@ export const register = async (req, res, next) => {
             });
         }
 
-        // Check for special character in password (including . and _)
-        if (!/[!@#$%^&*(),.?":{}|<>_]/.test(password)) {
+        // Check for special character in password (including . _ - ! @ # $ etc.)
+        if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(password)) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must contain at least one special character (. _ ! @ # $ etc.)'
+                error: 'Password must contain at least one special character (. _ - ! @ # $ etc.)'
             });
         }
 
@@ -343,7 +344,24 @@ export const checkEmail = async (req, res, next) => {
             return res.status(400).json({
                 success: false,
                 exists: false,
+                validDomain: false,
                 error: 'Email is required'
+            });
+        }
+
+        // DNS MX record check — verify domain can receive emails
+        let validDomain = false;
+        try {
+            validDomain = await validateEmailDomain(email);
+        } catch {
+            validDomain = false;
+        }
+
+        if (!validDomain) {
+            return res.status(200).json({
+                success: true,
+                exists: false,
+                validDomain: false
             });
         }
 
@@ -351,7 +369,8 @@ export const checkEmail = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            exists: !!user
+            exists: !!user,
+            validDomain: true
         });
 
     } catch (error) {
@@ -551,11 +570,11 @@ export const updatePassword = async (req, res, next) => {
             });
         }
 
-        // Check for special character
-        if (!/[!@#$%^&*(),.?":{}<>]/.test(newPassword)) {
+        // Check for special character (standardised set including _ and -)
+        if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(newPassword)) {
             return res.status(400).json({
                 success: false,
-                error: 'New password must contain at least one special character'
+                error: 'New password must contain at least one special character (. _ - ! @ # $ etc.)'
             });
         }
 
@@ -743,10 +762,10 @@ export const resetPassword = async (req, res, next) => {
                 error: 'Password must contain at least one number'
             });
         }
-        if (!/[!@#$%^&*(),.?":{}|<>_]/.test(password)) {
+        if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(password)) {
             return res.status(400).json({
                 success: false,
-                error: 'Password must contain at least one special character (. _ ! @ # $ etc.)'
+                error: 'Password must contain at least one special character (. _ - ! @ # $ etc.)'
             });
         }
 

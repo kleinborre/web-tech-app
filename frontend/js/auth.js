@@ -16,9 +16,10 @@ const AUTH_CONFIG = {
     REDIRECT_AFTER_LOGOUT: '/',
     LOGIN_PAGE: '/auth/login',
     MIN_PASSWORD_LENGTH: 8,
-    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>_]/,
+    PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>_\-]/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/
+    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/,
+    EMAIL_CHECK_DEBOUNCE_MS: 600
 };
 
 /* ==========================================================================
@@ -96,7 +97,7 @@ const Validators = {
             return { valid: false, message: 'Password must contain at least one number', strength: 1 };
         }
         if (!hasSpecial) {
-            return { valid: false, message: 'Password must contain at least one special character (. _ ! @ # $ etc.)', strength: 2 };
+            return { valid: false, message: 'Password must contain at least one special character (. _ - ! @ # $ etc.)', strength: 2 };
         }
 
         // Calculate strength (all required criteria met)
@@ -608,17 +609,66 @@ const FormHandlers = {
             });
         }
 
-        // Live validation - Email
+        // Live validation - Email (with debounced backend domain check)
+        let emailDebounceTimer = null;
         if (emailInput) {
             emailInput.addEventListener('input', () => {
-                const result = Validators.email(emailInput.value);
-                if (emailInput.value === '') {
+                const email = emailInput.value.trim();
+
+                // Clear any pending debounce
+                clearTimeout(emailDebounceTimer);
+
+                if (email === '') {
                     UI.clearValidation(emailInput);
-                } else if (result.valid) {
-                    UI.showSuccess(emailInput);
-                } else {
-                    UI.showError(emailInput, result.message);
+                    return;
                 }
+
+                // Step 1: Instant syntax check
+                const syntaxResult = Validators.email(email);
+                if (!syntaxResult.valid) {
+                    UI.showError(emailInput, syntaxResult.message);
+                    return;
+                }
+
+                // Step 2: Show pending state (remove green/red while checking)
+                UI.clearValidation(emailInput);
+
+                // Step 3: Debounced backend domain + existence check
+                emailDebounceTimer = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`${AUTH_CONFIG.API_BASE}/check-email`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email })
+                        });
+                        const data = await response.json();
+
+                        // Check if input still has the same value (user might have changed it)
+                        if (emailInput.value.trim() !== email) return;
+
+                        if (!response.ok || !data.success) {
+                            UI.showError(emailInput, data.error || 'Invalid email address');
+                            return;
+                        }
+
+                        if (!data.validDomain) {
+                            UI.showError(emailInput, 'This email domain does not exist');
+                            return;
+                        }
+
+                        if (data.exists) {
+                            UI.showError(emailInput, 'This email is already registered');
+                            return;
+                        }
+
+                        UI.showSuccess(emailInput);
+                    } catch (error) {
+                        // On network error, fall back to syntax-only validation
+                        if (emailInput.value.trim() === email) {
+                            UI.showSuccess(emailInput);
+                        }
+                    }
+                }, AUTH_CONFIG.EMAIL_CHECK_DEBOUNCE_MS);
             });
         }
 

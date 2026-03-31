@@ -18,7 +18,7 @@ const SettingsConfig = {
     USERNAME_REGEX: /^[a-zA-Z0-9._]+$/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     PW_MIN_LENGTH: 8,
-    PW_SPECIAL_REGEX: /[!@#$%^&*(),.?":{}|<>_]/,
+    PW_SPECIAL_REGEX: /[!@#$%^&*(),.?":{}|<>_\-]/,
     VERIFY_DEBOUNCE_MS: 600,
     POPUP_AUTO_CLOSE_MS: 2000
 };
@@ -626,6 +626,7 @@ function initEmailForm() {
     const emailError = document.getElementById('emailError');
     const updateBtn = document.getElementById('updateEmailBtn');
     const form = document.getElementById('emailForm');
+    let emailDebounceTimer = null;
 
     // Click-to-edit
     emailInput.addEventListener('click', () => {
@@ -647,9 +648,12 @@ function initEmailForm() {
         }
     });
 
-    // Real-time validation
+    // Real-time validation with debounced backend DNS + existence check
     emailInput.addEventListener('input', () => {
         const val = emailInput.value.trim();
+
+        // Clear any pending debounce
+        clearTimeout(emailDebounceTimer);
 
         if (val === '' || val === SettingsState.originalEmail) {
             emailInput.classList.remove('settings-form__input--error', 'settings-form__input--success');
@@ -659,13 +663,71 @@ function initEmailForm() {
             return;
         }
 
-        if (validateEmail(val, emailInput, emailError)) {
-            updateBtn.disabled = false;
-            updateBtn.classList.remove('btn--disabled');
-        } else {
+        // Step 1: Instant syntax check
+        if (!SettingsConfig.EMAIL_REGEX.test(val)) {
+            emailInput.classList.add('settings-form__input--error');
+            emailInput.classList.remove('settings-form__input--success');
+            emailError.textContent = 'Please enter a valid email address.';
             updateBtn.disabled = true;
             updateBtn.classList.add('btn--disabled');
+            return;
         }
+
+        // Step 2: Clear state while checking
+        emailInput.classList.remove('settings-form__input--error', 'settings-form__input--success');
+        emailError.textContent = '';
+        updateBtn.disabled = true;
+        updateBtn.classList.add('btn--disabled');
+
+        // Step 3: Debounced backend domain + existence check
+        emailDebounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`${SettingsConfig.AUTH_API}/check-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email: val })
+                });
+                const data = await res.json();
+
+                // Check if input still has the same value
+                if (emailInput.value.trim() !== val) return;
+
+                if (!data.validDomain) {
+                    emailInput.classList.add('settings-form__input--error');
+                    emailInput.classList.remove('settings-form__input--success');
+                    emailError.textContent = 'This email domain does not exist.';
+                    updateBtn.disabled = true;
+                    updateBtn.classList.add('btn--disabled');
+                    return;
+                }
+
+                if (data.exists) {
+                    emailInput.classList.add('settings-form__input--error');
+                    emailInput.classList.remove('settings-form__input--success');
+                    emailError.textContent = 'This email is already registered.';
+                    updateBtn.disabled = true;
+                    updateBtn.classList.add('btn--disabled');
+                    return;
+                }
+
+                // Valid + available!
+                emailInput.classList.remove('settings-form__input--error');
+                emailInput.classList.add('settings-form__input--success');
+                emailError.textContent = '';
+                updateBtn.disabled = false;
+                updateBtn.classList.remove('btn--disabled');
+            } catch (error) {
+                // On network error, allow submission (backend will catch it)
+                if (emailInput.value.trim() === val) {
+                    emailInput.classList.remove('settings-form__input--error');
+                    emailInput.classList.add('settings-form__input--success');
+                    emailError.textContent = '';
+                    updateBtn.disabled = false;
+                    updateBtn.classList.remove('btn--disabled');
+                }
+            }
+        }, 600);
     });
 
     // Submit
@@ -673,7 +735,7 @@ function initEmailForm() {
         e.preventDefault();
         const val = emailInput.value.trim();
         if (!val || val === SettingsState.originalEmail) return;
-        if (!validateEmail(val, emailInput, emailError)) return;
+        if (!SettingsConfig.EMAIL_REGEX.test(val)) return;
 
         if (typeof UI !== 'undefined' && UI.showConfirmDialog) {
             UI.showConfirmDialog(
@@ -897,7 +959,7 @@ function validateNewPassword(val, input, errorEl) {
     if (!SettingsConfig.PW_SPECIAL_REGEX.test(val)) {
         input.classList.add('settings-form__input--error');
         input.classList.remove('settings-form__input--success');
-        errorEl.textContent = 'Must contain at least one special character (. _ ! @ # $ etc.)';
+        errorEl.textContent = 'Must contain at least one special character (. _ - ! @ # $ etc.)';
         return false;
     }
     input.classList.remove('settings-form__input--error');

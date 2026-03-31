@@ -8,6 +8,18 @@
  */
 
 import { body, param, validationResult } from 'express-validator';
+import { validateEmailDomain } from '../utils/emailValidator.js';
+
+/* ==========================================================================
+   SHARED CONSTANTS
+   ========================================================================== */
+
+/**
+ * Standardised special-character regex for password validation.
+ * Used in every rule set so the requirement is consistent everywhere.
+ * Includes: ! @ # $ % ^ & * ( ) , . ? " : { } | < > _ -
+ */
+const PASSWORD_SPECIAL_REGEX = /[!@#$%^&*(),.?":{}|<>_\-]/;
 
 /* ==========================================================================
    VALIDATION ERROR HANDLER
@@ -49,14 +61,19 @@ export const registerRules = [
         .trim()
         .notEmpty().withMessage('Email is required')
         .isEmail().withMessage('Please provide a valid email address')
-        .normalizeEmail(),
+        .normalizeEmail()
+        .custom(async (email) => {
+            const valid = await validateEmailDomain(email);
+            if (!valid) throw new Error('This email domain does not exist or cannot receive emails');
+            return true;
+        }),
     body('password')
         .notEmpty().withMessage('Password is required')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
         .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
         .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
         .matches(/[0-9]/).withMessage('Password must contain at least one number')
-        .matches(/[!@#$%^&*(),.?":{}|<>_]/).withMessage('Password must contain at least one special character'),
+        .matches(PASSWORD_SPECIAL_REGEX).withMessage('Password must contain at least one special character (. _ - ! @ # $ etc.)'),
     body('confirmPassword')
         .notEmpty().withMessage('Password confirmation is required')
         .custom((value, { req }) => {
@@ -104,6 +121,11 @@ export const forgotPasswordRules = [
         .trim()
         .notEmpty().withMessage('Email is required')
         .isEmail().withMessage('Please provide a valid email address')
+        .custom(async (email) => {
+            const valid = await validateEmailDomain(email);
+            if (!valid) throw new Error('This email domain does not exist or cannot receive emails');
+            return true;
+        })
 ];
 
 /**
@@ -113,13 +135,13 @@ export const resetPasswordRules = [
     body('token')
         .trim()
         .notEmpty().withMessage('Reset token is required'),
-    body('newPassword')
+    body('password')
         .notEmpty().withMessage('New password is required')
         .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
         .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
         .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
         .matches(/[0-9]/).withMessage('Password must contain at least one number')
-        .matches(/[!@#$%^&*(),.?":{}|<>_]/).withMessage('Password must contain at least one special character')
+        .matches(PASSWORD_SPECIAL_REGEX).withMessage('Password must contain at least one special character (. _ - ! @ # $ etc.)')
 ];
 
 /* ==========================================================================
@@ -146,6 +168,11 @@ export const updateEmailRules = [
         .notEmpty().withMessage('Email is required')
         .isEmail().withMessage('Please provide a valid email address')
         .normalizeEmail()
+        .custom(async (email) => {
+            const valid = await validateEmailDomain(email);
+            if (!valid) throw new Error('This email domain does not exist or cannot receive emails');
+            return true;
+        })
 ];
 
 /**
@@ -160,7 +187,7 @@ export const updatePasswordRules = [
         .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
         .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
         .matches(/[0-9]/).withMessage('Password must contain at least one number')
-        .matches(/[!@#$%^&*(),.?":{}|<>_]/).withMessage('Password must contain at least one special character')
+        .matches(PASSWORD_SPECIAL_REGEX).withMessage('Password must contain at least one special character (. _ - ! @ # $ etc.)')
 ];
 
 /* ==========================================================================
