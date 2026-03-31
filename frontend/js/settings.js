@@ -63,7 +63,7 @@ const SettingsAPI = {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ newEmail })
+            body: JSON.stringify({ email: newEmail })
         });
         return res.json();
     },
