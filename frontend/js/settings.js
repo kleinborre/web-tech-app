@@ -15,7 +15,7 @@
 const SettingsConfig = {
     AUTH_API: '/api/auth',
     LOGIN_PAGE: '/auth/login',
-    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/,
+    USERNAME_REGEX: /^[a-zA-Z0-9_-]+$/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     PW_MIN_LENGTH: 8,
     PW_SPECIAL_REGEX: /[!@#$%^&*(),.?":{}|<>_\-]/,
@@ -53,7 +53,7 @@ const SettingsAPI = {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ newUsername })
+            body: JSON.stringify({ username: newUsername })
         });
         return res.json();
     },
@@ -557,14 +557,7 @@ function validateUsername(val, input, errorEl) {
     if (!SettingsConfig.USERNAME_REGEX.test(val)) {
         input.classList.add('settings-form__input--error');
         input.classList.remove('settings-form__input--success');
-        errorEl.textContent = 'Only letters, numbers, dots, and underscores allowed.';
-        return false;
-    }
-    // Only one separator type (dot or underscore, not both)
-    if (val.includes('.') && val.includes('_')) {
-        input.classList.add('settings-form__input--error');
-        input.classList.remove('settings-form__input--success');
-        errorEl.textContent = 'Use either dot or underscore, not both.';
+        errorEl.textContent = 'Only letters, numbers, underscores, and hyphens allowed.';
         return false;
     }
     input.classList.remove('settings-form__input--error');

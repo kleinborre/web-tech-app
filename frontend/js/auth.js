@@ -18,7 +18,7 @@ const AUTH_CONFIG = {
     MIN_PASSWORD_LENGTH: 8,
     PASSWORD_REGEX: /[!@#$%^&*(),.?":{}|<>_\-]/,
     EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    USERNAME_REGEX: /^[a-zA-Z0-9._]+$/,
+    USERNAME_REGEX: /^[a-zA-Z0-9_-]+$/,
     EMAIL_CHECK_DEBOUNCE_MS: 600
 };
 
@@ -54,13 +54,7 @@ const Validators = {
             return { valid: false, message: 'Username cannot exceed 30 characters' };
         }
         if (!AUTH_CONFIG.USERNAME_REGEX.test(username)) {
-            return { valid: false, message: 'Username can only contain letters, numbers, dots, and underscores' };
-        }
-        // Only one separator type allowed (dot or underscore, not both)
-        const hasDot = username.includes('.');
-        const hasUnderscore = username.includes('_');
-        if (hasDot && hasUnderscore) {
-            return { valid: false, message: 'Username can use either a dot or underscore, not both' };
+            return { valid: false, message: 'Username can only contain letters, numbers, underscores, and hyphens' };
         }
         return { valid: true, message: '' };
     },
@@ -765,7 +759,12 @@ const FormHandlers = {
                     );
                 } else {
                     if (typeof LoadingOverlay !== 'undefined') LoadingOverlay.hide();
-                    UI.showToast(result.error || 'Registration failed', 'danger');
+                    const errMsg = result.error || 'Registration failed';
+                    // If the error is username-related, highlight the username field inline
+                    if (errMsg.toLowerCase().includes('username') && usernameInput) {
+                        UI.showError(usernameInput, errMsg);
+                    }
+                    UI.showToast(errMsg, 'danger');
                     UI.hideLoading(submitBtn);
                 }
             } catch (error) {

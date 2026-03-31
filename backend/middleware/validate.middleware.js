@@ -56,7 +56,7 @@ export const registerRules = [
         .trim()
         .notEmpty().withMessage('Username is required')
         .isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 characters')
-        .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores'),
+        .matches(/^[a-zA-Z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores, and hyphens'),
     body('email')
         .trim()
         .notEmpty().withMessage('Email is required')
@@ -156,7 +156,7 @@ export const updateUsernameRules = [
         .trim()
         .notEmpty().withMessage('Username is required')
         .isLength({ min: 3, max: 30 }).withMessage('Username must be 3-30 characters')
-        .matches(/^[a-zA-Z0-9_]+$/).withMessage('Username can only contain letters, numbers, and underscores')
+        .matches(/^[a-zA-Z0-9_-]+$/).withMessage('Username can only contain letters, numbers, underscores, and hyphens')
 ];
 
 /**
