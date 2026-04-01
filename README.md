@@ -4,8 +4,10 @@
 ![Express](https://img.shields.io/badge/express-v5.x-blue.svg)
 ![MongoDB](https://img.shields.io/badge/mongodb-Atlas-green.svg)
 ![Firebase](https://img.shields.io/badge/firebase-Storage-orange.svg)
+![Tesseract](https://img.shields.io/badge/ocr-Tesseract.js-yellow.svg)
 ![OAuth](https://img.shields.io/badge/auth-Google_OAuth_2.0-red.svg)
 ![Helmet](https://img.shields.io/badge/security-Helmet.js-blueviolet.svg)
+![Jest](https://img.shields.io/badge/testing-Jest-C21325.svg)
 
 > A full-stack OCR web application that converts images to editable text using Tesseract.js, with JWT + Google OAuth authentication, Firebase Storage, SMTP password reset, real-time notifications, role-based access control, and a full admin dashboard.
 
@@ -15,25 +17,28 @@
 
 1. [Description](#-description)
 2. [Purpose & Goal](#-purpose--goal)
-3. [Live Deployments](#-live-deployments)
+3. [Live Deployment](#-live-deployment)
 4. [Default User Accounts & Role Access](#-default-user-accounts--role-access)
 5. [Features](#-features)
 6. [Tech Stack](#-tech-stack)
 7. [Project Directory Structure](#-project-directory-structure)
 8. [Architecture & Design Patterns](#-architecture--design-patterns)
-9. [Database Schema](#-database-schema)
+9. [Database Plan](#-database-plan)
 10. [REST API Endpoints](#-rest-api-endpoints)
 11. [Setup & Installation (Local)](#-setup--installation-local)
 12. [Accessing the Application](#-accessing-the-application)
-13. [Project Documentation Links](#-project-documentation-links)
-14. [Security Implementation](#-security-implementation)
-15. [Development Phases](#-development-phases)
+13. [Testing](#-testing)
+14. [Project Documentation Links](#-project-documentation-links)
+15. [Security Implementation](#-security-implementation)
+16. [Development Phases](#-development-phases)
 
 ---
 
 ## 📝 Description
 
-**ImageToTextOnline** is a web-based OCR application that lets users upload images (JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, PDF) and extract text instantly. It supports batch processing (up to 5 files), user authentication via JWT and Google OAuth 2.0, profile picture storage on Firebase, password reset via SMTP email, real-time notifications, conversion history with bulk operations, and a four-tier RBAC system (guest → user → admin → superadmin) with a full admin dashboard.
+**ImageToTextOnline** is a web application that turns images into text. You upload a photo (JPG, PNG, GIF, BMP, WebP, JFIF, HEIC, or even a PDF), and the app reads the text from it using OCR (Optical Character Recognition) powered by Tesseract.js. You can upload up to 5 files at once, copy or download the results, and even translate the extracted text into different languages.
+
+The app also comes with user accounts (sign up with email or Google), profile pictures, password reset via email, conversion history, real-time notifications, and a full admin dashboard. There are four levels of access: Guest, User, Admin, and Superadmin, each with different permissions.
 
 Built with Node.js, Express 5, MongoDB Atlas, and a vanilla HTML/CSS/JS + Bootstrap 5 frontend.
 
@@ -41,16 +46,17 @@ Built with Node.js, Express 5, MongoDB Atlas, and a vanilla HTML/CSS/JS + Bootst
 
 ## 🎯 Purpose & Goal
 
-Provide a free, browser-based tool for extracting text from images — no software installation required. Key goals include multi-format support, batch processing, secure authentication (local + OAuth), admin oversight with user management, and industry-standard security (Helmet.js, rate limiting, input validation, centralized error handling).
+The goal of this project is to give anyone a free, easy-to-use tool for pulling text out of images right from their browser. No need to install anything. Just open the website, upload your image, and get the text.
+
+On top of that, the app is built with real-world features you would find in production applications: secure login (with Google sign-in as an option), an admin panel to manage users, a history page so you can look back at past conversions, and proper security measures to keep everything safe.
 
 ---
 
-## 🌐 Live Deployments
+## 🌐 Live Deployment
 
-| Platform | URL | Scope |
-|----------|-----|-------|
-| **Vercel** | [web-tech-app.vercel.app](https://web-tech-app.vercel.app/) | Full-stack — frontend + backend + database + Firebase + OAuth |
-| **GitHub Pages** | [kleinborre.github.io/web-tech-app](https://kleinborre.github.io/web-tech-app/) | Frontend only — no backend/API access |
+🔗 **Live App:** [web-tech-app.vercel.app](https://web-tech-app.vercel.app/)
+
+The application is deployed on **Vercel** as a full-stack app (frontend + backend + MongoDB Atlas + Firebase Storage + Google OAuth).
 
 ---
 
@@ -62,6 +68,8 @@ Seeded by `seeder.js`:
 |----------|------|----------|
 | admin-user | **superadmin** | `eX6LooLPiVfCuZF6` |
 | test-user | **user** | `VitBxRJVNwqdHLsQ` |
+
+> **💡 Recommendation:** We highly advise that you create your own account to experience the full functionality of the application, including profile management, conversion history, notifications, and translation history.
 
 ### RBAC Permission Matrix
 
@@ -157,6 +165,16 @@ Seeded by `seeder.js`:
 | compression | Gzip response compression |
 | dotenv | Environment configuration |
 
+### Testing
+
+| Technology | Purpose |
+|-----------|---------|
+| Jest | Unit, integration, and security test framework (ESM mode) |
+| Supertest | HTTP endpoint testing for Express routes |
+| Puppeteer | Browser automation for functional testing |
+| Postman | Manual API testing and security validation |
+| Google Lighthouse | Performance and accessibility auditing |
+
 ### Frontend
 
 | Technology | Purpose |
@@ -178,13 +196,29 @@ web-tech-app/
 ├── index.html                              # GitHub Pages redirect
 ├── vercel.json                             # Vercel deployment config
 │
+├── docs/                                   # Documentation assets (diagrams)
+│   ├── db-diagram.png                      # Entity Relationship Diagram
+│   └── usecase-diagram.png                 # Use Case Diagram
+│
 ├── backend/
 │   ├── .env                                # Environment variables (not committed)
 │   ├── firebase-service-account.json       # Firebase credentials (not committed)
 │   ├── package.json
 │   ├── server.js                           # Express entry point
 │   ├── seeder.js                           # Default account seeder
+│   ├── jest.config.js                      # Jest test configuration (ESM)
 │   ├── eng.traineddata                     # Tesseract English data
+│   │
+│   ├── __tests__/                          # Automated test suite
+│   │   ├── fixtures/
+│   │   │   └── test-image.png              # Test image for OCR tests
+│   │   ├── integration/
+│   │   │   └── auth.test.js                # Integration tests (IT-001 to IT-023)
+│   │   ├── security/
+│   │   │   └── security.test.js            # Security tests (rate limiting, headers, RBAC)
+│   │   └── unit/
+│   │       ├── auth.test.js                # Unit tests (validation, regex, hashing)
+│   │       └── password.test.js            # Password validation unit tests
 │   │
 │   ├── config/
 │   │   ├── db.js                           # MongoDB connection + retry
@@ -195,8 +229,8 @@ web-tech-app/
 │   │   ├── auth.controller.js              # Auth, profile, password reset
 │   │   ├── history.controller.js           # History CRUD + bulk ops
 │   │   ├── notification.controller.js      # Notifications
-│   │   ├── ocr.controller.js              # OCR processing + Firebase image upload
-│   │   └── translation.controller.js      # MyMemory API translation + CRUD
+│   │   ├── ocr.controller.js               # OCR processing + Firebase image upload
+│   │   └── translation.controller.js       # MyMemory API translation + CRUD
 │   │
 │   ├── middleware/
 │   │   ├── admin.middleware.js             # adminOnly, superadminOnly
@@ -215,17 +249,18 @@ web-tech-app/
 │   │   └── User.model.js                  # User accounts
 │   │
 │   ├── routes/
-│   │   ├── admin.routes.js                # /api/admin/*
-│   │   ├── auth.routes.js                 # /api/auth/* (incl. OAuth)
-│   │   ├── history.routes.js              # /api/history/*
-│   │   ├── notification.routes.js         # /api/notifications/*
-│   │   ├── ocr.routes.js                 # /api/ocr/*
-│   │   └── translation.routes.js         # /api/translate + /api/translations/*
+│   │   ├── admin.routes.js                 # /api/admin/*
+│   │   ├── auth.routes.js                  # /api/auth/* (incl. OAuth)
+│   │   ├── history.routes.js               # /api/history/*
+│   │   ├── notification.routes.js          # /api/notifications/*
+│   │   ├── ocr.routes.js                   # /api/ocr/*
+│   │   └── translation.routes.js           # /api/translate + /api/translations/*
 │   │
 │   └── utils/
 │       ├── email.js                        # SMTP email sending
+│       ├── emailValidator.js               # DNS MX record email domain validation
 │       ├── firebase.js                     # Firebase upload/delete
-│       └── ocrProcessor.js                # Tesseract worker pool
+│       └── ocrProcessor.js                 # Tesseract worker pool
 │
 └── frontend/
     ├── index.html                          # Guest landing page + OCR converter
@@ -235,7 +270,7 @@ web-tech-app/
     ├── admin/
     │   ├── dashboard.html                  # Admin dashboard
     │   ├── settings.html                   # Account settings
-    │   └── users.html                     # User management (admin-only)
+    │   └── users.html                      # User management (admin-only)
     ├── auth/
     │   ├── forgot-password.html            # Forgot password form
     │   ├── login.html                      # Login (email/username + Google OAuth)
@@ -251,8 +286,8 @@ web-tech-app/
     │   ├── main.js                         # Core OCR + translation UI + sound integration
     │   ├── notifications.js                # Notification manager + sound
     │   ├── settings.js                     # Settings page logic + sound integration
-    │   └── sound-manager.js               # Web Audio API sound effects (4 sounds)
-    └── assets/                             # Static assets
+    │   └── sound-manager.js                # Web Audio API sound effects (4 sounds)
+    └── assets/                             # Static assets (icons, images)
 ```
 
 ---
@@ -277,70 +312,74 @@ Client Request → Routes → Middleware → Controllers → Models → MongoDB 
 
 ---
 
-## 🗄 Database Schema
+## 🗄 Database Plan
 
-### User (`User.model.js`)
+The application uses **MongoDB Atlas** as the primary database for all structured data (accessed via Mongoose ODM) and **Firebase Storage** for file storage (images). The schema follows Third Normal Form (3NF). For the full worksheet with detailed field types, constraints, data flows, and UI element mappings, see the [Database Plan Worksheet](https://docs.google.com/document/d/1r80j_zMcLkCDaHwG_qaypV6PmCfoDlVMWRUAlrRbg6Y/edit?usp=sharing).
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `username` | String | Unique display name (3-30 chars) |
-| `email` | String | Unique email (indexed) |
-| `password` | String | Bcrypt hash (optional for Google-only users) |
-| `role` | String | `user` / `admin` / `superadmin` |
-| `isActive` | Boolean | Account status (default: `true`) |
-| `googleId` | String | Google OAuth ID (optional) |
-| `profilePicture` | String | Firebase Storage URL (optional) |
-| `createdAt` / `updatedAt` | Date | Timestamps |
+### Collections (5)
 
-### ConversionLog (`ConversionLog.model.js`)
+| Collection | Purpose | Documents Store |
+|---|---|---|
+| **users** | User accounts, authentication credentials, roles, and profile picture URLs | Usernames, emails, bcrypt-hashed passwords, Google OAuth IDs, role assignments (`user`/`admin`/`superadmin`), account status, Firebase Storage profile picture URLs |
+| **conversion_logs** | OCR conversion results and history | Original filenames, extracted text, confidence scores, processing times, MIME types, file sizes, translated text, Firebase Storage image URLs. References `users` via `userId` (null for guests) |
+| **translations** | Saved text translations from MyMemory API | Original text, translated text, source/target language codes, associated filenames. References `users` via `userId` (null for guests) |
+| **notifications** | Real-time user notifications | Notification type (`conversion`, `profile_update`, `password_reset`, `new_user`), message text, read status, linked document IDs. Auto-deletes after 30 days via TTL index |
+| **passwordresettokens** | Secure, time-limited password reset tokens | SHA-256 hashed tokens with 15-minute expiry. One token per user (unique index). Auto-deletes on expiry via TTL index |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Reference to User (`null` for guest conversions) |
-| `originalFileName` | String | Uploaded file name |
-| `extractedText` | String | OCR output |
-| `translatedText` | String | Translated text (if translated) |
-| `sourceLang` | String | Source language code |
-| `targetLang` | String | Target language code |
-| `confidence` | Number | OCR confidence score |
-| `processingTime` | Number | Processing time (ms) |
-| `mimeType` | String | File MIME type |
-| `fileSize` | Number | File size (bytes) |
-| `success` | Boolean | Whether OCR succeeded |
-| `errorMessage` | String | Error message (if failed) |
-| `imageUrl` | String | Firebase Storage URL |
-| `conversionDate` | Date | Timestamp |
+### CRUD Operations (33 Total)
 
-### Notification (`Notification.model.js`)
+| Feature Area | Operations |
+|---|---|
+| **Authentication** | Register user, Login query, Get profile, Check email availability, Verify password, Update username/email/password, Google OAuth create/find |
+| **Password Reset** | Generate hashed token + send email, Verify token, Reset password, Delete used token |
+| **OCR & History** | Process images + save results + upload to Firebase, List/Get/Delete/Bulk delete/Clear history, Translate history item |
+| **Translations** | Translate text via API, Save/List/Update/Delete/Bulk delete/Clear translations |
+| **Notifications** | Auto-create on events, List paginated, Count unread, Mark read/Mark all read |
+| **Profile Picture** | Upload to Firebase + save URL, Delete from Firebase + clear URL |
+| **Admin** | Get all users, Get user details, Toggle user status, Change user role, Dashboard stats aggregation |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Recipient user |
-| `type` | String | `conversion` / `profile_update` / `new_user` |
-| `message` | String | Content text |
-| `read` | Boolean | Read status |
-| `referenceIds` | [ObjectId] | Linked ConversionLog IDs |
-| `createdAt` | Date | Timestamp |
+### Database Indexes (12)
 
-### PasswordResetToken (`PasswordResetToken.model.js`)
+| Collection | Index | Type | Purpose |
+|---|---|---|---|
+| **users** | `username` | Unique | Fast login lookup |
+| | `email` | Unique (sparse) | Email lookup; allows null for superadmin |
+| | `googleId` | Unique (sparse) | Google OAuth lookup |
+| | `{ role: 1, isActive: 1 }` | Compound | Admin dashboard queries |
+| **conversion_logs** | `{ userId: 1, conversionDate: -1 }` | Compound | User history sorted by date |
+| | `{ conversionDate: -1 }` | Single | Recent conversions global queries |
+| | `{ success: 1 }` | Single | Filter by success/failure status |
+| **translations** | `{ userId: 1, createdAt: -1 }` | Compound | User translations sorted by date |
+| | `{ createdAt: -1 }` | Single | Recent translations global queries |
+| **notifications** | `{ userId: 1, read: 1, createdAt: -1 }` | Compound | Unread notifications per user |
+| | `{ createdAt: 1 }` | TTL (30 days) | Auto-delete old notifications |
+| **passwordresettokens** | `{ userId: 1 }` | Unique | One active token per user |
+| | `{ expiresAt: 1 }` | TTL (0s) | Auto-delete expired tokens |
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | User requesting reset |
-| `token` | String | Bcrypt-hashed token |
-| `expiresAt` | Date | 1-hour expiration |
+### Firebase Storage
 
-### Translation (`Translation.model.js`)
+Firebase Storage handles binary file storage separately from MongoDB. MongoDB only stores the public URL reference.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `userId` | ObjectId | Reference to User (`null` for guest translations, optional) |
-| `originalText` | String | OCR-extracted source text |
-| `translatedText` | String | Translated text from MyMemory API |
-| `sourceLang` | String | Source language code (e.g., `en`, `auto`) |
-| `targetLang` | String | Target language code (e.g., `es`, `zh-CN`) |
-| `originalFileName` | String | Source image filename |
-| `createdAt` / `updatedAt` | Date | Timestamps |
+| Storage Path | Purpose | Referenced By |
+|---|---|---|
+| `profile-pictures/{userId}/{timestamp}.{ext}` | User profile pictures (JPEG, PNG, GIF, WebP, max 2MB) | `users.profilePicture` |
+| `ocr-images/{userId}/{timestamp}.jpg` | Compressed OCR source images (JPEG, 60% quality, max 800px) | `conversion_logs.imageUrl` |
+
+When a MongoDB document is deleted, the app also deletes the corresponding file from Firebase Storage to prevent orphaned files.
+
+### Entity Relationship Diagram
+
+The ERD visualizes all five MongoDB collections and Firebase Storage with their fields, data types, keys, and relationship cardinalities.
+
+![Entity Relationship Diagram](docs/db-diagram.png)
+
+### Use Case Diagram
+
+The Use Case Diagram maps all user interactions across four RBAC actors (Guest, User, Admin, Superadmin) with inheritance, six external systems, and 30+ use cases across eight functional packages.
+
+<p align="center">
+  <img src="docs/usecase-diagram.png" alt="Use Case Diagram" width="750">
+</p>
 
 ---
 
@@ -582,17 +621,58 @@ Server runs at `http://localhost:3000`.
 
 ---
 
+## 🧪 Testing
+
+The application underwent comprehensive testing across **5 testing types** with a total of **62 test cases**, all passing. Testing combines automated and manual approaches to ensure full coverage of functionality, security, and user experience.
+
+### Testing Summary
+
+| Testing Type | Test Cases | Method | Tools Used | Coverage |
+|---|---|---|---|---|
+| **Unit Testing** | UT-001 to UT-015 (15 cases) | Automated | Jest (ESM mode) | Password hashing (bcrypt), JWT generation/verification/expiry, email format regex, password complexity validation (length, uppercase, lowercase, number, special char), email DNS MX record validation, username format regex |
+| **Integration Testing** | IT-001 to IT-023 (23 cases) | Automated | Jest + Supertest | Full API endpoint testing — registration (success, duplicate, invalid domain), login (valid, invalid, non-existent), logout, profile retrieval, check-email (existing, fake domain), forgot/reset password (valid, expired), OCR conversion, history CRUD, profile picture (upload, invalid type), admin RBAC (admin access, regular user block), password update, text translation |
+| **Functional Testing** | FT-001 to FT-015 (15 cases) | Manual | Browser DevTools, Puppeteer | End-to-end user workflows — registration with real-time validation, login (email/password + Google OAuth), logout, OCR conversion with copy/download, dashboard history with pagination, settings (username, email with DNS check, password with strength meter), profile picture upload, forgot/reset password flow, admin dashboard with user management, page navigation |
+| **Security Testing** | ST-001 to ST-014 (14 cases) | Automated + Manual | Jest + Supertest, Postman | XSS prevention (script injection in username, email), NoSQL injection prevention, route protection (no auth, expired JWT, tampered JWT), rate limiting (login, registration), Helmet.js headers (X-Content-Type-Options, Referrer-Policy), RBAC enforcement (user→admin block, admin→superadmin block), file upload validation (oversized files), password field exposure check |
+| **Usability Testing** | UST-001 to UST-010 (10 cases) | Manual | Browser DevTools, Google Lighthouse | Navigation flow clarity, error message clarity (invalid login, duplicate email), real-time form validation feedback, password strength indicator, responsive design (mobile 375px), loading states during OCR, email domain validation feedback, cross-browser compatibility (Chrome + Firefox), keyboard accessibility (Tab, Enter, Escape) |
+
+### Test Results
+
+| Metric | Value |
+|---|---|
+| Total Test Cases | **62** |
+| Passed | **62** |
+| Failed | **0** |
+| Pass Rate | **100%** |
+
+### Defects Found and Resolved
+
+| Defect | Severity | Testing Phase | Resolution |
+|---|---|---|---|
+| Password reset rejected valid passwords due to field name mismatch (`body.newPassword` vs `body.password`) | Critical | Integration | Fixed (Phase 22) |
+| `updatePassword` controller regex missing underscore and pipe from special characters | High | Integration | Fixed (Phase 22) |
+| Email validation only checked syntax, allowing fake domains (e.g., `test@zyx.com`) | High | Usability | Fixed (Phase 22) — DNS MX record validation added |
+| Password special character regex inconsistent across 8 code locations | Medium | Security | Fixed (Phase 22) — Unified to single standardized regex |
+
+### Running Automated Tests
+
+```bash
+cd backend
+npm test          # Run all 52 automated tests (Unit + Integration + Security)
+```
+
+Automated tests use **Jest** in ESM mode with **Supertest** for real HTTP requests against the Express server. Test files are located in `backend/__tests__/` organized by type (`unit/`, `integration/`, `security/`). The test suite includes automatic cleanup of test users and history records created during testing.
+
+---
+
 ## 📄 Project Documentation Links
 
 | Document | Link |
 |----------|------|
-| API Testing Evidence | [Google Docs](https://docs.google.com/document/d/1Dy_AZTZUmfaXDNUsZJ2sT2C8Ql5BlMrPPcbbarUE2aY/edit?usp=sharing) |
-| Postman Collection & Environment Files | [Google Drive](https://drive.google.com/drive/folders/161GvthrYjIRRU98gUH0n_Kk2WSjGz86x?usp=sharing) |
-| UML Class Diagram | [Google Drive](https://drive.google.com/file/d/1N6aiYrpLr0-uCCgnmWqELqAG6obFmbSI/view?usp=sharing) |
-| Use Case Diagram | [Google Drive](https://drive.google.com/file/d/1qijDwGLEIh7zaWLz7aWpQWt5eAUfguC2/view?usp=sharing) |
+| Integration Plan | [Google Sheets](https://docs.google.com/spreadsheets/d/16wQOqXFzJkREMpyyzgHibVKAoVvgcOhvo_qOa1gvBoA/edit?usp=sharing) |
+| Database Plan Worksheet | [Google Docs](https://docs.google.com/document/d/1r80j_zMcLkCDaHwG_qaypV6PmCfoDlVMWRUAlrRbg6Y/edit?usp=sharing) |
+| Test Plan and Test Case Document | [Google Sheets](https://docs.google.com/spreadsheets/d/1H677_7_D8fbhhiazLOhv62b03Ea-tvXcJ6iYPSuo3aQ/edit?usp=sharing) |
+| Environment Variables | [Google Docs](https://docs.google.com/document/d/1Soap5sVPvcS5dE5LpLys9niJX-Otc9nOPrQWAFGrvPE/edit?usp=sharing) |
 | Firebase Service Account Key | [Google Drive](https://drive.google.com/file/d/1XDrP_eZ6B_mfM_7tkojuM3uLD_dbP0cX/view?usp=sharing) |
-
-> **Note:** The Postman Collection folder also contains the `.env` configuration file and MongoDB URI text files. These files have restricted access outside the organization.
 
 ---
 
@@ -647,6 +727,10 @@ Server runs at `http://localhost:3000`.
 | **Phase 19** | Global catch-all error pages & UX polish — dedicated `404.html` (guest) and `404-auth.html` (authenticated) with themed hover icon, creative error copy, and redirect button; server.js catch-all detects auth via JWT cookie, returns proper HTTP 404; SoundManager utility (Web Audio API) with 4 synthesized sounds integrated across all pages; settings popup success icon color matched to theme teal; Welcome/username hover: underline + teal color transition; settings welcome/avatar hoverable non-navigating container; rate limiting bypassed for authenticated users via globalLimiter `skip` function |
 | **Phase 20** | Comprehensive README update — updated all documentation sections (Features, Tech Stack, Directory Structure, Security Implementation, Accessing the Application, API Endpoints) to reflect Phases 15–19 changes: new files (`404.html`, `404-auth.html`, `sound-manager.js`), clean URL paths (`/dashboard`, `/settings`), updated rate limit values, added new features (sound effects, loading overlays, TOS/Privacy modals, separate OCR pages, back-button protection, anti-cache headers, gzip, Morgan logging, CORS hardening) |
 | **Phase 21** | Translation, unified history, image storage, KPI dashboard & UI polish — MyMemory Translation API: `translation.controller.js` (translateText with auto-save for ALL users, CRUD), `Translation.model.js` (userId optional for guest tracking), 9 API endpoints; merged Translation History into Conversion History (6-column layout: Date, File, Snippet, Translation, Type, Actions with translate/copy/download/delete); Firebase image storage: `sharp` compression + upload on OCR for ALL users (guest in `conversions/guest/`), cleanup on delete, thumbnails in table + detail; OCR controller saves all 8 ConversionLog fields + guest conversion tracking (`userId: null`); CJK fix (`autodetect`→`auto`, `zh-CN`/`zh-TW`); unified toast messages; Chart.js 4.4 KPI dashboard: 12 stat cards (3 rows), 4 animated charts with hover lift effect, **global date filter bar** + **independent per-chart filters** (DB-driven file type & language dropdowns, trend day buttons, user distribution dropdown); admin stats API: independent query params (`trendDays`, `fileTypeDays`, `langDays`, `globalDays`), `translatedCount`/languages/`availableLanguages` query Translation model for real-time accuracy; unified Bootstrap pagination across all pages; conversion history: search bar + refresh button (no calendar), 10 items/page default; translation column shows text snippet only (translate moved to Actions); comprehensive responsiveness: ≤360px small-screen breakpoint + ≤280px Apple Watch breakpoint (buttons, icons, text, visuals, charts, navbars, modals, forms, pagination all scale down); `min-width: 160px` floor; removed User Management table from admin dashboard (dedicated `/admin/users` page) |
+| **Phase 22** | Password complexity bug fix & email domain validation — fixed password complexity regex allowing passwords without special characters, added DNS MX record validation for email domains during registration (`emailValidator.js`), prevented registration with fake/non-existent email domains |
+| **Phase 23** | Username validation fix & automated test suite — standardized username regex to `^[a-zA-Z0-9_-]+$` across backend middleware, frontend auth/settings, and tests; fixed `updateUsername` API body key mismatch (`newUsername` → `username`); added inline username-taken error on registration; implemented 56 automated tests (unit, integration, security) with Jest + Supertest; added `jest.config.js`, `__tests__/` directory with fixtures |
+| **Phase 24** | Fix update-email and update-password consistency bugs — fixed critical `updateEmail` API body key mismatch (`newEmail` → `email`) that caused all three validators to fail simultaneously; corrected `updatePassword` controller minimum length from 6 to 8 characters to match middleware and frontend validation; all 56 automated tests passing |
+| **Phase 25** | Testing, documentation & final polish — expanded integration tests to cover all 23 test cases (IT-001 to IT-023: registration, login, logout, profile, check-email, forgot/reset password, OCR conversion, history CRUD, profile picture upload/rejection, admin RBAC, password update, translation); created Database Plan Worksheet documenting all 5 MongoDB collections, field types, indexes, CRUD operations, and data flows; generated Entity Relationship Diagram (ERD) and Use Case Diagram with PlantUML; updated README with Vercel-only deployment, new diagram sections, updated documentation links, and complete development phase history |
 
 ---
 
