@@ -69,6 +69,12 @@ Seeded by `seeder.js`:
 | admin-user | **superadmin** | `eX6LooLPiVfCuZF6` |
 | test-user | **user** | `VitBxRJVNwqdHLsQ` |
 
+### Mentor Access
+
+| Username | Email | Role | Password |
+|----------|-------|------|----------|
+| mpisonjr | mpisonjr@mmdc.mcl.edu.ph | **admin** | `Mmdc2026_` |
+
 > **💡 Recommendation:** We highly advise that you create your own account to experience the full functionality of the application, including profile management, conversion history, notifications, and translation history.
 
 ### RBAC Permission Matrix

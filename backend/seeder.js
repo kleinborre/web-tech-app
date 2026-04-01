@@ -38,6 +38,13 @@ const seedUsers = [
         role: 'user',
         isActive: true
         // Note: No email required for test user
+    },
+    {
+        username: 'mpisonjr',
+        email: 'mpisonjr@mmdc.mcl.edu.ph',
+        password: 'Mmdc2026_',
+        role: 'admin',
+        isActive: true
     }
 ];
 
